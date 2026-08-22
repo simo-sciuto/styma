@@ -7,13 +7,43 @@ export type ImageInput = {
   data: string;
 };
 
+/** Esito di una singola corsia, appena si conclude. */
+export type ResearchLaneEvent = {
+  id: string;
+  label: string;
+  status: 'done' | 'failed';
+  comparables: number;
+};
+
+export type ResearchOptions = {
+  /**
+   * Chiamata appena una corsia finisce. Serve a raccontare l'attesa mentre
+   * accade: le corsie durano minuti, e un'interfaccia ferma sembra rotta.
+   */
+  onLaneSettled?: (event: ResearchLaneEvent) => void;
+};
+
+/**
+ * La ricerca gira su piu' corsie parallele e puo' concludersi bene su alcune
+ * e male su altre. In quel caso il risultato resta valido ma poggia su meno
+ * dati: `warnings` esiste per dirlo, invece di lasciarlo intuire da una
+ * confidenza piu' bassa del solito.
+ */
+export type MarketResearchOutcome = {
+  research: MarketResearch;
+  warnings: string[];
+};
+
 /**
  * Interfaccia unica verso il modello. Il resto dell'applicazione non sa
  * quale provider stia rispondendo: si puo' sostituire senza toccare i servizi.
  */
 export interface ObjectIntelligenceProvider {
   identify(images: ImageInput[]): Promise<Identification>;
-  researchMarket(identification: Identification): Promise<MarketResearch>;
+  researchMarket(
+    identification: Identification,
+    options?: ResearchOptions,
+  ): Promise<MarketResearchOutcome>;
 }
 
 export class ProviderError extends Error {

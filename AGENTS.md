@@ -20,6 +20,8 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
 - `src/components` — primitive UI riusabili.
 - `src/schemas` — schemi Zod per l'input esterno (output del modello) e tipi di dominio.
 - `src/services/ai` — integrazione col modello, isolata dietro `ObjectIntelligenceProvider`.
+  La ricerca di mercato gira su corsie parallele con mandati disgiunti (`config.ts`) e i
+  risultati vengono ricomposti da `merge.ts`.
 - `src/services/valuation` — forbice di prezzo e flip score. Codice puro, testato.
 - `src/services/inventory` — lettura e scrittura degli oggetti salvati.
 - `src/lib` — utilita' (upload, immagini, formattazione, rate limit) e client Supabase.
@@ -37,6 +39,11 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
 - **Ogni tabella ha RLS attiva** e la proprieta' si verifica risalendo a `items.user_id`, mai
   duplicando `user_id` sulle tabelle figlie: due fonti di verita' divergono.
 - **Le valutazioni sono immutabili.** Una nuova analisi inserisce una riga, non aggiorna la vecchia.
+- **Le corsie di ricerca vanno deduplicate.** Piu' corsie possono trovare la stessa pagina: contarla
+  due volte gonfia il campione e quindi la confidenza. La deduplica per URL normalizzato sta in
+  `src/services/ai/merge.ts` ed e' testata.
+- **Le attese lunghe si raccontano mentre accadono.** `/api/valuate` risponde in SSE e riporta ogni
+  corsia quando finisce davvero. Nessuna barra di avanzamento che si muove da sola.
 - Interfaccia in italiano, identificatori in inglese.
 
 ## Comandi
@@ -46,7 +53,7 @@ npm run dev        # sviluppo
 npm run build      # build di produzione
 npm run typecheck  # tsc --noEmit
 npm run lint       # eslint
-npm test           # vitest (logica di valutazione)
+npm test           # vitest (valutazione, fusione delle corsie, lettura dello stream)
 ```
 
 ## Configurazione

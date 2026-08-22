@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 import { Button, Card, Field } from '@/components/ui';
+import { readAnalysisEvents } from '@/lib/analysis-stream';
 import type { PreparedImage } from '@/lib/images';
 import type { AnalysisResult } from '@/schemas/analysis';
 import type { Identification } from '@/schemas/identification';
@@ -17,6 +18,24 @@ const STAGE_MESSAGES: Record<Exclude<Stage, 'idle' | 'done'>, string> = {
   identifying: 'Leggo l’oggetto e i suoi marchi…',
   researching: 'Cerco vendite comparabili e stimo il valore…',
 };
+
+/**
+ * Una corsia di ricerca vista da chi aspetta. Lo stato arriva dal server
+ * quando la corsia finisce davvero: nessuna barra che avanza da sola.
+ */
+type LaneProgress = {
+  id: string;
+  label: string;
+  status: 'running' | 'done' | 'failed';
+  comparables: number;
+};
+
+function laneDetail(lane: LaneProgress): string {
+  if (lane.status === 'running') return 'in corso…';
+  if (lane.status === 'failed') return 'non riuscita';
+  if (lane.comparables === 0) return 'niente di credibile';
+  return lane.comparables === 1 ? '1 comparabile' : `${lane.comparables} comparabili`;
+}
 
 function parsePurchasePrice(raw: string): number | null {
   if (raw.trim() === '') return null;
@@ -39,6 +58,7 @@ export function AnalyzeFlow() {
   const [stage, setStage] = useState<Stage>('idle');
   const [identification, setIdentification] = useState<Identification | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [lanes, setLanes] = useState<LaneProgress[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const busy = stage === 'identifying' || stage === 'researching';
@@ -47,6 +67,7 @@ export function AnalyzeFlow() {
     setError(null);
     setResult(null);
     setIdentification(null);
+    setLanes([]);
     setStage('identifying');
 
     try {
@@ -77,8 +98,34 @@ export function AnalyzeFlow() {
       if (!valuateResponse.ok) {
         throw new Error(await readError(valuateResponse, 'Valutazione non riuscita.'));
       }
+      if (!valuateResponse.body) throw new Error('Valutazione non riuscita.');
 
-      setResult((await valuateResponse.json()) as AnalysisResult);
+      let analysis: AnalysisResult | null = null;
+
+      for await (const event of readAnalysisEvents(valuateResponse.body)) {
+        if (event.type === 'lanes') {
+          setLanes(
+            event.lanes.map((lane) => ({ ...lane, status: 'running' as const, comparables: 0 })),
+          );
+        } else if (event.type === 'lane') {
+          setLanes((current) =>
+            current.map((lane) =>
+              lane.id === event.lane.id
+                ? { ...lane, status: event.lane.status, comparables: event.lane.comparables }
+                : lane,
+            ),
+          );
+        } else if (event.type === 'result') {
+          analysis = event.result;
+        } else {
+          throw new Error(event.error);
+        }
+      }
+
+      // Il flusso puo' chiudersi senza risultato solo se la connessione cade.
+      if (!analysis) throw new Error('La valutazione si e’ interrotta. Riprova.');
+
+      setResult(analysis);
       setStage('done');
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Qualcosa e’ andato storto.');
@@ -92,6 +139,7 @@ export function AnalyzeFlow() {
     setPurchasePrice('');
     setResult(null);
     setIdentification(null);
+    setLanes([]);
     setError(null);
     setStage('idle');
   }
@@ -165,8 +213,35 @@ export function AnalyzeFlow() {
               Riconosciuto: <strong className="text-foreground">{identification.name}</strong>
             </p>
           ) : null}
-          <p className="mt-3 text-xs text-muted">
-            Può volerci fino a un minuto: stiamo consultando vendite reali.
+
+          {lanes.length > 0 ? (
+            <ul className="mt-4 space-y-1.5">
+              {lanes.map((lane) => (
+                <li key={lane.id} className="flex items-baseline justify-between gap-3 text-sm">
+                  <span
+                    className={lane.status === 'running' ? 'text-muted' : 'text-foreground'}
+                    style={
+                      lane.status === 'running'
+                        ? { animation: 'styma-pulse 1.6s ease-in-out infinite' }
+                        : undefined
+                    }
+                  >
+                    {lane.status === 'done' ? '✓' : lane.status === 'failed' ? '×' : '·'} {lane.label}
+                  </span>
+                  <span
+                    className={`shrink-0 text-xs ${
+                      lane.status === 'failed' ? 'text-danger' : 'text-muted'
+                    }`}
+                  >
+                    {laneDetail(lane)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          <p className="mt-4 text-xs text-muted">
+            Le ricerche girano in parallelo su mercati diversi: consultiamo vendite reali, non stime.
           </p>
         </Card>
       ) : (

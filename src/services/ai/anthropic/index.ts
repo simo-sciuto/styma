@@ -5,10 +5,17 @@ import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { IdentificationSchema, type Identification } from '@/schemas/identification';
 import { MarketResearchSchema, type MarketResearch } from '@/schemas/market';
 import { toStrictToolSchema } from '@/lib/json-schema';
-import { aiConfig } from '../config';
-import { ProviderError, type ImageInput, type ObjectIntelligenceProvider } from '../provider';
+import { aiConfig, type ResearchLane } from '../config';
+import { mergeMarketResearch } from '../merge';
+import {
+  ProviderError,
+  type ImageInput,
+  type MarketResearchOutcome,
+  type ObjectIntelligenceProvider,
+  type ResearchOptions,
+} from '../provider';
 import { getAnthropicClient } from './client';
-import { IDENTIFICATION_SYSTEM_PROMPT, RESEARCH_SYSTEM_PROMPT } from './prompts';
+import { IDENTIFICATION_SYSTEM_PROMPT, researchSystemPrompt } from './prompts';
 
 const REPORT_TOOL_NAME = 'report_market_research';
 
@@ -107,14 +114,83 @@ export class AnthropicProvider implements ObjectIntelligenceProvider {
     }
   }
 
-  async researchMarket(identification: Identification): Promise<MarketResearch> {
+  /**
+   * Le corsie partono insieme: il tempo di attesa e' quello della piu' lenta,
+   * non la somma. Se qualcuna cade si va avanti con le altre — meno dati sono
+   * pur sempre dati, mentre un errore secco lascia l'utente senza niente.
+   */
+  async researchMarket(
+    identification: Identification,
+    options?: ResearchOptions,
+  ): Promise<MarketResearchOutcome> {
     const client = getAnthropicClient();
+    const brief = identificationBrief(identification);
+    const lanes = aiConfig.research.lanes;
 
+    const settled = await Promise.allSettled(
+      lanes.map(async (lane) => {
+        try {
+          const research = await this.#runLane(client, lane, brief);
+          options?.onLaneSettled?.({
+            id: lane.id,
+            label: lane.label,
+            status: 'done',
+            comparables: research.comparables.length,
+          });
+          return research;
+        } catch (error) {
+          options?.onLaneSettled?.({
+            id: lane.id,
+            label: lane.label,
+            status: 'failed',
+            comparables: 0,
+          });
+          throw error;
+        }
+      }),
+    );
+
+    const found: MarketResearch[] = [];
+    const failedLabels: string[] = [];
+    let firstFailure: unknown = null;
+
+    settled.forEach((outcome, index) => {
+      const lane = lanes[index]!;
+      if (outcome.status === 'fulfilled') {
+        found.push(outcome.value);
+        return;
+      }
+      failedLabels.push(lane.label);
+      firstFailure ??= outcome.reason;
+      console.error(`[research] corsia "${lane.id}" fallita`, outcome.reason);
+    });
+
+    if (found.length === 0) {
+      throw toProviderError(firstFailure ?? new ProviderError('La ricerca di mercato non ha prodotto risultati', 'unavailable'));
+    }
+
+    const warnings =
+      failedLabels.length > 0
+        ? [
+            `Una parte della ricerca non e’ andata a buon fine (${failedLabels.join(
+              ', ',
+            )}): la stima poggia su meno dati del solito.`,
+          ]
+        : [];
+
+    return { research: mergeMarketResearch(found), warnings };
+  }
+
+  async #runLane(
+    client: Anthropic,
+    lane: ResearchLane,
+    brief: string,
+  ): Promise<MarketResearch> {
     const tools: Anthropic.ToolUnion[] = [
       {
         type: 'web_search_20260209',
         name: 'web_search',
-        max_uses: aiConfig.research.maxSearches,
+        max_uses: lane.maxSearches,
         user_location: {
           type: 'approximate',
           country: aiConfig.market.country,
@@ -124,7 +200,7 @@ export class AnthropicProvider implements ObjectIntelligenceProvider {
       {
         type: 'web_fetch_20260209',
         name: 'web_fetch',
-        max_uses: aiConfig.research.maxSearches,
+        max_uses: lane.maxFetches,
       },
       {
         name: REPORT_TOOL_NAME,
@@ -138,56 +214,50 @@ export class AnthropicProvider implements ObjectIntelligenceProvider {
     const messages: Anthropic.MessageParam[] = [
       {
         role: 'user',
-        content: `Trova vendite comparabili per questo oggetto e riporta il mercato.\n\n${identificationBrief(
-          identification,
-        )}`,
+        content: `Trova vendite comparabili per questo oggetto e riporta il mercato.\n\n${brief}`,
       },
     ];
 
-    try {
-      for (let iteration = 0; iteration < aiConfig.research.maxIterations; iteration += 1) {
-        const response = await client.messages.create({
-          model: aiConfig.research.model,
-          max_tokens: aiConfig.research.maxTokens,
-          system: RESEARCH_SYSTEM_PROMPT,
-          output_config: { effort: aiConfig.research.effort },
-          tools,
-          messages,
-        });
+    for (let iteration = 0; iteration < aiConfig.research.maxIterations; iteration += 1) {
+      const response = await client.messages.create({
+        model: aiConfig.research.model,
+        max_tokens: aiConfig.research.maxTokens,
+        system: researchSystemPrompt(lane.mandate),
+        output_config: { effort: aiConfig.research.effort },
+        tools,
+        messages,
+      });
 
-        if (response.stop_reason === 'refusal') {
-          throw new ProviderError('Il modello ha rifiutato la ricerca di mercato', 'invalid_response');
-        }
-
-        messages.push({ role: 'assistant', content: response.content });
-
-        // Il loop dei tool server-side ha raggiunto il limite: si riprende re-inviando.
-        if (response.stop_reason === 'pause_turn') continue;
-
-        const report = response.content.find(
-          (block): block is Anthropic.ToolUseBlock =>
-            block.type === 'tool_use' && block.name === REPORT_TOOL_NAME,
-        );
-
-        if (report) {
-          const parsed = MarketResearchSchema.safeParse(report.input);
-          if (!parsed.success) {
-            throw new ProviderError('Risultati di mercato in un formato inatteso', 'invalid_response', {
-              cause: parsed.error,
-            });
-          }
-          return parsed.data;
-        }
-
-        messages.push({
-          role: 'user',
-          content: `Chiama ora ${REPORT_TOOL_NAME} con quello che hai trovato. Se non hai trovato comparabili credibili, chiamalo con comparables vuoto.`,
-        });
+      if (response.stop_reason === 'refusal') {
+        throw new ProviderError('Il modello ha rifiutato la ricerca di mercato', 'invalid_response');
       }
 
-      throw new ProviderError('La ricerca di mercato non si e’ conclusa', 'unavailable');
-    } catch (error) {
-      throw toProviderError(error);
+      messages.push({ role: 'assistant', content: response.content });
+
+      // Il loop dei tool server-side ha raggiunto il limite: si riprende re-inviando.
+      if (response.stop_reason === 'pause_turn') continue;
+
+      const report = response.content.find(
+        (block): block is Anthropic.ToolUseBlock =>
+          block.type === 'tool_use' && block.name === REPORT_TOOL_NAME,
+      );
+
+      if (report) {
+        const parsed = MarketResearchSchema.safeParse(report.input);
+        if (!parsed.success) {
+          throw new ProviderError('Risultati di mercato in un formato inatteso', 'invalid_response', {
+            cause: parsed.error,
+          });
+        }
+        return parsed.data;
+      }
+
+      messages.push({
+        role: 'user',
+        content: `Chiama ora ${REPORT_TOOL_NAME} con quello che hai trovato. Se non hai trovato comparabili credibili nel tuo mandato, chiamalo con comparables vuoto.`,
+      });
     }
+
+    throw new ProviderError('La ricerca di mercato non si e’ conclusa', 'unavailable');
   }
 }

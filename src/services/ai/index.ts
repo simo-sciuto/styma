@@ -10,4 +10,10 @@ export function getProvider(): ObjectIntelligenceProvider {
 }
 
 export { ProviderError } from './provider';
-export type { ImageInput, ObjectIntelligenceProvider } from './provider';
+export type {
+  ImageInput,
+  MarketResearchOutcome,
+  ObjectIntelligenceProvider,
+  ResearchLaneEvent,
+  ResearchOptions,
+} from './provider';

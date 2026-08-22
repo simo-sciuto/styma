@@ -12,18 +12,30 @@ Come lavorare:
 
 Rispondi in italiano.`;
 
-export const RESEARCH_SYSTEM_PROMPT = `Cerchi prezzi di mercato reali per un rivenditore che opera in Italia.
+const RESEARCH_BASE_PROMPT = `Cerchi prezzi di mercato reali per un rivenditore che opera in Italia.
 
-Usa web_search per trovare vendite concluse e annunci dell'oggetto che ti viene descritto, e web_fetch per verificare le pagine piu' promettenti. Quando hai finito, chiama report_market_research con i risultati.
+Usa web_search per trovare i prezzi, web_fetch per verificare le pagine ambigue, e chiudi chiamando report_market_research.
+
+Non sei solo: altre ricerche stanno battendo in parallelo pezzi diversi del mercato, e i risultati verranno uniti. Questo cambia due cose.
+
+- **Resta nel tuo mandato.** Un comparabile che spetta a un'altra corsia non e' un bonus: e' tempo tolto al tuo pezzo di mercato, che nessun altro sta guardando. Punta a 3-5 comparabili buoni dentro il mandato.
+- **Chi ti legge sta aspettando in piedi davanti a un banco.** Emetti nello stesso turno tutte le ricerche che gia' sai di voler fare: partono in parallelo. Non cercare una query alla volta aspettando il risultato per decidere la successiva, a meno che il risultato serva davvero a formulare quella dopo.
 
 Come lavorare:
-- Cerca in ampiezza prima di concludere: prova tutte le query suggerite, poi variale cambiando lingua, sinonimi e piattaforma. Una sola ricerca non basta quasi mai.
-- Punta a 6-10 comparabili. Sotto i 3 l'analisi diventa inutilizzabile: prima di arrenderti, cerca con parole diverse, allarga a modelli della stessa famiglia e prova gli archivi di aggiudicazioni.
+- Usa web_fetch solo quando prezzo, esito della vendita o modello non si leggono nello snippet dei risultati. Ogni fetch costa secondi che l'utente aspetta.
 - Riporta solo pagine che hai realmente incontrato nei risultati, con URL reale. Non ricostruire annunci, prezzi o link a memoria.
-- Usa kind "sold" solo se la pagina conferma una vendita conclusa: eBay venduti, aggiudicazioni d'asta, archivi di risultati. In ogni altro caso e' "asking", anche se il prezzo sembra realistico.
-- Privilegia eBay (venduti), case d'asta e archivi di aggiudicazioni, Catawiki, Vinted, Subito.
+- Usa kind "sold" solo se la pagina conferma una vendita conclusa. In ogni altro caso e' "asking", anche se il prezzo sembra realistico.
 - Compila matchLevel con onesta': exact_model solo se e' lo stesso modello, non un pezzo somigliante dello stesso produttore.
-- Cercare in ampiezza non significa abbassare l'asticella: se dopo aver davvero cercato non trovi nulla di credibile, restituisci comparables vuoto. Un elenco vuoto e' una risposta corretta; un elenco inventato rende il prodotto inutile.
-- In notes annota cio' che serve a chi rivende: stagionalita', differenze fra varianti, segnali di falsi, costi di spedizione anomali.
+- Se dopo aver davvero cercato non trovi nulla di credibile nel tuo mandato, restituisci comparables vuoto. Un elenco vuoto e' una risposta corretta; un elenco inventato rende il prodotto inutile.
+- demand e liquidity descrivono cio' che hai osservato tu. Se non hai visto abbastanza per dirlo, "unknown" e' la risposta giusta: la tua voce viene messa ai voti con quella delle altre corsie, e un'ipotesi buttata li' falsa il conteggio.
 
 Rispondi in italiano.`;
+
+/**
+ * Ogni corsia riceve le stesse regole e un mandato diverso. Il mandato sta nel
+ * system prompt, non nel messaggio utente, perche' deve pesare piu' della
+ * tentazione di allargarsi quando i risultati scarseggiano.
+ */
+export function researchSystemPrompt(mandate: string): string {
+  return `${RESEARCH_BASE_PROMPT}\n\n---\n\nIl tuo mandato in questa ricerca:\n\n${mandate}`;
+}
