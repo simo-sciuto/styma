@@ -34,9 +34,10 @@ Supabase conserva gli oggetti salvati, le foto e ogni valutazione ricevuta. Le v
 vengono sovrascritte: rianalizzare un oggetto ne aggiunge una nuova, cosi' resta leggibile come il
 mercato si e' mosso.
 
-L'identita' e' una sessione anonima creata al primo salvataggio — in mercatino nessuno si registra —
-e la Row Level Security isola i dati per utente. Le foto stanno in un bucket privato sotto
-`<user_id>/<item_id>/`, servite con URL firmati.
+L'identita' parte come sessione anonima creata al primo salvataggio — in mercatino nessuno si
+registra — e da `/account` si collega a un'email mantenendo lo stesso utente, quindi lo stesso
+inventario. La Row Level Security isola i dati per utente; le foto stanno in un bucket privato
+sotto `<user_id>/<item_id>/`, servite con URL firmati.
 
 Setup del database:
 
@@ -44,15 +45,15 @@ Setup del database:
 supabase db push --db-url "postgresql://postgres.<project-ref>:<password>@<pooler-host>:5432/postgres"
 ```
 
-Poi, sul progetto Supabase, due passaggi che non si possono fare da SQL:
+Poi, sul progetto Supabase:
 
 1. **Accessi anonimi** → Authentication → Sign In / Providers → *Anonymous sign-ins*.
-2. **Bucket delle foto** → Storage → New bucket: nome `item-images`, privato, limite 8 MB,
-   MIME `image/jpeg, image/png, image/webp`.
-
-Il bucket va creato dalla Dashboard e non dalle migrazioni: il servizio Storage non registra i
-bucket inseriti direttamente in `storage.buckets`, e ogni upload risponderebbe "Bucket not found"
-pur essendo la riga presente nella tabella. Le policy di accesso, invece, stanno nelle migrazioni.
+2. **Bucket delle foto**: `item-photos`, privato, limite 8 MB, MIME
+   `image/jpeg, image/png, image/webp`. Creato una volta dalla Dashboard o via API Storage;
+   le policy di accesso stanno nelle migrazioni.
+3. **SMTP** → Authentication → Emails. Il mailer integrato di Supabase manda poche email l'ora
+   ed e' pensato per lo sviluppo: senza un SMTP tuo, registrazione e collegamento account
+   funzionano solo a singhiozzo.
 
 ## Stato
 

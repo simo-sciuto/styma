@@ -20,9 +20,14 @@ export default async function InventoryPage() {
 
       <div className="mt-6 flex items-baseline justify-between gap-4">
         <h1 className="text-2xl font-semibold tracking-tight">Inventario</h1>
-        <Link href="/analizza" className="text-sm underline decoration-line underline-offset-4">
-          Analizza un oggetto
-        </Link>
+        <div className="flex gap-4 text-sm">
+          <Link href="/account" className="underline decoration-line underline-offset-4">
+            Account
+          </Link>
+          <Link href="/analizza" className="underline decoration-line underline-offset-4">
+            Analizza
+          </Link>
+        </div>
       </div>
 
       {entries === null ? (

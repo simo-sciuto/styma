@@ -92,4 +92,4 @@ export type ItemDetail = {
   imageUrls: string[];
 };
 
-export const IMAGE_BUCKET = 'item-images';
+export const IMAGE_BUCKET = 'item-photos';

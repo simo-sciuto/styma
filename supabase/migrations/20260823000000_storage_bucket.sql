@@ -1,15 +1,11 @@
--- Policy di accesso alle foto degli oggetti.
+-- Policy di accesso alle foto, prima versione, sul bucket `item-images`.
 --
--- Il bucket `item-images` NON viene creato qui. In questa versione di Supabase
--- il servizio Storage non registra i bucket inseriti direttamente in
--- storage.buckets: la riga esiste nella tabella ma ogni chiamata risponde
--- "Bucket not found". Un trigger `protect_buckets_delete` sulla stessa tabella
--- conferma che il ciclo di vita dei bucket e' passato sotto l'API.
---
--- Il bucket va quindi creato dalla Dashboard (Storage -> New bucket) o via API:
---   nome `item-images`, privato, limite 8 MB, MIME image/jpeg,image/png,image/webp
---
--- Queste policy sono ri-eseguibili.
+-- NOTA STORICA: il commento originale di questo file attribuiva un errore
+-- "Bucket not found" al fatto che il servizio Storage non registrasse i bucket
+-- creati via SQL. Era sbagliato: la causa era una URL malformata nello script
+-- di prova, priva del nome del bucket (/object/<path> invece di
+-- /object/<bucket>/<path>). Il bucket in uso e le policy definitive sono nella
+-- migrazione 20260823003000.
 
 drop policy if exists "users read their own item images" on storage.objects;
 drop policy if exists "users upload their own item images" on storage.objects;

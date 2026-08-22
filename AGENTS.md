@@ -57,5 +57,5 @@ npm test           # vitest (logica di valutazione)
 - `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` — senza, l'analisi funziona e
   l'inventario si disattiva da solo dichiarandolo, invece di rompersi.
 
-Sul progetto Supabase servono anche gli accessi anonimi attivi e il bucket `item-images` creato
-dalla Dashboard: i bucket creati via SQL non vengono registrati dal servizio Storage.
+Sul progetto Supabase servono gli accessi anonimi attivi, il bucket privato `item-photos` e un
+SMTP configurato perche' la conferma email funzioni oltre le poche unita' l'ora del mailer interno.
