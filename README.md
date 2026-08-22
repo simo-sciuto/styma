@@ -44,7 +44,15 @@ Setup del database:
 supabase db push --db-url "postgresql://postgres.<project-ref>:<password>@<pooler-host>:5432/postgres"
 ```
 
-Sul progetto Supabase vanno poi attivati gli **accessi anonimi** (Authentication → Sign In / Providers).
+Poi, sul progetto Supabase, due passaggi che non si possono fare da SQL:
+
+1. **Accessi anonimi** → Authentication → Sign In / Providers → *Anonymous sign-ins*.
+2. **Bucket delle foto** → Storage → New bucket: nome `item-images`, privato, limite 8 MB,
+   MIME `image/jpeg, image/png, image/webp`.
+
+Il bucket va creato dalla Dashboard e non dalle migrazioni: il servizio Storage non registra i
+bucket inseriti direttamente in `storage.buckets`, e ogni upload risponderebbe "Bucket not found"
+pur essendo la riga presente nella tabella. Le policy di accesso, invece, stanno nelle migrazioni.
 
 ## Stato
 

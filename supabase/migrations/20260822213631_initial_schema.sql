@@ -210,53 +210,6 @@ create policy "comparables follow their valuation"
     )
   );
 
--- Storage ------------------------------------------------------------------
--- Bucket privato. Le foto vivono sotto <user_id>/<item_id>/<file>, quindi
--- il primo segmento del path e' la chiave di proprieta'.
-
-insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values (
-  'item-images',
-  'item-images',
-  false,
-  8388608,
-  array['image/jpeg', 'image/png', 'image/webp']
-)
-on conflict (id) do nothing;
-
-create policy "users read their own item images"
-  on storage.objects for select
-  to authenticated
-  using (
-    bucket_id = 'item-images'
-    and (select auth.uid())::text = (storage.foldername(name))[1]
-  );
-
-create policy "users upload their own item images"
-  on storage.objects for insert
-  to authenticated
-  with check (
-    bucket_id = 'item-images'
-    and (select auth.uid())::text = (storage.foldername(name))[1]
-  );
-
--- Update serve anche per l'upsert di un file gia' presente.
-create policy "users replace their own item images"
-  on storage.objects for update
-  to authenticated
-  using (
-    bucket_id = 'item-images'
-    and (select auth.uid())::text = (storage.foldername(name))[1]
-  )
-  with check (
-    bucket_id = 'item-images'
-    and (select auth.uid())::text = (storage.foldername(name))[1]
-  );
-
-create policy "users delete their own item images"
-  on storage.objects for delete
-  to authenticated
-  using (
-    bucket_id = 'item-images'
-    and (select auth.uid())::text = (storage.foldername(name))[1]
-  );
+-- Storage ----------------------------------------------------------------
+-- Bucket e policy stanno nella migrazione successiva: lo schema `storage`
+-- richiede permessi che questa migrazione puo' non avere.

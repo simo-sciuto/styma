@@ -56,3 +56,6 @@ npm test           # vitest (logica di valutazione)
 - `ANTHROPIC_API_KEY` — senza, l'interfaccia funziona ma le API di analisi rispondono 503.
 - `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` — senza, l'analisi funziona e
   l'inventario si disattiva da solo dichiarandolo, invece di rompersi.
+
+Sul progetto Supabase servono anche gli accessi anonimi attivi e il bucket `item-images` creato
+dalla Dashboard: i bucket creati via SQL non vengono registrati dal servizio Storage.
