@@ -1,10 +1,16 @@
 import type { Identification } from '@/schemas/identification';
 import type { MarketResearch } from '@/schemas/market';
+import type { UsageTotals } from './usage';
 
 export type ImageInput = {
   mediaType: 'image/jpeg' | 'image/png' | 'image/webp';
   /** Contenuto in base64, senza prefisso data URL. */
   data: string;
+};
+
+export type IdentificationOutcome = {
+  identification: Identification;
+  usage: UsageTotals;
 };
 
 /** Esito di una singola corsia, appena si conclude. */
@@ -32,6 +38,8 @@ export type ResearchOptions = {
 export type MarketResearchOutcome = {
   research: MarketResearch;
   warnings: string[];
+  /** Token e costo stimato di tutte le corsie messe insieme. */
+  usage: UsageTotals;
 };
 
 /**
@@ -39,7 +47,7 @@ export type MarketResearchOutcome = {
  * quale provider stia rispondendo: si puo' sostituire senza toccare i servizi.
  */
 export interface ObjectIntelligenceProvider {
-  identify(images: ImageInput[]): Promise<Identification>;
+  identify(images: ImageInput[]): Promise<IdentificationOutcome>;
   researchMarket(
     identification: Identification,
     options?: ResearchOptions,

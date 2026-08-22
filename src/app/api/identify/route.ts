@@ -68,8 +68,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    const identification = await getProvider().identify(images);
-    return NextResponse.json({ identification });
+    const { identification, usage } = await getProvider().identify(images);
+    // Il costo si mostra solo in sviluppo: e' un dato sulla nostra infrastruttura.
+    return NextResponse.json(
+      process.env.NODE_ENV === 'production' ? { identification } : { identification, usage },
+    );
   } catch (error) {
     return providerErrorResponse(error);
   }

@@ -42,6 +42,12 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
 - **Le corsie di ricerca vanno deduplicate.** Piu' corsie possono trovare la stessa pagina: contarla
   due volte gonfia il campione e quindi la confidenza. La deduplica per URL normalizzato sta in
   `src/services/ai/merge.ts` ed e' testata.
+- **Sviluppare non deve costare.** `STYMA_AI_FIXTURES=1` rigioca le risposte registrate in
+  `bench/fixtures` senza chiamare il modello; `STYMA_AI_RECORD=1` ne registra di nuove pagando una
+  volta. Entrambe rifiutano di partire in produzione: servire un'analisi registrata come fresca
+  sarebbe la peggiore bugia possibile, visto che qui il numero *e'* il prodotto.
+- **Il costo di ogni analisi si misura**, non si stima a occhio: `src/services/ai/usage.ts` conta
+  token, ricerche e dollari, e li scrive nei log del server. Il listino sta in `config.ts`.
 - **Le attese lunghe si raccontano mentre accadono.** `/api/valuate` risponde in SSE e riporta ogni
   corsia quando finisce davvero. Nessuna barra di avanzamento che si muove da sola.
 - Interfaccia in italiano, identificatori in inglese.
@@ -55,7 +61,7 @@ npm run typecheck  # tsc --noEmit
 npm run lint       # eslint
 npm test           # vitest (valutazione, fusione delle corsie, lettura dello stream)
 
-node bench/research-bench.mjs [foto.jpg]   # cronometra un'analisi vera contro `npm run dev`
+node bench/research-bench.mjs [foto.jpg]   # cronometra e conta i costi di un'analisi contro `npm run dev`
 ```
 
 ## Configurazione
@@ -63,6 +69,7 @@ node bench/research-bench.mjs [foto.jpg]   # cronometra un'analisi vera contro `
 `.env.local` (vedi `.env.example`):
 
 - `ANTHROPIC_API_KEY` — senza, l'interfaccia funziona ma le API di analisi rispondono 503.
+- `STYMA_AI_FIXTURES` / `STYMA_AI_RECORD` — sviluppo gratuito su risposte registrate.
 - `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` — senza, l'analisi funziona e
   l'inventario si disattiva da solo dichiarandolo, invece di rompersi.
 

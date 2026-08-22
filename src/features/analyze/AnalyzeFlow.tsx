@@ -117,6 +117,9 @@ export function AnalyzeFlow() {
           );
         } else if (event.type === 'result') {
           analysis = event.result;
+        } else if (event.type === 'usage') {
+          // Solo in sviluppo: il server non lo manda in produzione.
+          console.info('[usage] analisi', event.usage);
         } else {
           throw new Error(event.error);
         }

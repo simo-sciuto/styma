@@ -7,8 +7,10 @@ import { MarketResearchSchema, type MarketResearch } from '@/schemas/market';
 import { toStrictToolSchema } from '@/lib/json-schema';
 import { aiConfig, type ResearchLane } from '../config';
 import { mergeMarketResearch } from '../merge';
+import { UsageMeter, describeUsage, type UsageTotals } from '../usage';
 import {
   ProviderError,
+  type IdentificationOutcome,
   type ImageInput,
   type MarketResearchOutcome,
   type ObjectIntelligenceProvider,
@@ -61,7 +63,7 @@ function identificationBrief(identification: Identification): string {
 }
 
 export class AnthropicProvider implements ObjectIntelligenceProvider {
-  async identify(images: ImageInput[]): Promise<Identification> {
+  async identify(images: ImageInput[]): Promise<IdentificationOutcome> {
     if (images.length === 0) {
       throw new ProviderError('Nessuna immagine da analizzare', 'invalid_response');
     }
@@ -101,6 +103,10 @@ export class AnthropicProvider implements ObjectIntelligenceProvider {
         ],
       });
 
+      const meter = new UsageMeter();
+      meter.add(aiConfig.identification.model, response.usage);
+      console.info(describeUsage('identificazione', meter.totals));
+
       if (response.stop_reason === 'refusal') {
         throw new ProviderError('Il modello ha rifiutato di analizzare queste immagini', 'invalid_response');
       }
@@ -108,7 +114,7 @@ export class AnthropicProvider implements ObjectIntelligenceProvider {
         throw new ProviderError('Il modello non ha restituito un’identificazione valida', 'invalid_response');
       }
 
-      return response.parsed_output;
+      return { identification: response.parsed_output, usage: meter.totals };
     } catch (error) {
       throw toProviderError(error);
     }
@@ -127,10 +133,13 @@ export class AnthropicProvider implements ObjectIntelligenceProvider {
     const brief = identificationBrief(identification);
     const lanes = aiConfig.research.lanes;
 
+    const meter = new UsageMeter();
+
     const settled = await Promise.allSettled(
       lanes.map(async (lane) => {
         try {
-          const research = await this.#runLane(client, lane, brief);
+          const { research, usage } = await this.#runLane(client, lane, brief);
+          meter.merge(usage);
           options?.onLaneSettled?.({
             id: lane.id,
             label: lane.label,
@@ -178,14 +187,16 @@ export class AnthropicProvider implements ObjectIntelligenceProvider {
           ]
         : [];
 
-    return { research: mergeMarketResearch(found), warnings };
+    console.info(describeUsage(`ricerca (${found.length}/${lanes.length} corsie)`, meter.totals));
+
+    return { research: mergeMarketResearch(found), warnings, usage: meter.totals };
   }
 
   async #runLane(
     client: Anthropic,
     lane: ResearchLane,
     brief: string,
-  ): Promise<MarketResearch> {
+  ): Promise<{ research: MarketResearch; usage: UsageTotals }> {
     const tools: Anthropic.ToolUnion[] = [
       {
         type: 'web_search_20260209',
@@ -201,6 +212,7 @@ export class AnthropicProvider implements ObjectIntelligenceProvider {
         type: 'web_fetch_20260209',
         name: 'web_fetch',
         max_uses: lane.maxFetches,
+        max_content_tokens: aiConfig.research.maxFetchContentTokens,
       },
       {
         name: REPORT_TOOL_NAME,
@@ -218,15 +230,27 @@ export class AnthropicProvider implements ObjectIntelligenceProvider {
       },
     ];
 
+    const meter = new UsageMeter();
+
     for (let iteration = 0; iteration < aiConfig.research.maxIterations; iteration += 1) {
       const response = await client.messages.create({
         model: aiConfig.research.model,
         max_tokens: aiConfig.research.maxTokens,
         system: researchSystemPrompt(lane.mandate),
         output_config: { effort: aiConfig.research.effort },
+        /**
+         * Il loop rimanda ogni volta la conversazione intera, e i risultati di
+         * ricerca ne sono la parte grossa. Senza cache il secondo giro ripaga
+         * a prezzo pieno cio' che ha gia' pagato il primo; con la cache lo
+         * rilegge a un decimo. Il marcatore si mette da solo sull'ultimo
+         * blocco memorizzabile.
+         */
+        cache_control: { type: 'ephemeral' },
         tools,
         messages,
       });
+
+      meter.add(aiConfig.research.model, response.usage);
 
       if (response.stop_reason === 'refusal') {
         throw new ProviderError('Il modello ha rifiutato la ricerca di mercato', 'invalid_response');
@@ -249,7 +273,7 @@ export class AnthropicProvider implements ObjectIntelligenceProvider {
             cause: parsed.error,
           });
         }
-        return parsed.data;
+        return { research: parsed.data, usage: meter.totals };
       }
 
       messages.push({

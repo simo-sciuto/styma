@@ -20,6 +20,9 @@ const here = path.dirname(new URL(import.meta.url).pathname);
 
 const since = (start) => `${((Date.now() - start) / 1000).toFixed(1)}s`.padStart(7);
 
+const usdOf = (usage) =>
+  usage ? ` — $${usage.usd.toFixed(4)} (${usage.webSearches} ricerche, in ${usage.inputTokens.toLocaleString('it-IT')} / out ${usage.outputTokens.toLocaleString('it-IT')})` : '';
+
 async function identify(photoPath) {
   const start = Date.now();
   const form = new FormData();
@@ -28,9 +31,9 @@ async function identify(photoPath) {
   const response = await fetch(`${BASE}/api/identify`, { method: 'POST', body: form });
   if (!response.ok) throw new Error(`identify ${response.status}: ${await response.text()}`);
 
-  const { identification } = await response.json();
-  console.log(`${since(start)}  identificazione — ${identification.name}`);
-  return identification;
+  const { identification, usage } = await response.json();
+  console.log(`${since(start)}  identificazione — ${identification.name}${usdOf(usage)}`);
+  return { identification, usage };
 }
 
 async function research(identification) {
@@ -46,6 +49,7 @@ async function research(identification) {
   const decoder = new TextDecoder();
   let buffer = '';
   let result = null;
+  let usage = null;
 
   for (;;) {
     const { value, done } = await reader.read();
@@ -64,6 +68,8 @@ async function research(identification) {
       } else if (event.type === 'lane') {
         const detail = event.lane.status === 'failed' ? 'FALLITA' : `${event.lane.comparables} comparabili`;
         console.log(`${since(start)}  corsia "${event.lane.label}" — ${detail}`);
+      } else if (event.type === 'usage') {
+        usage = event.usage;
       } else if (event.type === 'result') {
         result = event.result;
         console.log(`${since(start)}  risultato`);
@@ -73,17 +79,21 @@ async function research(identification) {
     }
   }
 
-  return { result, seconds: (Date.now() - start) / 1000 };
+  return { result, usage, seconds: (Date.now() - start) / 1000 };
 }
 
 const photo = process.argv[2];
-const identification = photo
+const identified = photo
   ? await identify(photo)
-  : JSON.parse(fs.readFileSync(path.join(here, 'ident.json'), 'utf8')).identification;
+  : { identification: JSON.parse(fs.readFileSync(path.join(here, 'ident.json'), 'utf8')).identification, usage: null };
 
-const { result, seconds } = await research(identification);
+const { result, usage, seconds } = await research(identified.identification);
 
-console.log(`\nRicerca di mercato: ${seconds.toFixed(1)}s`);
+console.log(`\nRicerca di mercato: ${seconds.toFixed(1)}s${usdOf(usage)}`);
+if (identified.usage || usage) {
+  const total = (identified.usage?.usd ?? 0) + (usage?.usd ?? 0);
+  console.log(`Costo dell'analisi completa: $${total.toFixed(4)}`);
+}
 if (result?.market) {
   const sold = result.market.comparables.filter((c) => c.kind === 'sold').length;
   console.log(

@@ -102,6 +102,8 @@ export async function POST(request: Request) {
           });
           market = outcome.research;
           warnings.push(...outcome.warnings);
+          // Il costo si mostra solo in sviluppo: e' un dato sulla nostra infrastruttura.
+          if (process.env.NODE_ENV !== 'production') send({ type: 'usage', usage: outcome.usage });
         } catch (error) {
           // Senza chiave non c'e' analisi possibile: e' l'unico caso in cui
           // vale la pena fermarsi invece di mostrare la sola identificazione.

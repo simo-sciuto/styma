@@ -1,5 +1,6 @@
 import type { AnalysisResult } from '@/schemas/analysis';
 import type { ResearchLaneEvent } from '@/services/ai/provider';
+import type { UsageTotals } from '@/services/ai/usage';
 
 /**
  * Il protocollo fra `/api/valuate` e l'interfaccia. Sta qui e non nella route
@@ -9,6 +10,7 @@ import type { ResearchLaneEvent } from '@/services/ai/provider';
 export type ValuateEvent =
   | { type: 'lanes'; lanes: { id: string; label: string }[] }
   | { type: 'lane'; lane: ResearchLaneEvent }
+  | { type: 'usage'; usage: UsageTotals }
   | { type: 'result'; result: AnalysisResult }
   | { type: 'error'; error: string; code: string };
 
