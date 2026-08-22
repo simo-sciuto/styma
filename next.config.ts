@@ -1,7 +1,9 @@
-import type { NextConfig } from "next";
+import path from 'node:path';
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Un package-lock.json nella cartella superiore confonderebbe la root di Turbopack.
+  turbopack: { root: path.resolve(import.meta.dirname) },
 };
 
 export default nextConfig;

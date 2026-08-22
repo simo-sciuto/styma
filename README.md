@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# STYMA
 
-## Getting Started
+> "Ho trovato questo oggetto. Conviene comprarlo, e quanto vale davvero?"
 
-First, run the development server:
+Fotografi un oggetto a un mercatino, e in un minuto sai cos'e', quanto vale sul mercato
+dell'usato e fino a che prezzo ha senso pagarlo.
+
+## Come funziona
+
+1. **Identificazione** — le foto vanno a un modello vision che riconosce l'oggetto, legge
+   punzoni ed etichette e restituisce una scheda strutturata. Non stima prezzi.
+2. **Ricerca di mercato** — un secondo passaggio cerca vendite comparabili reali sul web e le
+   riporta con fonte, URL, prezzo e se si tratta di una vendita conclusa o di un prezzo richiesto.
+3. **Valutazione** — il codice, non il modello, calcola la forbice di prezzo pesando ogni
+   comparabile per somiglianza, tipo di prezzo, eta' del dato e stato di conservazione.
+4. **Decisione** — il flip score combina margine atteso, affidabilita' della stima e liquidita',
+   e restituisce BUY / MAYBE / PASS con le soglie di prezzo corrispondenti.
+
+Quando i dati non bastano, l'applicazione lo dichiara invece di produrre un numero plausibile.
+
+## Avvio
 
 ```bash
+cp .env.example .env.local   # e inserisci ANTHROPIC_API_KEY
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Apri http://localhost:3000 e vai su **Analizza un oggetto**.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Persistenza
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Supabase conserva gli oggetti salvati, le foto e ogni valutazione ricevuta. Le valutazioni non
+vengono sovrascritte: rianalizzare un oggetto ne aggiunge una nuova, cosi' resta leggibile come il
+mercato si e' mosso.
 
-## Learn More
+L'identita' e' una sessione anonima creata al primo salvataggio — in mercatino nessuno si registra —
+e la Row Level Security isola i dati per utente. Le foto stanno in un bucket privato sotto
+`<user_id>/<item_id>/`, servite con URL firmati.
 
-To learn more about Next.js, take a look at the following resources:
+Setup del database:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+supabase db push --db-url "postgresql://postgres.<project-ref>:<password>@<pooler-host>:5432/postgres"
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Sul progetto Supabase vanno poi attivati gli **accessi anonimi** (Authentication → Sign In / Providers).
 
-## Deploy on Vercel
+## Stato
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Upload → identificazione → ricerca comparabili → valutazione → decisione → salvataggio in inventario.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Dettagli di architettura e convenzioni: `AGENTS.md`. Requisiti di prodotto: `PROJECT_PRD.md`.
