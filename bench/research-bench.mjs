@@ -68,6 +68,10 @@ async function research(identification) {
       } else if (event.type === 'lane') {
         const detail = event.lane.status === 'failed' ? 'FALLITA' : `${event.lane.comparables} comparabili`;
         console.log(`${since(start)}  corsia "${event.lane.label}" — ${detail}`);
+      } else if (event.type === 'cache') {
+        console.log(
+          `${since(start)}  RIUSO dalla cache — ricerca di ${event.ageDays} giorni fa, ${event.comparables} comparabili, nessuna chiamata al modello`,
+        );
       } else if (event.type === 'usage') {
         usage = event.usage;
       } else if (event.type === 'result') {

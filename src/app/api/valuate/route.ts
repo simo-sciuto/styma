@@ -5,10 +5,12 @@ import { errorResponse } from '@/lib/api';
 import { checkRateLimit, clientKey } from '@/lib/rate-limit';
 import { IdentificationSchema } from '@/schemas/identification';
 import type { MarketResearch } from '@/schemas/market';
+import type { MarketSource } from '@/schemas/analysis';
 import type { ValuateEvent } from '@/lib/analysis-stream';
 import { aiConfig } from '@/services/ai/config';
 import { getProvider, ProviderError } from '@/services/ai';
 import { assessFlip, valuate } from '@/services/valuation';
+import { readCachedResearch, writeCachedResearch } from '@/services/market-cache';
 
 export const runtime = 'nodejs';
 /** Le corsie di ricerca girano in parallelo, ma ognuna fa piu' giri: serve margine. */
@@ -88,22 +90,43 @@ export async function POST(request: Request) {
       const heartbeat = setInterval(() => write(': ping\n\n'), HEARTBEAT_MS);
 
       try {
-        send({
-          type: 'lanes',
-          lanes: aiConfig.research.lanes.map(({ id, label }) => ({ id, label })),
-        });
-
         const warnings: string[] = [];
         let market: MarketResearch | null = null;
+        let marketSource: MarketSource | null = null;
+
+        // Una ricerca gia' fatta di recente sullo stesso modello vale quanto una
+        // nuova: i comparabili descrivono il modello, e lo stato dell'esemplare
+        // lo applica la valutazione. Quanto "di recente" dipende dal mercato.
+        const cached = await readCachedResearch(identification);
+        if (cached) {
+          market = cached.research;
+          marketSource = { cached: true, researchedAt: cached.researchedAt, ageDays: cached.ageDays };
+          send({ type: 'cache', ageDays: cached.ageDays, comparables: cached.research.comparables.length });
+        }
 
         try {
-          const outcome = await getProvider().researchMarket(identification, {
-            onLaneSettled: (lane) => send({ type: 'lane', lane }),
-          });
-          market = outcome.research;
-          warnings.push(...outcome.warnings);
-          // Il costo si mostra solo in sviluppo: e' un dato sulla nostra infrastruttura.
-          if (process.env.NODE_ENV !== 'production') send({ type: 'usage', usage: outcome.usage });
+          if (!market) {
+            // Annunciate solo ora: se la cache ha risposto, queste corsie non
+            // partono, e dichiararle comunque sarebbe raccontare un lavoro
+            // che non stiamo facendo.
+            send({
+              type: 'lanes',
+              lanes: aiConfig.research.lanes.map(({ id, label }) => ({ id, label })),
+            });
+
+            const outcome = await getProvider().researchMarket(identification, {
+              onLaneSettled: (lane) => send({ type: 'lane', lane }),
+            });
+            market = outcome.research;
+            marketSource = { cached: false, researchedAt: new Date().toISOString(), ageDays: 0 };
+            warnings.push(...outcome.warnings);
+            // Il costo si mostra solo in sviluppo: e' un dato sulla nostra infrastruttura.
+            if (process.env.NODE_ENV !== 'production') send({ type: 'usage', usage: outcome.usage });
+
+            // Non blocca la risposta: se l'archiviazione fallisce, l'utente ha
+            // comunque la sua analisi.
+            void writeCachedResearch(identification, outcome.research);
+          }
         } catch (error) {
           // Senza chiave non c'e' analisi possibile: e' l'unico caso in cui
           // vale la pena fermarsi invece di mostrare la sola identificazione.
@@ -131,7 +154,7 @@ export async function POST(request: Request) {
 
         send({
           type: 'result',
-          result: { identification, market, valuation, flip, warnings },
+          result: { identification, market, marketSource, valuation, flip, warnings },
         });
       } catch (error) {
         console.error('[valuate] errore non gestito', error);

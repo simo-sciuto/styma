@@ -13,6 +13,15 @@ export const ConditionSchema = z.enum(CONDITION_LEVELS);
 export type Condition = z.infer<typeof ConditionSchema>;
 
 /**
+ * Quanto in fretta si muove il prezzo di questa categoria di oggetti.
+ * Non e' una stima di valore: e' cio' che decide per quanto tempo una
+ * ricerca di mercato resta riutilizzabile. Vedi `services/market-cache`.
+ */
+export const MARKET_PACES = ['slow', 'medium', 'fast'] as const;
+export const MarketPaceSchema = z.enum(MARKET_PACES);
+export type MarketPace = z.infer<typeof MarketPaceSchema>;
+
+/**
  * What the vision model is allowed to tell us about the object.
  * Deliberately excludes anything about price: market value comes from
  * comparables, never from the model's own guess.
@@ -34,6 +43,9 @@ export const IdentificationSchema = z.object({
   confidence: z.number().describe('Quanto sei sicuro dell’identificazione, da 0 a 1'),
   confidenceReasons: z.array(z.string()).describe('Perché la confidenza è alta o bassa'),
   imageQuality: z.enum(['good', 'mixed', 'poor']).describe('Qualità complessiva delle foto ricevute'),
+  marketPace: MarketPaceSchema.describe(
+    'Quanto in fretta invecchia il prezzo di questa categoria: slow (modernariato, design, arte, mobili, libri, dischi), medium (abbigliamento, orologi, ceramiche, giocattoli, biciclette), fast (elettronica, telefoni, computer, console, fotocamere digitali, elettrodomestici). Nel dubbio scegli il piu’ veloce.',
+  ),
   missingShots: z
     .array(z.string())
     .describe('Foto aggiuntive che migliorerebbero l’identificazione, se ce ne sono'),

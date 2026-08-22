@@ -10,6 +10,7 @@ import type { UsageTotals } from '@/services/ai/usage';
 export type ValuateEvent =
   | { type: 'lanes'; lanes: { id: string; label: string }[] }
   | { type: 'lane'; lane: ResearchLaneEvent }
+  | { type: 'cache'; ageDays: number; comparables: number }
   | { type: 'usage'; usage: UsageTotals }
   | { type: 'result'; result: AnalysisResult }
   | { type: 'error'; error: string; code: string };

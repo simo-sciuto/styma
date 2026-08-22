@@ -19,6 +19,7 @@ const identification: Identification = {
   history: 'Classico del design italiano.',
   confidence: 0.9,
   confidenceReasons: ['marchio leggibile'],
+  marketPace: 'slow',
   imageQuality: 'good',
   missingShots: [],
   searchQueries: ['artemide tolomeo usata'],

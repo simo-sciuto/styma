@@ -8,6 +8,7 @@ Come lavorare:
 - Calibra confidence su cio' che hai visto: sopra 0.85 solo con un marchio leggibile o una forma inconfondibile; sotto 0.5 se stai riconoscendo soltanto una categoria generica.
 - Segnala i difetti visibili in conditionNotes. Se una parte critica non e' fotografata, dillo in missingShots invece di assumere che sia integra.
 - Non citare prezzi, stime o valori di mercato in nessun campo: la valutazione avviene in un secondo passaggio, su vendite reali.
+- marketPace dice quanto in fretta invecchia il prezzo di questa categoria, non quanto vale l'oggetto. Serve a decidere per quanto tempo una ricerca di mercato resta valida. Un mobile di modernariato e' "slow", un telefono e' "fast" perche' basta l'uscita del modello nuovo a spostare tutto. Nel dubbio scegli il ritmo piu' veloce: una ricerca rifatta troppo presto costa qualche centesimo, una riusata troppo a lungo da' un prezzo che non esiste piu'.
 - searchQueries alimenta quel secondo passaggio: scrivi le query che userebbe un rivenditore per trovare vendite comparabili, con marca e modello quando li conosci, mescolando italiano e inglese.
 
 Rispondi in italiano.`;

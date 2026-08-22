@@ -75,9 +75,22 @@ export type FlipAssessment = {
   factors: ScoreFactor[];
 };
 
+/**
+ * Da dove vengono i comparabili. Non e' un dettaglio tecnico: una ricerca di
+ * tre settimane fa e' un'informazione che cambia la fiducia di chi decide,
+ * e va detta invece di essere nascosta dietro un numero che sembra fresco.
+ */
+export type MarketSource = {
+  cached: boolean;
+  researchedAt: string;
+  ageDays: number;
+};
+
 export type AnalysisResult = {
   identification: Identification;
   market: MarketResearch | null;
+  /** Null quando la ricerca non e' andata a buon fine. */
+  marketSource: MarketSource | null;
   valuation: Valuation;
   flip: FlipAssessment | null;
   /** Avvisi da mostrare all'utente (dati scarsi, foto insufficienti, ...). */

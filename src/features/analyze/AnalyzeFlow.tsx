@@ -59,6 +59,9 @@ export function AnalyzeFlow() {
   const [identification, setIdentification] = useState<Identification | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [lanes, setLanes] = useState<LaneProgress[]>([]);
+  const [reusedResearch, setReusedResearch] = useState<{ ageDays: number; comparables: number } | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
 
   const busy = stage === 'identifying' || stage === 'researching';
@@ -68,6 +71,7 @@ export function AnalyzeFlow() {
     setResult(null);
     setIdentification(null);
     setLanes([]);
+    setReusedResearch(null);
     setStage('identifying');
 
     try {
@@ -117,6 +121,9 @@ export function AnalyzeFlow() {
           );
         } else if (event.type === 'result') {
           analysis = event.result;
+        } else if (event.type === 'cache') {
+          setLanes([]);
+          setReusedResearch({ ageDays: event.ageDays, comparables: event.comparables });
         } else if (event.type === 'usage') {
           // Solo in sviluppo: il server non lo manda in produzione.
           console.info('[usage] analisi', event.usage);
@@ -143,6 +150,7 @@ export function AnalyzeFlow() {
     setResult(null);
     setIdentification(null);
     setLanes([]);
+    setReusedResearch(null);
     setError(null);
     setStage('idle');
   }
@@ -214,6 +222,14 @@ export function AnalyzeFlow() {
           {identification ? (
             <p className="mt-3 text-sm text-muted">
               Riconosciuto: <strong className="text-foreground">{identification.name}</strong>
+            </p>
+          ) : null}
+
+          {reusedResearch ? (
+            <p className="mt-4 text-sm">
+              Questo modello e’ gia’ stato cercato{' '}
+              {reusedResearch.ageDays === 0 ? 'oggi' : `${reusedResearch.ageDays} giorni fa`}:
+              riusiamo quei {reusedResearch.comparables} comparabili invece di ripetere la ricerca.
             </p>
           ) : null}
 

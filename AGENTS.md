@@ -24,6 +24,8 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
   risultati vengono ricomposti da `merge.ts`.
 - `src/services/valuation` — forbice di prezzo e flip score. Codice puro, testato.
 - `src/services/inventory` — lettura e scrittura degli oggetti salvati.
+- `src/services/market-cache` — riuso delle ricerche di mercato per modello, con scadenza
+  per ritmo di mercato. `policy.ts` e' puro e testato.
 - `src/lib` — utilita' (upload, immagini, formattazione, rate limit) e client Supabase.
 - `supabase/migrations` — schema e policy RLS.
 
@@ -48,6 +50,13 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
   sarebbe la peggiore bugia possibile, visto che qui il numero *e'* il prodotto.
 - **Il costo di ogni analisi si misura**, non si stima a occhio: `src/services/ai/usage.ts` conta
   token, ricerche e dollari, e li scrive nei log del server. Il listino sta in `config.ts`.
+- **Una ricerca riusata si dichiara.** La cache riusa i comparabili di un modello gia' cercato
+  (30 giorni per il modernariato, 14 per il medio, 7 per l'elettronica, che si deprezza a gradini).
+  L'interfaccia dice sempre quanti giorni ha la ricerca: un dato riusato che sembra fresco e'
+  esattamente la bugia che questo prodotto non puo' dire.
+- **La cache non si scrive dai client.** `market_research_cache` ha RLS attiva e zero policy: ci
+  arriva solo il server con `SUPABASE_SERVICE_ROLE_KEY`. Una cache condivisa scrivibile dal browser
+  si avvelena, e comparabili inventati sposterebbero le valutazioni di tutti.
 - **Le attese lunghe si raccontano mentre accadono.** `/api/valuate` risponde in SSE e riporta ogni
   corsia quando finisce davvero. Nessuna barra di avanzamento che si muove da sola.
 - Interfaccia in italiano, identificatori in inglese.
@@ -72,6 +81,8 @@ node bench/research-bench.mjs [foto.jpg]   # cronometra e conta i costi di un'an
 - `STYMA_AI_FIXTURES` / `STYMA_AI_RECORD` — sviluppo gratuito su risposte registrate.
 - `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` — senza, l'analisi funziona e
   l'inventario si disattiva da solo dichiarandolo, invece di rompersi.
+- `SUPABASE_SERVICE_ROLE_KEY` — solo lato server, mai con prefisso `NEXT_PUBLIC_`. Senza, la cache
+  delle ricerche si spegne da sola e ogni analisi paga la propria ricerca.
 
 Sul progetto Supabase servono gli accessi anonimi attivi, il bucket privato `item-photos` e un
 SMTP configurato perche' la conferma email funzioni oltre le poche unita' l'ora del mailer interno.

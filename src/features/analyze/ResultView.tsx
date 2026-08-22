@@ -2,7 +2,12 @@
 
 import type { ReactNode } from 'react';
 
-import type { AnalysisResult, Recommendation, WeightedComparable } from '@/schemas/analysis';
+import type {
+  AnalysisResult,
+  MarketSource,
+  Recommendation,
+  WeightedComparable,
+} from '@/schemas/analysis';
 import { Card, Disclosure, Pill } from '@/components/ui';
 import {
   CONDITION_LABELS,
@@ -14,6 +19,18 @@ import {
   formatEur,
   formatRange,
 } from '@/lib/format';
+
+/**
+ * L'eta' della ricerca si dichiara sempre, anche quando e' di oggi. Chi decide
+ * davanti a un banco deve sapere se sta guardando il mercato di adesso o quello
+ * di tre settimane fa: nasconderlo sarebbe far sembrare fresco un dato riusato.
+ */
+function describeMarketSource(source: MarketSource): string {
+  if (!source.cached) return 'Ricerca fatta adesso, su vendite e annunci reali.';
+  if (source.ageDays === 0) return 'Ricerca riusata, fatta oggi per lo stesso modello.';
+  if (source.ageDays === 1) return 'Ricerca riusata, fatta ieri per lo stesso modello.';
+  return `Ricerca riusata, fatta ${source.ageDays} giorni fa per lo stesso modello.`;
+}
 
 const RECOMMENDATION_STYLES: Record<Recommendation, { tone: string; label: string }> = {
   BUY: { tone: 'bg-accent-soft text-accent', label: 'Compralo' },
@@ -59,7 +76,7 @@ export function ResultView({
   result: AnalysisResult;
   saveSlot?: ReactNode;
 }) {
-  const { identification, market, valuation, flip, warnings } = result;
+  const { identification, market, marketSource, valuation, flip, warnings } = result;
   const decision = flip?.atPrice ?? null;
 
   return (
@@ -297,6 +314,11 @@ export function ResultView({
 
       {market ? (
         <Disclosure summary="Lettura del mercato">
+          {marketSource ? (
+            <p className="mb-2 text-muted">
+              {describeMarketSource(marketSource)}
+            </p>
+          ) : null}
           <p>
             Domanda {DEMAND_LABELS[market.demand]} · {LIQUIDITY_LABELS[market.liquidity]}
           </p>
