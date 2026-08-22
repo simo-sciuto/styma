@@ -54,6 +54,8 @@ npm run build      # build di produzione
 npm run typecheck  # tsc --noEmit
 npm run lint       # eslint
 npm test           # vitest (valutazione, fusione delle corsie, lettura dello stream)
+
+node bench/research-bench.mjs [foto.jpg]   # cronometra un'analisi vera contro `npm run dev`
 ```
 
 ## Configurazione
