@@ -47,6 +47,10 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
 - **Le corsie di ricerca vanno deduplicate.** Piu' corsie possono trovare la stessa pagina: contarla
   due volte gonfia il campione e quindi la confidenza. La deduplica per URL normalizzato sta in
   `src/services/ai/merge.ts` ed e' testata.
+- **Un errore deve dire cosa e' successo davvero.** Una registrazione mancante rispondeva "il
+  servizio di analisi non risponde", mandando a cercare un guasto inesistente: ha un codice suo
+  (`fixture_missing`) e il messaggio del provider arriva intatto. Ogni `ProviderError` lascia una
+  riga di log: un 503 muto e' un vicolo cieco.
 - **Sviluppare non deve costare.** `STYMA_AI_FIXTURES=1` rigioca le risposte registrate in
   `bench/fixtures` senza chiamare il modello; `STYMA_AI_RECORD=1` ne registra di nuove pagando una
   volta. Entrambe rifiutano di partire in produzione: servire un'analisi registrata come fresca

@@ -73,8 +73,8 @@ export class FixtureProvider implements ObjectIntelligenceProvider {
     const raw = readFixture('identify', key);
     if (raw === null) {
       throw new ProviderError(
-        `Nessuna registrazione per queste foto (identify-${key}.json). Rilancia con STYMA_AI_RECORD=1 per crearne una.`,
-        'unavailable',
+        `Nessuna registrazione per queste foto. L'app sta rigiocando risposte salvate (STYMA_AI_FIXTURES=1) e questa immagine non e' fra quelle in bench/fixtures. Usa una foto di bench/photos, oppure riavvia senza STYMA_AI_FIXTURES per chiamare il modello davvero, oppure con STYMA_AI_RECORD=1 per registrare questa (file atteso: identify-${key}.json).`,
+        'fixture_missing',
       );
     }
 
@@ -98,8 +98,8 @@ export class FixtureProvider implements ObjectIntelligenceProvider {
     const raw = readFixture('research', key);
     if (raw === null) {
       throw new ProviderError(
-        `Nessuna registrazione di mercato per "${identification.name}" (research-${key}.json). Rilancia con STYMA_AI_RECORD=1.`,
-        'unavailable',
+        `Nessuna registrazione di mercato per "${identification.name}". L'app sta rigiocando risposte salvate: riavvia senza STYMA_AI_FIXTURES per cercare davvero, o con STYMA_AI_RECORD=1 per registrare (file atteso: research-${key}.json).`,
+        'fixture_missing',
       );
     }
 

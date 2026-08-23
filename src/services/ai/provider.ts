@@ -68,6 +68,14 @@ export class ProviderError extends Error {
       | 'rate_limited'
       | 'invalid_response'
       | 'unavailable'
+      /**
+       * L'app sta rigiocando registrazioni e per questo oggetto non ce n'e'
+       * una. E' un codice a se' perche' "il servizio non risponde" mandava a
+       * cercare un guasto che non c'era: il servizio sta benissimo, e'
+       * l'utente che ha caricato una foto mai registrata. Non puo' arrivare in
+       * produzione, dove le registrazioni sono vietate.
+       */
+      | 'fixture_missing'
       | 'unknown',
     options?: { cause?: unknown },
   ) {

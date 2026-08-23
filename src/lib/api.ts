@@ -10,7 +10,16 @@ export function errorResponse(message: string, code: string, status: number) {
 /** Traduce gli errori del provider in risposte HTTP con messaggi leggibili. */
 export function providerErrorResponse(error: unknown) {
   if (error instanceof ProviderError) {
+    // Ogni errore lascia una traccia: un 503 senza una riga di log manda a
+    // indovinare, e indovinare su questo progetto e' gia' costato abbastanza.
+    console.error(`[api] ${error.code}: ${error.message}`);
+
     switch (error.code) {
+      case 'fixture_missing':
+        // Il messaggio del provider dice esattamente cosa fare, e questo caso
+        // esiste solo in sviluppo: sostituirlo con una frase generica
+        // toglierebbe l'unica informazione utile.
+        return errorResponse(error.message, error.code, 503);
       case 'missing_credentials':
         return errorResponse(
           'Il servizio di analisi non e’ configurato. Manca la chiave API.',
