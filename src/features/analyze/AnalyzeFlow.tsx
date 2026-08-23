@@ -62,6 +62,10 @@ export function AnalyzeFlow() {
   const [reusedResearch, setReusedResearch] = useState<{ ageDays: number; comparables: number } | null>(
     null,
   );
+  const [structuredSource, setStructuredSource] = useState<{
+    label: string;
+    comparables: number;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const busy = stage === 'identifying' || stage === 'researching';
@@ -72,6 +76,7 @@ export function AnalyzeFlow() {
     setIdentification(null);
     setLanes([]);
     setReusedResearch(null);
+    setStructuredSource(null);
     setStage('identifying');
 
     try {
@@ -124,6 +129,8 @@ export function AnalyzeFlow() {
         } else if (event.type === 'cache') {
           setLanes([]);
           setReusedResearch({ ageDays: event.ageDays, comparables: event.comparables });
+        } else if (event.type === 'source') {
+          setStructuredSource({ label: event.label, comparables: event.comparables });
         } else if (event.type === 'usage') {
           // Solo in sviluppo: il server non lo manda in produzione.
           console.info('[usage] analisi', event.usage);
@@ -151,6 +158,7 @@ export function AnalyzeFlow() {
     setIdentification(null);
     setLanes([]);
     setReusedResearch(null);
+    setStructuredSource(null);
     setError(null);
     setStage('idle');
   }
@@ -230,6 +238,14 @@ export function AnalyzeFlow() {
               Questo modello e’ gia’ stato cercato{' '}
               {reusedResearch.ageDays === 0 ? 'oggi' : `${reusedResearch.ageDays} giorni fa`}:
               riusiamo quei {reusedResearch.comparables} comparabili invece di ripetere la ricerca.
+            </p>
+          ) : null}
+
+          {structuredSource ? (
+            <p className="mt-4 text-sm">
+              {structuredSource.comparables > 0
+                ? `${structuredSource.label}: ${structuredSource.comparables} inserzioni trovate.`
+                : `${structuredSource.label}: nessuna inserzione, cerco altrove.`}
             </p>
           ) : null}
 

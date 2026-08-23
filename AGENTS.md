@@ -26,6 +26,8 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
 - `src/services/inventory` — lettura e scrittura degli oggetti salvati.
 - `src/services/market-cache` — riuso delle ricerche di mercato per modello, con scadenza
   per ritmo di mercato. `policy.ts` e' puro e testato.
+- `src/services/market-data` — prezzi da fonti strutturate (per ora eBay Browse API). Vengono
+  prima della ricerca col modello, che parte solo se questi non bastano.
 - `src/lib` — utilita' (upload, immagini, formattazione, rate limit) e client Supabase.
 - `supabase/migrations` — schema e policy RLS.
 
@@ -50,6 +52,13 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
   sarebbe la peggiore bugia possibile, visto che qui il numero *e'* il prodotto.
 - **Il costo di ogni analisi si misura**, non si stima a occhio: `src/services/ai/usage.ts` conta
   token, ricerche e dollari, e li scrive nei log del server. Il listino sta in `config.ts`.
+- **I prezzi si cercano prima dove sono dati, poi dove sono pagine.** Una ricerca agentica sul web
+  e' costata 300.000 token di input per analisi (~1,30 $); la stessa informazione da un'API arriva
+  strutturata a costo zero. `src/services/market-data` viene interrogato per primo e la ricerca col
+  modello parte solo sotto `ENOUGH_COMPARABLES`.
+- **Le inserzioni attive sono `asking`, mai `sold`.** La Browse API restituisce annunci in corso.
+  Spacciarli per vendite concluse sarebbe la bugia piu' facile da fare qui, e la piu' costosa: il
+  peso di una vendita conclusa e' quasi il doppio.
 - **Una ricerca riusata si dichiara.** La cache riusa i comparabili di un modello gia' cercato
   (30 giorni per il modernariato, 14 per il medio, 7 per l'elettronica, che si deprezza a gradini).
   L'interfaccia dice sempre quanti giorni ha la ricerca: un dato riusato che sembra fresco e'
@@ -83,6 +92,9 @@ node bench/research-bench.mjs [foto.jpg]   # cronometra e conta i costi di un'an
   l'inventario si disattiva da solo dichiarandolo, invece di rompersi.
 - `SUPABASE_SERVICE_ROLE_KEY` — solo lato server, mai con prefisso `NEXT_PUBLIC_`. Senza, la cache
   delle ricerche si spegne da sola e ogni analisi paga la propria ricerca.
+- `EBAY_CLIENT_ID`, `EBAY_CLIENT_SECRET`, `EBAY_ENV` — prezzi strutturati. Senza, si ricade sulla
+  ricerca col modello. Il sandbox si autentica ma non ha inserzioni: per dati veri serve
+  `EBAY_ENV=production` con un keyset di produzione attivo.
 
 Sul progetto Supabase servono gli accessi anonimi attivi, il bucket privato `item-photos` e un
 SMTP configurato perche' la conferma email funzioni oltre le poche unita' l'ora del mailer interno.

@@ -11,6 +11,8 @@ import { aiConfig } from '@/services/ai/config';
 import { getProvider, ProviderError } from '@/services/ai';
 import { assessFlip, valuate } from '@/services/valuation';
 import { readCachedResearch, writeCachedResearch } from '@/services/market-cache';
+import { ENOUGH_COMPARABLES, collectMarketData } from '@/services/market-data';
+import { mergeMarketResearch } from '@/services/ai/merge';
 
 export const runtime = 'nodejs';
 /** Le corsie di ricerca girano in parallelo, ma ognuna fa piu' giri: serve margine. */
@@ -104,11 +106,30 @@ export async function POST(request: Request) {
           send({ type: 'cache', ageDays: cached.ageDays, comparables: cached.research.comparables.length });
         }
 
+        // Prima le fonti strutturate: gli stessi prezzi, senza far navigare il
+        // modello. Se bastano, la ricerca agentica non parte proprio.
+        let structured: MarketResearch | null = null;
+        if (!market) {
+          const data = await collectMarketData(identification);
+          if (data) {
+            structured = data.research.comparables.length > 0 ? data.research : null;
+            send({
+              type: 'source',
+              label: `eBay (${data.sources.join(', ')})`,
+              comparables: data.research.comparables.length,
+            });
+            if (data.research.comparables.length >= ENOUGH_COMPARABLES) {
+              market = data.research;
+              marketSource = { cached: false, researchedAt: new Date().toISOString(), ageDays: 0 };
+            }
+          }
+        }
+
         try {
           if (!market) {
-            // Annunciate solo ora: se la cache ha risposto, queste corsie non
-            // partono, e dichiararle comunque sarebbe raccontare un lavoro
-            // che non stiamo facendo.
+            // Annunciate solo ora: se la cache o le fonti strutturate hanno
+            // risposto, queste corsie non partono, e dichiararle comunque
+            // sarebbe raccontare un lavoro che non stiamo facendo.
             send({
               type: 'lanes',
               lanes: aiConfig.research.lanes.map(({ id, label }) => ({ id, label })),
@@ -117,7 +138,11 @@ export async function POST(request: Request) {
             const outcome = await getProvider().researchMarket(identification, {
               onLaneSettled: (lane) => send({ type: 'lane', lane }),
             });
-            market = outcome.research;
+            // Quello che eBay aveva gia' trovato non si butta: la fusione
+            // deduplica per URL, quindi sommarlo non gonfia il campione.
+            market = structured
+              ? mergeMarketResearch([structured, outcome.research])
+              : outcome.research;
             marketSource = { cached: false, researchedAt: new Date().toISOString(), ageDays: 0 };
             warnings.push(...outcome.warnings);
             // Il costo si mostra solo in sviluppo: e' un dato sulla nostra infrastruttura.
@@ -125,7 +150,7 @@ export async function POST(request: Request) {
 
             // Non blocca la risposta: se l'archiviazione fallisce, l'utente ha
             // comunque la sua analisi.
-            void writeCachedResearch(identification, outcome.research);
+            void writeCachedResearch(identification, market);
           }
         } catch (error) {
           // Senza chiave non c'e' analisi possibile: e' l'unico caso in cui
