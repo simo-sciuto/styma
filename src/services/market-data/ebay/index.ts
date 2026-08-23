@@ -9,7 +9,7 @@ import { EbaySearchResponseSchema, toComparable } from './mapping';
  * L'estero serve a capire se il prezzo italiano e' allineato, e su oggetti
  * di nicchia spesso e' l'unico posto dove ci sono inserzioni.
  */
-const MARKETPLACES = ['EBAY_IT', 'EBAY_DE', 'EBAY_GB'] as const;
+const MARKETPLACES = ['EBAY_IT', 'EBAY_DE', 'EBAY_GB', 'EBAY_ES', 'EBAY_FR'] as const;
 
 /** Oltre questo numero per mercato si aggiungono solo doppioni della stessa inserzione. */
 const LIMIT_PER_MARKETPLACE = 20;

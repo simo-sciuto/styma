@@ -84,6 +84,9 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
   selettivo dei venduti (`research.buySoldData`). Misurato: ~0,96 $ per tre corsie contro i 4
   centesimi di un'analisi che si ferma a eBay. Accenderle e' una decisione economica, da prendere
   con un numero davanti — non un default.
+- **eBay si interroga su cinque mercati** (IT, DE, GB, ES, FR): l'API non si paga a chiamata, quindi
+  allargare il campione non costa. Misurato: 93 inserzioni contro 56 su un oggetto reale, passando
+  da tre a cinque mercati.
 - **Le fonti si interrogano in ordine di costo crescente:** fonti strutturate (gratis e fresche) →
   cache (evita di ripagare il modello) → ricerca col modello (~1,30 $ e minuti, ultima risorsa).
   Le inserzioni eBay non si archiviano in cache: sono gratis, e conservarle vorrebbe dire servire
