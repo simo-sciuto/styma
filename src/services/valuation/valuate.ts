@@ -50,9 +50,23 @@ function rejectOutliers(
  * Il modello linguistico non entra mai in questo calcolo: qui si lavora
  * solo sui dati raccolti e sui pesi configurati.
  */
-export function valuate(identification: Identification, research: MarketResearch | null): Valuation {
+export type ValuationOptions = {
+  /**
+   * Sconto sui prezzi richiesti. Arriva dall'esterno perche' puo' essere
+   * calibrato sulle vendite reali di chi usa l'app: vedi `calibration.ts`.
+   * Assente, si usa l'assunzione di configurazione.
+   */
+  askingToSoldRatio?: number;
+};
+
+export function valuate(
+  identification: Identification,
+  research: MarketResearch | null,
+  options?: ValuationOptions,
+): Valuation {
+  const askingToSoldRatio = options?.askingToSoldRatio ?? valuationConfig.askingToSoldRatio;
   const evaluations = (research?.comparables ?? []).map((comparable) =>
-    evaluateComparable(comparable, identification.condition),
+    evaluateComparable(comparable, identification.condition, askingToSoldRatio),
   );
 
   const used: WeightedComparable[] = [];
@@ -158,7 +172,7 @@ export function valuate(identification: Identification, research: MarketResearch
   if (soldCount < used.length) {
     // Lo sconto applicato ai prezzi richiesti e' un'assunzione dichiarata, non
     // una misura: se resta implicito, la forbice sembra ricavata da vendite.
-    const percent = Math.round((1 - valuationConfig.askingToSoldRatio) * 100);
+    const percent = Math.round((1 - askingToSoldRatio) * 100);
     reasons.push(
       soldCount === 0
         ? `Nessuna vendita confermata: la stima parte dai prezzi richiesti, scontati del ${percent}% perche' un annuncio non e' una vendita`

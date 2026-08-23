@@ -23,6 +23,12 @@ export type ResearchLaneEvent = {
 
 export type ResearchOptions = {
   /**
+   * Corsie da far partire. Assente significa tutte. Serve a comprare solo
+   * cio' che serve: quando le inserzioni ci sono gia' ma mancano le vendite
+   * concluse, si paga la corsia delle aste e non le altre due.
+   */
+  laneIds?: readonly string[];
+  /**
    * Chiamata appena una corsia finisce. Serve a raccontare l'attesa mentre
    * accade: le corsie durano minuti, e un'interfaccia ferma sembra rotta.
    */

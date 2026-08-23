@@ -108,6 +108,20 @@ export const aiConfig = {
     lanes: researchLanes,
     /** Giri massimi del loop di tool use, per corsia, prima di arrenderci. */
     maxIterations: 5,
+
+    /**
+     * Sopra quale stima vale la pena pagare una corsia per cercare vendite vere.
+     *
+     * Gli archivi d'asta sono l'unica fonte di aggiudicazioni ancora
+     * raggiungibile: la Marketplace Insights di eBay e' chiusa a nuovi utenti e
+     * la vecchia Finding API risponde 418. Quella corsia costa qualche decina di
+     * centesimo, quindi ha senso su un pezzo da 500 euro e non su uno da 90:
+     * sotto, l'incertezza che toglie vale meno di quello che costa.
+     *
+     * La decisione si prende sulla stima preliminare ricavata dalle inserzioni,
+     * non su un'impressione: e' un dato che a quel punto abbiamo gia'.
+     */
+    soldDataWorthItAboveEur: 150,
   },
   /** Mercato di riferimento: orienta i risultati di ricerca. */
   market: {

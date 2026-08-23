@@ -10,6 +10,9 @@ import type { ValuateEvent } from '@/lib/analysis-stream';
 import { aiConfig } from '@/services/ai/config';
 import { getProvider, ProviderError } from '@/services/ai';
 import { assessFlip, valuate } from '@/services/valuation';
+import { calibrateAskingToSold } from '@/services/valuation/calibration';
+import { readSaleObservations } from '@/services/inventory/calibration-repository';
+import { getServerSupabase } from '@/lib/supabase/server';
 import { readCachedResearch, writeCachedResearch } from '@/services/market-cache';
 import { ENOUGH_COMPARABLES, collectMarketData } from '@/services/market-data';
 import { mergeMarketResearch } from '@/services/ai/merge';
@@ -75,6 +78,26 @@ export async function POST(request: Request) {
   }
 
   const { identification, purchasePrice = null } = parsed.data;
+
+  /**
+   * Lo sconto sui prezzi richiesti, calibrato sulle vendite di chi sta usando
+   * l'app se ne ha abbastanza. Va letto qui, fuori dallo stream, perche' ha
+   * bisogno dei cookie della richiesta: dentro `start()` la sessione non c'e'
+   * piu' e la RLS restituirebbe zero righe senza dirlo.
+   */
+  let askingToSoldRatio: number | undefined;
+  try {
+    const supabase = await getServerSupabase();
+    if (supabase) {
+      const calibration = calibrateAskingToSold(await readSaleObservations(supabase));
+      if (calibration?.usable) askingToSoldRatio = calibration.observedRatio;
+    }
+  } catch (error) {
+    // Senza calibrazione si usa l'assunzione: e' un miglioramento, non un
+    // requisito, e non deve poter impedire un'analisi.
+    console.warn('[valuate] calibrazione non disponibile', error);
+  }
+
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream<Uint8Array>({
@@ -142,7 +165,42 @@ export async function POST(request: Request) {
           }
         }
 
+        /**
+         * Le inserzioni bastano per una forbice, ma senza nemmeno una vendita
+         * conclusa la confidenza resta ferma su "low" e il prodotto non dira'
+         * mai "compra". Su un oggetto di valore quella incertezza costa piu' di
+         * quanto costi toglierla: si paga la sola corsia delle aste, che e'
+         * l'unica fonte di aggiudicazioni ancora raggiungibile.
+         */
+        const preliminary = market ? valuate(identification, market, { askingToSoldRatio }) : null;
+        const worthBuyingSoldData =
+          preliminary !== null &&
+          preliminary.available &&
+          preliminary.soldCount === 0 &&
+          preliminary.likely >= aiConfig.research.soldDataWorthItAboveEur;
+
         try {
+          if (worthBuyingSoldData && market) {
+            const lane = aiConfig.research.lanes.find((candidate) => candidate.id === 'auctions');
+            if (lane) {
+              send({ type: 'lanes', lanes: [{ id: lane.id, label: lane.label }] });
+              try {
+                const outcome = await getProvider().researchMarket(identification, {
+                  laneIds: [lane.id],
+                  onLaneSettled: (settled) => send({ type: 'lane', lane: settled }),
+                });
+                market = mergeMarketResearch([market, outcome.research]);
+                if (process.env.NODE_ENV !== 'production') {
+                  send({ type: 'usage', usage: outcome.usage });
+                }
+              } catch (error) {
+                // Le inserzioni ce le abbiamo gia': un buco qui non deve
+                // costare all'utente l'analisi che aveva gia' in mano.
+                console.error('[valuate] corsia aste fallita', error);
+              }
+            }
+          }
+
           if (!market) {
             // Annunciate solo ora: se la cache o le fonti strutturate hanno
             // risposto, queste corsie non partono, e dichiararle comunque
@@ -182,7 +240,7 @@ export async function POST(request: Request) {
           warnings.push('La ricerca di mercato non e’ andata a buon fine: nessuna stima disponibile.');
         }
 
-        const valuation = valuate(identification, market);
+        const valuation = valuate(identification, market, { askingToSoldRatio });
         const flip = assessFlip(identification, market, valuation, purchasePrice);
 
         if (identification.confidence < 0.5) {

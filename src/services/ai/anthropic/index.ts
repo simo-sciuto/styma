@@ -131,7 +131,13 @@ export class AnthropicProvider implements ObjectIntelligenceProvider {
   ): Promise<MarketResearchOutcome> {
     const client = getAnthropicClient();
     const brief = identificationBrief(identification);
-    const lanes = aiConfig.research.lanes;
+    const lanes = options?.laneIds
+      ? aiConfig.research.lanes.filter((lane) => options.laneIds!.includes(lane.id))
+      : aiConfig.research.lanes;
+
+    if (lanes.length === 0) {
+      throw new ProviderError('Nessuna corsia di ricerca selezionata', 'unavailable');
+    }
 
     const meter = new UsageMeter();
 

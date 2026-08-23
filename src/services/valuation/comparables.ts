@@ -45,6 +45,7 @@ export type ComparableEvaluation =
 export function evaluateComparable(
   comparable: Comparable,
   objectCondition: Condition,
+  askingToSoldRatio: number = valuationConfig.askingToSoldRatio,
 ): ComparableEvaluation {
   if (!Number.isFinite(comparable.price) || comparable.price <= 0) {
     return { kept: false, comparable, reason: 'Prezzo non valido' };
@@ -58,7 +59,7 @@ export function evaluateComparable(
   // entrambi, invece di far apparire uno sconto come se fosse il cartellino.
   const saleEstimateEur =
     comparable.kind === 'asking'
-      ? Math.round(priceEur * valuationConfig.askingToSoldRatio * 100) / 100
+      ? Math.round(priceEur * askingToSoldRatio * 100) / 100
       : priceEur;
 
   const weightBreakdown = {

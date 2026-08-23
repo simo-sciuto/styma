@@ -4,13 +4,33 @@ import Link from 'next/link';
 import { Card, Pill } from '@/components/ui';
 import { formatEur, formatRange } from '@/lib/format';
 import { listInventory } from '@/services/inventory/repository';
+import { readSaleObservations } from '@/services/inventory/calibration-repository';
 import { ITEM_STATUS_LABELS } from '@/services/inventory/types';
+import { calibrateAskingToSold, describeCalibration } from '@/services/valuation/calibration';
+import { valuationConfig } from '@/services/valuation/config';
+import { getServerSupabase } from '@/lib/supabase/server';
+
+/**
+ * Lo sconto sui prezzi richiesti misurato sulle vendite di chi guarda questa
+ * pagina. E' l'unico numero del prodotto che parte come assunzione e puo'
+ * diventare una misura, quindi si mostra: chi vende deve poter vedere se il
+ * suo mercato somiglia a quello che stiamo assumendo.
+ */
+async function readCalibration() {
+  try {
+    const supabase = await getServerSupabase();
+    if (!supabase) return null;
+    return calibrateAskingToSold(await readSaleObservations(supabase));
+  } catch {
+    return null;
+  }
+}
 
 export const metadata = { title: 'Inventario — STYMA' };
 export const dynamic = 'force-dynamic';
 
 export default async function InventoryPage() {
-  const entries = await listInventory();
+  const [entries, calibration] = await Promise.all([listInventory(), readCalibration()]);
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-5 pb-20 pt-8">
@@ -29,6 +49,12 @@ export default async function InventoryPage() {
           </Link>
         </div>
       </div>
+
+      {calibration ? (
+        <Card className="mt-6 border-accent/30 bg-accent-soft">
+          <p className="text-sm">{describeCalibration(calibration, valuationConfig.askingToSoldRatio)}</p>
+        </Card>
+      ) : null}
 
       {entries === null ? (
         <Card className="mt-6">

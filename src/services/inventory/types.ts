@@ -47,6 +47,10 @@ export type ValuationRow = {
   /** Quando e' stata fatta la ricerca su cui poggia la forbice. Null se non c'e' stata. */
   market_researched_at: string | null;
   market_research_cached: boolean | null;
+  /** Sconto applicato ai prezzi richiesti quando la riga e' stata calcolata. */
+  asking_to_sold_ratio: number | null;
+  /** Vendite confermate fra i comparabili. Zero = stima ricavata solo da annunci. */
+  sold_comparable_count: number | null;
   reasoning: {
     factors?: { label: string; direction: 'positive' | 'negative' }[];
     reasons?: string[];
@@ -105,6 +109,10 @@ export const IMAGE_BUCKET = 'item-photos';
 export function describeSavedMarketSource(valuation: {
   market_researched_at: string | null;
   market_research_cached: boolean | null;
+  /** Sconto applicato ai prezzi richiesti quando la riga e' stata calcolata. */
+  asking_to_sold_ratio: number | null;
+  /** Vendite confermate fra i comparabili. Zero = stima ricavata solo da annunci. */
+  sold_comparable_count: number | null;
   created_at: string;
 }): string | null {
   if (!valuation.market_researched_at) return null;

@@ -53,6 +53,15 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
   sarebbe la peggiore bugia possibile, visto che qui il numero *e'* il prodotto.
 - **Il costo di ogni analisi si misura**, non si stima a occhio: `src/services/ai/usage.ts` conta
   token, ricerche e dollari, e li scrive nei log del server. Il listino sta in `config.ts`.
+- **Le vendite vere calibrano lo sconto sui prezzi richiesti.** `askingToSoldRatio` e' l'unico
+  numero scelto a tavolino, perche' i venduti non sono comprabili da nessuna fonte gratuita. Ogni
+  oggetto venduto con `sale_price` registrato e' pero' un confronto fra la nostra stima e cio' che
+  il mercato ha pagato: sopra `MINIMUM_SAMPLES` vendite, `services/valuation/calibration.ts`
+  sostituisce l'assunzione con la misura, e l'inventario lo dichiara. Mediano e non media: una
+  vendita fortunata non deve spostare le stime di tutti.
+- **La corsia delle aste si paga solo dove serve.** Sopra `soldDataWorthItAboveEur` e senza nemmeno
+  una vendita confermata, si compra la sola corsia `auctions`: e' l'unica fonte di aggiudicazioni
+  ancora raggiungibile, e su un pezzo di valore toglie piu' incertezza di quanto costi.
 - **Le fonti si interrogano in ordine di costo crescente:** fonti strutturate (gratis e fresche) →
   cache (evita di ripagare il modello) → ricerca col modello (~1,30 $ e minuti, ultima risorsa).
   Le inserzioni eBay non si archiviano in cache: sono gratis, e conservarle vorrebbe dire servire
