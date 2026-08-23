@@ -65,6 +65,12 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
   sarebbe la peggiore bugia possibile, visto che qui il numero *e'* il prodotto.
 - **Il costo di ogni analisi si misura**, non si stima a occhio: `src/services/ai/usage.ts` conta
   token, ricerche e dollari, e li scrive nei log del server. Il listino sta in `config.ts`.
+  Riferimento misurato: **~0,006 $ per analisi completa** (identificazione su Haiku + eBay).
+- **L'identificazione gira su Haiku**, verificato 5/5 sull'estrazione di marca e modello contro
+  Opus, a un settimo del prezzo e con stringhe piu' pulite. Se sbaglia la marca, le query eBay non
+  trovano nulla e l'analisi lo dichiara: degrada in silenzio, non in un prezzo sbagliato. Il
+  ripiego automatico su Opus scatta solo se il modello economico rifiuta una capacita' — se compare
+  nei log, il modello in `config.ts` va cambiato.
 - **Le vendite vere calibrano lo sconto sui prezzi richiesti.** `askingToSoldRatio` e' l'unico
   numero scelto a tavolino, perche' i venduti non sono comprabili da nessuna fonte gratuita. Ogni
   oggetto venduto con `sale_price` registrato e' pero' un confronto fra la nostra stima e cio' che

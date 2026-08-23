@@ -65,14 +65,37 @@ In notes segnala quali varianti valgono di piu' e se la spedizione dall'estero c
 
 export const aiConfig = {
   identification: {
-    model: 'claude-opus-5',
     /**
-     * low | medium | high | xhigh | max. Qui Opus si guadagna il prezzo: leggere
-     * un punzone sfocato e' la parte difficile, e un'identificazione sbagliata
-     * rende inutile tutta la ricerca che segue.
+     * Haiku, per ora.
+     *
+     * Spente le corsie, l'identificazione e' rimasta l'unico costo, e su Haiku
+     * costa un quinto che su Opus. La scommessa e' che leggere "Canon" e "AE-1"
+     * su una foto decente non richieda il modello piu' capace: marca e modello
+     * sono i due campi che contano, perche' decidono se eBay trova cinquantasei
+     * comparabili esatti o diciannove di categoria.
+     *
+     * Non e' verificata: il tetto di spesa impostato sull'account impedisce di
+     * misurarla. Per questo c'e' `fallbackModel`, e per questo esiste
+     * `bench/compare-models.mjs` — la scelta va confermata coi dati, non con
+     * questo commento.
      */
-    effort: 'medium' as const,
-    maxTokens: 16000,
+    model: 'claude-haiku-4-5-20251001',
+
+    /**
+     * Il modello a cui si torna se quello economico rifiuta la richiesta per
+     * una capacita' che non ha. Costa piu' del doppio, ma un 400 non consuma
+     * token: meglio pagare l'analisi che restituire un errore a chi e' davanti
+     * a un banco. Se compare nei log, la scelta sopra e' sbagliata.
+     */
+    fallbackModel: 'claude-opus-5',
+
+    /**
+     * low | medium | high | xhigh | max, oppure null per i modelli che non
+     * accettano il parametro: Haiku 4.5 risponde 400 se lo riceve. Va cambiato
+     * insieme al modello.
+     */
+    effort: null as 'low' | 'medium' | 'high' | null,
+    maxTokens: 8000,
   },
   research: {
     /**
@@ -168,6 +191,7 @@ export const aiConfig = {
       'claude-opus-5': { inputPerMTok: 5, outputPerMTok: 25 },
       'claude-sonnet-5': { inputPerMTok: 3, outputPerMTok: 15 },
       'claude-haiku-4-5': { inputPerMTok: 1, outputPerMTok: 5 },
+      'claude-haiku-4-5-20251001': { inputPerMTok: 1, outputPerMTok: 5 },
     },
     /** Scrittura in cache a 5 minuti: 1,25x l'input. Lettura: 0,1x. */
     cacheWriteMultiplier: 1.25,

@@ -21,6 +21,18 @@ import { IDENTIFICATION_SYSTEM_PROMPT, researchSystemPrompt } from './prompts';
 
 const REPORT_TOOL_NAME = 'report_market_research';
 
+/**
+ * Un 400 che dice "questo modello non sa fare questa cosa", distinto da un 400
+ * che dice "hai finito il budget": il primo si risolve cambiando modello, il
+ * secondo no, e ripiegare su un modello piu' caro peggiorerebbe le cose.
+ */
+function isCapabilityError(error: unknown): boolean {
+  if (!(error instanceof APIError) || error.status !== 400) return false;
+  const message = String((error as { message?: string }).message ?? '');
+  if (/usage limit|credit balance/i.test(message)) return false;
+  return /does not support|not supported|unsupported|invalid_request_error/i.test(message);
+}
+
 function toProviderError(error: unknown): ProviderError {
   if (error instanceof ProviderError) return error;
   if (error instanceof APIError) {
@@ -80,70 +92,86 @@ export class AnthropicProvider implements ObjectIntelligenceProvider {
       throw new ProviderError('Nessuna immagine da analizzare', 'invalid_response');
     }
 
+    try {
+      return await this.#identifyWith(aiConfig.identification.model, images);
+    } catch (error) {
+      /**
+       * Il modello economico non e' stato verificato — il tetto di spesa
+       * impedisce di provarlo — quindi puo' rifiutare la richiesta per una
+       * capacita' che non ha, come e' gia' successo con `effort`. Un 400 non
+       * consuma token: ripiegare costa quanto l'analisi che avremmo pagato
+       * comunque, mentre restituire un errore a chi e' davanti a un banco
+       * costa l'analisi e basta.
+       */
+      if (!isCapabilityError(error)) throw toProviderError(error);
+
+      console.warn(
+        `[identify] ${aiConfig.identification.model} ha rifiutato la richiesta, si ripiega su ${aiConfig.identification.fallbackModel}. Se lo vedi spesso, cambia il modello in config.ts.`,
+        error instanceof APIError ? error.message : error,
+      );
+      try {
+        return await this.#identifyWith(aiConfig.identification.fallbackModel, images);
+      } catch (fallbackError) {
+        throw toProviderError(fallbackError);
+      }
+    }
+  }
+
+  async #identifyWith(model: string, images: ImageInput[]): Promise<IdentificationOutcome> {
     const client = getAnthropicClient();
 
-    try {
-      const response = await client.messages.parse({
-        model: aiConfig.identification.model,
-        max_tokens: aiConfig.identification.maxTokens,
-        /**
-         * Il prefisso statico — istruzioni e schema di uscita — e' identico a
-         * ogni analisi e vale piu' di meta' dei token di input quando la foto
-         * e' una sola. Memorizzarlo lo fa rileggere a un decimo del prezzo.
-         * Il marcatore sta qui e non a livello di richiesta: li' cadrebbe
-         * dopo le immagini, che cambiano ogni volta, e la cache non
-         * varrebbe mai — anzi, si pagherebbe la scrittura per niente.
-         */
-        system: [
-          {
-            type: 'text' as const,
-            text: IDENTIFICATION_SYSTEM_PROMPT,
-            cache_control: { type: 'ephemeral' as const },
-          },
-        ],
-        output_config: {
-          effort: aiConfig.identification.effort,
-          format: zodOutputFormat(IdentificationSchema),
+    const response = await client.messages.parse({
+      model,
+      max_tokens: aiConfig.identification.maxTokens,
+      /**
+       * Niente `cache_control` qui: provato e misurato, non si attivava mai
+       * (`cache w0/r0` su ogni chiamata). Il prefisso statico e' troppo corto
+       * per superare la soglia minima di memorizzazione, quindi il marcatore
+       * era codice che sembrava un'ottimizzazione senza esserlo — peggio che
+       * non averlo. Tornera' utile se il prompt crescera' molto.
+       */
+      system: IDENTIFICATION_SYSTEM_PROMPT,
+      output_config: {
+        // `effort` e' null sui modelli che non lo accettano: passarlo comunque
+        // fa fallire l'intera richiesta con un 400.
+        ...(aiConfig.identification.effort === null
+          ? {}
+          : { effort: aiConfig.identification.effort }),
+        format: zodOutputFormat(IdentificationSchema),
+      },
+      messages: [
+        {
+          role: 'user',
+          content: [
+            ...images.map((image, index) => [
+              { type: 'text' as const, text: `Foto ${index + 1} di ${images.length}` },
+              {
+                type: 'image' as const,
+                source: {
+                  type: 'base64' as const,
+                  media_type: image.mediaType,
+                  data: image.data,
+                },
+              },
+            ]),
+            { type: 'text' as const, text: 'Identifica questo oggetto.' },
+          ].flat(),
         },
-        messages: [
-          {
-            role: 'user',
-            content: [
-              ...images.map((image, index) => [
-                {
-                  type: 'text' as const,
-                  text: `Foto ${index + 1} di ${images.length}`,
-                },
-                {
-                  type: 'image' as const,
-                  source: {
-                    type: 'base64' as const,
-                    media_type: image.mediaType,
-                    data: image.data,
-                  },
-                },
-              ]),
-              { type: 'text' as const, text: 'Identifica questo oggetto.' },
-            ].flat(),
-          },
-        ],
-      });
+      ],
+    });
 
-      const meter = new UsageMeter();
-      meter.add(aiConfig.identification.model, response.usage);
-      console.info(describeUsage('identificazione', meter.totals));
+    const meter = new UsageMeter();
+    meter.add(model, response.usage);
+    console.info(describeUsage(`identificazione (${model})`, meter.totals));
 
-      if (response.stop_reason === 'refusal') {
-        throw new ProviderError('Il modello ha rifiutato di analizzare queste immagini', 'invalid_response');
-      }
-      if (!response.parsed_output) {
-        throw new ProviderError('Il modello non ha restituito un’identificazione valida', 'invalid_response');
-      }
-
-      return { identification: response.parsed_output, usage: meter.totals };
-    } catch (error) {
-      throw toProviderError(error);
+    if (response.stop_reason === 'refusal') {
+      throw new ProviderError('Il modello ha rifiutato di analizzare queste immagini', 'invalid_response');
     }
+    if (!response.parsed_output) {
+      throw new ProviderError('Il modello non ha restituito un\u2019identificazione valida', 'invalid_response');
+    }
+
+    return { identification: response.parsed_output, usage: meter.totals };
   }
 
   /**
