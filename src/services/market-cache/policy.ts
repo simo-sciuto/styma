@@ -30,6 +30,19 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  */
 export const MIN_CONFIDENCE_TO_CACHE = 0.75;
 
+/**
+ * Il modello scrive il modello come gli viene: la stessa macchina e' uscita una
+ * volta come "AE-1" e una come "AE-1 con FD 50mm f/1.8". Due chiavi diverse
+ * significano cache mancata e ricerca ripagata, che e' il modo piu' silenzioso
+ * di non funzionare. Si tiene solo cio' che precede un accessorio o una
+ * precisazione.
+ */
+const ACCESSORY_SEPARATORS = /\s+(?:con|with|avec|mit|piu'|più|\+|e)\s+|[,(\/]/i;
+
+function coreModel(model: string): string {
+  return model.split(ACCESSORY_SEPARATORS)[0] ?? model;
+}
+
 function normalize(value: string): string {
   return value
     .toLowerCase()
@@ -52,7 +65,7 @@ function normalize(value: string): string {
  */
 export function cacheKey(identification: Identification): string | null {
   const brand = normalize(identification.brand ?? '');
-  const model = normalize(identification.model ?? '');
+  const model = normalize(coreModel(identification.model ?? ''));
   if (brand === '' || model === '') return null;
   return `${brand}|${model}`;
 }

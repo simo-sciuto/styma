@@ -5,11 +5,17 @@ import { CONDITION_ORDER, valuationConfig } from './config';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function recencyWeight(soldAt: string | null): number {
+function recencyWeight(comparable: Comparable): number {
   const { recencyWeights } = valuationConfig;
-  if (!soldAt) return recencyWeights.unknown;
+  const { soldAt, kind } = comparable;
+
+  // Un annuncio attivo non ha data perche' non e' ancora una vendita, non
+  // perche' sia vecchio: e' esposto adesso.
+  const missing = kind === 'asking' ? recencyWeights.activeListing : recencyWeights.unknown;
+
+  if (!soldAt) return missing;
   const timestamp = Date.parse(soldAt);
-  if (Number.isNaN(timestamp)) return recencyWeights.unknown;
+  if (Number.isNaN(timestamp)) return missing;
 
   const ageDays = (Date.now() - timestamp) / DAY_MS;
   if (ageDays < 0) return recencyWeights.unknown; // data futura: dato sospetto
@@ -47,10 +53,18 @@ export function evaluateComparable(
   const rate = valuationConfig.fxToEur[comparable.currency];
   const priceEur = Math.round(comparable.price * rate * 100) / 100;
 
+  // Il prezzo osservato resta quello che si legge sulla pagina; il calcolo usa
+  // il prezzo di vendita atteso. Tenerli separati permette di mostrare
+  // entrambi, invece di far apparire uno sconto come se fosse il cartellino.
+  const saleEstimateEur =
+    comparable.kind === 'asking'
+      ? Math.round(priceEur * valuationConfig.askingToSoldRatio * 100) / 100
+      : priceEur;
+
   const weightBreakdown = {
     match: valuationConfig.matchWeights[comparable.matchLevel],
     kind: valuationConfig.kindWeights[comparable.kind],
-    recency: recencyWeight(comparable.soldAt),
+    recency: recencyWeight(comparable),
     condition: conditionWeight(objectCondition, comparable.condition),
   };
 
@@ -68,7 +82,7 @@ export function evaluateComparable(
     };
   }
 
-  return { kept: true, value: { comparable, priceEur, weight, weightBreakdown } };
+  return { kept: true, value: { comparable, priceEur, saleEstimateEur, weight, weightBreakdown } };
 }
 
 /**
@@ -76,22 +90,22 @@ export function evaluateComparable(
  * sulla retta una porzione pari al proprio peso.
  */
 export function weightedPercentile(items: WeightedComparable[], percentile: number): number {
-  const sorted = [...items].sort((a, b) => a.priceEur - b.priceEur);
+  const sorted = [...items].sort((a, b) => a.saleEstimateEur - b.saleEstimateEur);
   const totalWeight = sorted.reduce((sum, item) => sum + item.weight, 0);
-  if (totalWeight === 0) return sorted[0]?.priceEur ?? 0;
+  if (totalWeight === 0) return sorted[0]?.saleEstimateEur ?? 0;
 
   const target = totalWeight * percentile;
   let cumulative = 0;
   for (const item of sorted) {
     cumulative += item.weight;
-    if (cumulative >= target) return item.priceEur;
+    if (cumulative >= target) return item.saleEstimateEur;
   }
-  return sorted[sorted.length - 1]!.priceEur;
+  return sorted[sorted.length - 1]!.saleEstimateEur;
 }
 
 /** Media pesata: con campioni piccoli e' piu' stabile del mediano, che salta fra i pochi punti osservati. */
 export function weightedMean(items: WeightedComparable[]): number {
   const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
-  if (totalWeight === 0) return items[0]?.priceEur ?? 0;
-  return items.reduce((sum, item) => sum + item.priceEur * item.weight, 0) / totalWeight;
+  if (totalWeight === 0) return items[0]?.saleEstimateEur ?? 0;
+  return items.reduce((sum, item) => sum + item.saleEstimateEur * item.weight, 0) / totalWeight;
 }

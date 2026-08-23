@@ -17,37 +17,56 @@
  */
 const researchLanes = [
   {
-    id: 'sold',
-    label: 'vendite concluse',
-    maxSearches: 3,
+    id: 'auctions',
+    label: 'aggiudicazioni e aste',
+    maxSearches: 2,
     maxFetches: 1,
-    mandate: `Cerca solo vendite realmente concluse: eBay "venduti", aggiudicazioni d'asta, archivi di
-risultati (Catawiki conclusi, case d'asta, LiveAuctioneers, Invaluable, Barnebys).
-E' la corsia che pesa di piu' nella valutazione: un prezzo di aggiudicazione vale piu' di dieci
-annunci. Se una pagina non conferma che la vendita e' avvenuta, non e' roba tua: lasciala alle
-altre corsie invece di declassarla ad "asking".`,
+    /**
+     * Sostituisce la vecchia corsia "vendite concluse", che su una Canon AE-1
+     * ha restituito zero: le pagine dei venduti eBay non sono raggiungibili
+     * dalla ricerca web, quindi quel mandato era irrealizzabile e costava
+     * comunque un terzo del conto. Gli archivi d'asta, invece, pubblicano i
+     * risultati come pagine indicizzate.
+     */
+    allowedDomains: [
+      'catawiki.com',
+      'liveauctioneers.com',
+      'invaluable.com',
+      'barnebys.com',
+      'the-saleroom.com',
+      'bidsquare.com',
+      'drouot.com',
+      'worthpoint.com',
+    ],
+    mandate: `Cerca aggiudicazioni: prezzi a cui un pezzo del genere e' stato realmente battuto.
+Gli archivi d'asta pubblicano i risultati, quindi qui le vendite concluse esistono davvero.
+kind "sold" solo se la pagina mostra il prezzo di aggiudicazione; se mostra solo la stima
+pre-asta, non e' una vendita e non va riportata.
+Se questo oggetto non passa dalle aste, restituisci comparables vuoto senza insistere: e'
+un esito normale per la merce corrente, e le altre corsie stanno coprendo quel mercato.`,
   },
   {
     id: 'listings',
-    label: 'annunci attivi',
-    maxSearches: 3,
+    label: 'annunci italiani',
+    maxSearches: 2,
     maxFetches: 1,
-    mandate: `Cerca solo annunci attivi sul mercato italiano: Subito, Vinted, eBay inserzioni in corso,
-Etsy, negozi di modernariato e mercatini online. Sono prezzi richiesti, quindi kind "asking"
-sempre, anche quando il prezzo sembra realistico.
-Annota in notes se lo stesso oggetto risulta invenduto da tempo o ricompare spesso: dice piu'
-del prezzo esposto.`,
+    allowedDomains: ['subito.it', 'vinted.it', 'ebay.it', 'etsy.com', 'kijiji.it'],
+    mandate: `Cerca annunci attivi sul mercato italiano. Sono prezzi richiesti, quindi kind "asking"
+sempre, anche quando il prezzo sembra realistico: la valutazione li sconta per conto suo.
+E' la corsia che nella pratica trova piu' dati: puntare a 4-6 annunci dello stesso modello
+vale piu' che trovarne due perfetti.
+Annota in notes se lo stesso oggetto risulta invenduto da tempo o ricompare spesso.`,
   },
   {
     id: 'international',
-    label: 'mercato estero e contesto',
-    maxSearches: 3,
+    label: 'mercato estero',
+    maxSearches: 2,
     maxFetches: 1,
-    mandate: `Cerca fuori dall'Italia e fuori dalle piattaforme generaliste: eBay .de/.fr/.co.uk/.com,
-siti specialistici, cataloghi e comunita' di collezionisti. Cerca anche in inglese, tedesco e francese.
-Oltre ai comparabili sei tu a leggere il contesto: quali varianti valgono di piu', come si riconosce
-un falso o una riproduzione, se c'e' stagionalita', se la spedizione dall'estero cambia i conti.
-Mettilo in notes.`,
+    allowedDomains: ['ebay.de', 'ebay.fr', 'ebay.co.uk', 'ebay.com', 'leboncoin.fr', 'wallapop.com'],
+    mandate: `Cerca lo stesso oggetto fuori dall'Italia, in inglese, tedesco e francese. Servono a
+capire se il prezzo italiano e' allineato o fuori mercato.
+Anche qui quasi tutto sara' kind "asking".
+In notes segnala quali varianti valgono di piu' e se la spedizione dall'estero cambia i conti.`,
   },
 ] as const;
 
@@ -64,13 +83,20 @@ export const aiConfig = {
   },
   research: {
     /**
-     * Sonnet e non Opus: qui il lavoro e' cercare ed estrarre, non ragionare.
+     * Haiku e non Opus.
+     *
+     * Misurato: una ricerca su Sonnet 5 ha consumato 274.000 token di input e
+     * costato 1,22 $, perche' i risultati di ricerca rientrano in contesto a
+     * ogni iterazione interna. Su quel volume il prezzo per token e' tutto, e
+     * qui il lavoro e' cercare ed estrarre, non ragionare: le corsie hanno
+     * domini fissati e uno schema stretto da riempire.
+     *
      * L'onesta' dei dati non dipende dall'intelligenza del modello ma dallo
      * schema Zod e dall'aritmetica in `services/valuation`, che non cambiano.
-     * Costa il 40% in meno per token. Se la qualita' dei comparabili peggiora,
-     * e' la prima riga da rimettere a `claude-opus-5`.
+     * Se la qualita' dei comparabili peggiora, questa e' la prima riga da
+     * rimettere a `claude-sonnet-5`.
      */
-    model: 'claude-sonnet-5',
+    model: 'claude-haiku-4-5',
     /**
      * Ogni corsia ha un mandato stretto e poche ricerche: non le serve ragionare
      * a lungo, e i token di ragionamento si generano in serie, quindi sono tempo

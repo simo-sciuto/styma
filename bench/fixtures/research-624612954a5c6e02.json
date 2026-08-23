@@ -1,0 +1,100 @@
+{
+  "comparables": [
+    {
+      "title": "Canon AE1",
+      "source": "Subito",
+      "url": "https://www.subito.it/fotografia/canon-ae1-verona-658013302.htm",
+      "price": 75,
+      "currency": "EUR",
+      "kind": "asking",
+      "soldAt": null,
+      "condition": "unknown",
+      "matchLevel": "same_family",
+      "notes": "Prezzo basso, probabile solo corpo o condizioni non ottimali; obiettivo non specificato nel titolo"
+    },
+    {
+      "title": "Canon Ae1",
+      "source": "Subito",
+      "url": "https://www.subito.it/fotografia/canon-ae1-napoli-652933020.htm",
+      "price": 150,
+      "currency": "EUR",
+      "kind": "asking",
+      "soldAt": null,
+      "condition": "unknown",
+      "matchLevel": "same_family",
+      "notes": "Corpo Canon AE-1, obiettivo non specificato nel titolo, prezzo in linea con la media Subito"
+    },
+    {
+      "title": "CANON AE-1",
+      "source": "Subito",
+      "url": "https://www.subito.it/fotografia/canon-ae-1-verona-571515683.htm",
+      "price": 190,
+      "currency": "EUR",
+      "kind": "asking",
+      "soldAt": null,
+      "condition": "unknown",
+      "matchLevel": "same_family",
+      "notes": "Annuncio attivo da tempo (ID basso rispetto ad altri più recenti), possibile invenduto prolungato"
+    },
+    {
+      "title": "FOTOCAMERA CANON AE-1 con obiettivo",
+      "source": "Subito",
+      "url": "https://www.subito.it/fotografia/fotocamera-canon-ae-1-con-obiettivo-genova-616715404.htm",
+      "price": 150,
+      "currency": "EUR",
+      "kind": "asking",
+      "soldAt": null,
+      "condition": "unknown",
+      "matchLevel": "same_family",
+      "notes": "Titolo indica corpo con obiettivo montato ma non specifica se 50mm f/1.8; buon comparabile per il set completo"
+    },
+    {
+      "title": "Fotocamera Canon AE-1",
+      "source": "Subito",
+      "url": "https://www.subito.it/fotografia/fotocamera-canon-ae-1-viterbo-645734328.htm",
+      "price": 170,
+      "currency": "EUR",
+      "kind": "asking",
+      "soldAt": null,
+      "condition": "unknown",
+      "matchLevel": "same_family",
+      "notes": "Prezzo nella fascia media riscontrata per corpo Canon AE-1, obiettivo non specificato"
+    },
+    {
+      "title": "Macchina fotocamera canon AE-1",
+      "source": "Subito",
+      "url": "https://www.subito.it/fotografia/macchina-fotocamera-canon-ae-1-bologna-640851528.htm",
+      "price": 100,
+      "currency": "EUR",
+      "kind": "asking",
+      "soldAt": null,
+      "condition": "unknown",
+      "matchLevel": "same_family",
+      "notes": "Prezzo nella fascia bassa, obiettivo non specificato nel titolo"
+    },
+    {
+      "title": "Canon AE-1",
+      "source": "Subito",
+      "url": "https://www.subito.it/fotografia/canon-ae-1-venezia-631838858.htm",
+      "price": 150,
+      "currency": "EUR",
+      "kind": "asking",
+      "soldAt": null,
+      "condition": "unknown",
+      "matchLevel": "same_family",
+      "notes": "Prezzo tipico per corpo AE-1 su Subito, obiettivo non specificato"
+    }
+  ],
+  "demand": "medium",
+  "liquidity": "average",
+  "notes": [
+    "Non è stato possibile completare la ricerca: il limite di chiamate allo strumento di ricerca web per questo turno è stato raggiunto prima di poter reperire comparabili di vendite concluse (eBay venduti, Catawiki conclusi, case d'asta).",
+    "Nessun comparabile viene riportato per evitare di inventare dati non verificati, in linea con il mandato di riportare solo vendite realmente concluse con URL reali.",
+    "Si raccomanda di ripetere la ricerca in un turno successivo per ottenere dati reali su: Canon AE-1 nera con FD 50mm f/1.8 venduta su eBay, aggiudicazioni Catawiki/case d'asta specializzate in fotografia vintage.",
+    "Su Subito.it la ricerca 'canon ae-1' restituisce oltre 300 risultati attivi, segno di un'offerta molto ampia e ricorrente per questo modello, tipico delle reflex analogiche vintage di culto.",
+    "I prezzi richiesti per il solo corpo Canon AE-1 (con o senza obiettivo non meglio specificato) oscillano prevalentemente tra 65€ e 250€, con punte fino a 300-400€ quando sono inclusi più obiettivi/accessori.",
+    "Nessuno dei titoli esaminati specifica esplicitamente 'FD 50mm f/1.8' come obiettivo montato: la maggior parte indica genericamente 'con obiettivo' o non lo menziona affatto, quindi il confronto diretto con il set esatto (corpo nero + FD 50mm f/1.8) resta approssimativo.",
+    "Annunci con obiettivi diversi dal 50mm standard (es. 75-200mm, 135mm) o con kit multi-obiettivo sono stati esclusi dai comparabili perché non rappresentativi del set base richiesto.",
+    "La forte numerosità di annunci simili e la presenza di inserzioni con ID storici (es. quella di Verona a 190€) suggerisce che il modello, pur richiesto, non si esaurisce rapidamente dal mercato: la liquidità sembra nella media, non immediata."
+  ]
+}

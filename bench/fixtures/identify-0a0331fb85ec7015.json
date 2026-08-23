@@ -1,0 +1,56 @@
+{
+  "name": "Canon AE-1 nera con obiettivo Canon FD 50mm f/1.8",
+  "category": "fotografia analogica - reflex 35mm",
+  "brand": "Canon",
+  "model": "AE-1 (con FD 50mm f/1.8)",
+  "period": "1976-1984",
+  "materials": [
+    "metallo",
+    "plastica",
+    "rivestimento in similpelle",
+    "vetro ottico"
+  ],
+  "characteristics": [
+    "reflex 35mm a pellicola con priorità dei tempi (AE)",
+    "finitura nera con scritte AE-1 dorate",
+    "otturatore a tendine metalliche",
+    "innesto Canon FD",
+    "obiettivo standard 50mm f/1.8 montato",
+    "attacchi a cinghiolo ad anello",
+    "slitta a contatto caldo sul prisma"
+  ],
+  "markings": [
+    "Canon",
+    "AE-1",
+    "S (leva autoscatto/interruttore)",
+    "CANON LENS FD 50mm 1:1.8",
+    "CANON LENS MADE IN JAPAN"
+  ],
+  "condition": "good",
+  "conditionNotes": [
+    "valutabile solo il frontale: pentaprisma, pelle e ghiere appaiono integri",
+    "piccoli riflessi/segni sulla lente frontale non verificabili",
+    "non visibili dorso, fondello, vano batteria e numero di serie"
+  ],
+  "history": "La Canon AE-1, lanciata nel 1976, è stata la prima reflex 35mm di grande serie con microprocessore e fu un enorme successo commerciale, sostenuto da una campagna pubblicitaria globale. Insieme all'obiettivo FD 50mm f/1.8 rappresentò per molti l'ingresso nella fotografia reflex. Oggi è tra le analogiche più diffuse e ricercate dai principianti della pellicola, con il noto difetto del 'Canon cough' (squittio dello specchio).",
+  "confidence": 0.96,
+  "confidenceReasons": [
+    "scritte 'Canon' e 'AE-1' chiaramente leggibili sul corpo",
+    "obiettivo identificato dalla scritta FD 50mm 1:1.8",
+    "forma e comandi inconfondibili del modello"
+  ],
+  "imageQuality": "good",
+  "marketPace": "medium",
+  "missingShots": [
+    "dorso aperto e tendine dell'otturatore",
+    "fondello con numero di serie e vano batteria",
+    "display/mirino e ghiera dei tempi dall'alto",
+    "vano batteria per verifica corrosione"
+  ],
+  "searchQueries": [
+    "Canon AE-1 black FD 50mm 1.8 sold",
+    "Canon AE-1 nera usata reflex analogica",
+    "Canon AE-1 body black working",
+    "Canon FD 50mm f/1.8 lens vintage"
+  ]
+}

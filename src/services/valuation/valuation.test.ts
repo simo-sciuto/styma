@@ -231,3 +231,92 @@ describe('assessFlip', () => {
     ).toBe('PASS');
   });
 });
+
+describe('annunci attivi e dati fuori scala', () => {
+  const listing = (price: number, overrides: Partial<Comparable> = {}): Comparable => ({
+    title: `Canon AE-1 a ${price}`,
+    source: 'Subito',
+    url: `https://subito.it/${price}`,
+    price,
+    currency: 'EUR',
+    kind: 'asking',
+    soldAt: null,
+    condition: 'unknown',
+    matchLevel: 'same_family',
+    notes: '',
+    ...overrides,
+  });
+
+  const market = (comparables: Comparable[]): MarketResearch => ({
+    comparables,
+    demand: 'medium',
+    liquidity: 'average',
+    notes: [],
+  });
+
+  it('usa gli annunci senza data invece di scartarli', () => {
+    // Prima valevano 0,185 di peso e finivano tutti nel cestino: sette Canon
+    // AE-1 in vendita producevano "non lo so".
+    const result = valuate(
+      identification,
+      market([listing(75), listing(100), listing(150), listing(150), listing(170), listing(190)]),
+    );
+
+    expect(result.available).toBe(true);
+  });
+
+  it('sconta i prezzi richiesti invece di prenderli per buoni', () => {
+    const result = valuate(identification, market([listing(200), listing(200), listing(200)]));
+
+    expect(result.available).toBe(true);
+    if (!result.available) return;
+    // 200 richiesti non sono 200 incassati.
+    expect(result.likely).toBeLessThan(200);
+    expect(result.likely).toBeGreaterThan(100);
+  });
+
+  it('non supera mai "low" senza una vendita confermata', () => {
+    const many = Array.from({ length: 10 }, () => listing(150, { matchLevel: 'exact_model' }));
+    const result = valuate(identification, market(many));
+
+    expect(result.available).toBe(true);
+    if (!result.available) return;
+    expect(result.confidence).toBe('low');
+  });
+
+  it('scarta un prezzo fuori scala invece di lasciarlo spostare la media', () => {
+    // Il caso vero: un'Olivetti Valentine aggiudicata a 45.000 GBP fra
+    // comparabili da poche centinaia di euro.
+    const sane = [listing(400), listing(450), listing(500), listing(550)];
+    const withOutlier = valuate(identification, market([...sane, listing(52000)]));
+    const withoutOutlier = valuate(identification, market(sane));
+
+    expect(withOutlier.available).toBe(true);
+    expect(withoutOutlier.available).toBe(true);
+    if (!withOutlier.available || !withoutOutlier.available) return;
+
+    expect(withOutlier.likely).toBeCloseTo(withoutOutlier.likely, 0);
+    expect(withOutlier.discarded.some((entry) => /fuori scala/.test(entry.reason))).toBe(true);
+  });
+
+  it('non scarta nulla sotto tre punti: non si sa quale sia quello sbagliato', () => {
+    // Con due soli prezzi il campione e' comunque troppo esile per una forbice;
+    // quello che si verifica qui e' che nessuno dei due venga bollato come
+    // errore, perche' non c'e' modo di sapere quale lo sia.
+    const result = valuate(identification, market([listing(100), listing(50000)]));
+
+    expect(result.discarded.some((entry) => /fuori scala/.test(entry.reason))).toBe(false);
+  });
+
+  it('il valore probabile resta dentro la forbice', () => {
+    const result = valuate(
+      identification,
+      market([listing(80), listing(120), listing(600, { matchLevel: 'exact_model' })]),
+    );
+
+    expect(result.available).toBe(true);
+    if (!result.available) return;
+    expect(result.likely).toBeGreaterThanOrEqual(result.low);
+    expect(result.likely).toBeLessThanOrEqual(result.high);
+  });
+});

@@ -26,7 +26,16 @@ export const valuationConfig = {
     within1Year: 0.85,
     within3Years: 0.6,
     older: 0.4,
+    /** Vendita conclusa di cui non conosciamo la data: puo' essere di ieri o di anni fa. */
     unknown: 0.6,
+    /**
+     * Annuncio attivo senza data. Non e' un dato vecchio: la data manca perche'
+     * la vendita non e' avvenuta, non perche' sia lontana. Trattarlo come
+     * "forse di tre anni fa" lo penalizzava due volte — una qui e una in
+     * kindWeights — e azzerava quasi ogni annuncio che la ricerca web sa
+     * trovare, che e' la maggior parte dei dati realmente disponibili.
+     */
+    activeListing: 1.0,
   },
 
   /** Penalita' per distanza di stato di conservazione rispetto all'oggetto. */
@@ -38,8 +47,45 @@ export const valuationConfig = {
     unknown: 0.7,
   },
 
-  /** Sotto questo peso il comparabile viene scartato. */
-  minComparableWeight: 0.3,
+  /**
+   * Sotto questo peso il comparabile viene scartato.
+   *
+   * 0,2 e non 0,3: le penalita' si moltiplicano, e un annuncio realistico
+   * (stesso modello di famiglia, stato non dichiarato) arrivava a 0,23 e
+   * finiva nel cestino. Il peso basso gia' lo fa contare poco nella media:
+   * la soglia serve a escludere la spazzatura, non i dati imperfetti.
+   */
+  minComparableWeight: 0.2,
+
+  /**
+   * Quanto un prezzo puo' allontanarsi dal mediano prima di essere considerato
+   * un errore invece che un segnale.
+   *
+   * Fra i comparabili di un'Olivetti Valentine e' comparsa un'aggiudicazione da
+   * 45.000 GBP: un lotto diverso, un refuso, o un pezzo da museo. Con la soglia
+   * di peso a 0,3 finiva scartata per caso, perche' era vecchia; abbassandola
+   * per far entrare gli annunci reali e' entrata anche lei, e ha trascinato la
+   * media al soffitto. Un dato fuori scala di cento volte non e' un mercato
+   * volatile, e' un dato sbagliato, e va tolto per quello che e'.
+   */
+  outlierFactor: 5,
+
+  /** Sotto questi punti non si distingue un errore da una coda: non si scarta nulla. */
+  outlierMinimumSample: 3,
+
+  /**
+   * Da prezzo richiesto a prezzo di vendita atteso.
+   *
+   * Un annuncio non e' una vendita: su Subito e Vinted si tratta, e si chiude
+   * sotto. Scontare e' piu' onesto che scartare — cosi' il dato entra nel
+   * calcolo dichiarando cio' che e', invece di sparire e lasciare l'utente
+   * senza risposta.
+   *
+   * E' un'assunzione, non una misura: va verificata contro vendite vere
+   * appena ne avremo abbastanza. Finche' resta un'assunzione, l'interfaccia
+   * deve dire che la stima viene da prezzi richiesti scontati.
+   */
+  askingToSoldRatio: 0.75,
 
   /** Somma dei pesi necessaria per considerare la forbice affidabile. */
   effectiveSampleTargets: {
@@ -71,6 +117,12 @@ export const valuationConfig = {
   dispersionMeaningfulFrom: 3,
 
   /** Tetti di confidenza legati alla dimensione del campione. */
+  /** Punteggio minimo per meritare l'etichetta. Sotto la soglia media e' "low". */
+  confidenceLabelThresholds: {
+    high: 0.7,
+    medium: 0.45,
+  },
+
   confidenceCaps: [
     { belowEffectiveSample: 2, cap: 0.44 },
     { belowEffectiveSample: 4, cap: 0.69 },

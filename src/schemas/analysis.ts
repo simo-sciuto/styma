@@ -5,8 +5,13 @@ export type ValuationConfidence = 'high' | 'medium' | 'low';
 
 export type WeightedComparable = {
   comparable: Comparable;
-  /** Prezzo normalizzato in EUR. */
+  /** Prezzo letto sulla pagina, normalizzato in EUR. */
   priceEur: number;
+  /**
+   * Prezzo di vendita atteso: uguale a `priceEur` per una vendita conclusa,
+   * scontato per un prezzo richiesto. E' questo che entra nel calcolo.
+   */
+  saleEstimateEur: number;
   /** Peso complessivo 0-1 usato nel calcolo della forbice. */
   weight: number;
   /** Contributi al peso, per trasparenza. */

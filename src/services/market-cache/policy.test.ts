@@ -65,6 +65,16 @@ describe('chiave della cache', () => {
     );
   });
 
+  it('collide quando il modello e’ scritto con o senza accessori', () => {
+    // Il caso vero: la stessa Canon e' uscita una volta come "AE-1" e una come
+    // "AE-1 con FD 50mm f/1.8". Due chiavi diverse = ricerca ripagata.
+    const corto = cacheKey(identification({ brand: 'Canon', model: 'AE-1' }));
+    expect(cacheKey(identification({ brand: 'Canon', model: 'AE-1 con FD 50mm f/1.8' }))).toBe(corto);
+    expect(cacheKey(identification({ brand: 'Canon', model: 'AE-1 with 50mm lens' }))).toBe(corto);
+    expect(cacheKey(identification({ brand: 'Canon', model: 'AE-1, nera' }))).toBe(corto);
+    expect(cacheKey(identification({ brand: 'Canon', model: 'AE-1 (Program)' }))).toBe(corto);
+  });
+
   it('non esiste senza marca o senza modello', () => {
     expect(cacheKey(identification({ brand: null }))).toBeNull();
     expect(cacheKey(identification({ model: null }))).toBeNull();
