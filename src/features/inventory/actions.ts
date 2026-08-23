@@ -23,7 +23,7 @@ export async function saveAnalysis(
   const user = userData.user;
   if (!user) return { ok: false, error: 'Sessione assente: riprova.' };
 
-  const { identification, valuation, flip, market, warnings } = result;
+  const { identification, valuation, flip, market, marketSource, warnings } = result;
 
   const { data: item, error: itemError } = await supabase
     .from('items')
@@ -62,6 +62,10 @@ export async function saveAnalysis(
       flip_score: flip?.atPrice?.score ?? null,
       recommendation: flip?.atPrice?.recommendation ?? null,
       assessed_at_price: flip?.atPrice?.purchasePrice ?? null,
+      // Una valutazione immutabile deve restare leggibile fra un mese: senza
+      // questo, la forbice sembrerebbe piu' fresca di quanto fosse.
+      market_researched_at: marketSource?.researchedAt ?? null,
+      market_research_cached: marketSource?.cached ?? null,
       reasoning: {
         factors: flip?.factors ?? [],
         reasons: valuation.available ? valuation.reasons : [],

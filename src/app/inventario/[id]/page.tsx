@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import { Card, Disclosure, Pill } from '@/components/ui';
 import { CONDITION_LABELS, MATCH_LABELS, formatDate, formatEur, formatRange } from '@/lib/format';
 import { getItemDetail } from '@/services/inventory/repository';
-import { ITEM_STATUS_LABELS } from '@/services/inventory/types';
+import { ITEM_STATUS_LABELS, describeSavedMarketSource } from '@/services/inventory/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -79,6 +79,9 @@ export default async function ItemPage({ params }: PageProps<'/inventario/[id]'>
                 <strong>{valuation.recommendation}</strong>
                 {valuation.flip_score !== null ? ` (${valuation.flip_score}/100)` : ''}
               </p>
+            ) : null}
+            {describeSavedMarketSource(valuation) ? (
+              <p className="mt-3 text-xs text-muted">{describeSavedMarketSource(valuation)}</p>
             ) : null}
           </Card>
         ) : (
