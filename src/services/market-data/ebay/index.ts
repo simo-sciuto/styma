@@ -1,5 +1,6 @@
 import type { Identification } from '@/schemas/identification';
 import type { Comparable } from '@/schemas/market';
+import { coreModel } from '@/lib/model-name';
 import { EbayError, ebayHost, getApplicationToken, getEbayConfig } from './client';
 import { EbaySearchResponseSchema, toComparable } from './mapping';
 
@@ -20,7 +21,9 @@ const LIMIT_PER_MARKETPLACE = 20;
  */
 export function buildQuery(identification: Identification): string | null {
   const brand = identification.brand?.trim();
-  const model = identification.model?.trim();
+  // Senza tagliare la coda, "Canon AE-1 con FD 50mm f/1.8" trova una
+  // inserzione su undicimila: la ricerca cerca la frase, non l'oggetto.
+  const model = identification.model === null ? undefined : coreModel(identification.model);
   if (brand && model) return `${brand} ${model}`;
   if (brand) return brand;
   if (model) return model;

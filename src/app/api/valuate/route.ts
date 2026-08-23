@@ -96,32 +96,49 @@ export async function POST(request: Request) {
         let market: MarketResearch | null = null;
         let marketSource: MarketSource | null = null;
 
-        // Una ricerca gia' fatta di recente sullo stesso modello vale quanto una
-        // nuova: i comparabili descrivono il modello, e lo stato dell'esemplare
-        // lo applica la valutazione. Quanto "di recente" dipende dal mercato.
-        const cached = await readCachedResearch(identification);
-        if (cached) {
-          market = cached.research;
-          marketSource = { cached: true, researchedAt: cached.researchedAt, ageDays: cached.ageDays };
-          send({ type: 'cache', ageDays: cached.ageDays, comparables: cached.research.comparables.length });
+        /**
+         * L'ordine e' per costo crescente, non per comodita'.
+         *
+         * 1. Fonti strutturate: gratis e istantanee. Vengono per prime proprio
+         *    perche' non c'e' ragione di servire dati di tre settimane fa
+         *    quando quelli di adesso non costano niente.
+         * 2. Cache: evita di ripagare una ricerca col modello, che e' cara.
+         * 3. Ricerca col modello: ~1,30 $ e qualche minuto. Ultima risorsa.
+         */
+        let structured: MarketResearch | null = null;
+        const data = await collectMarketData(identification);
+        if (data) {
+          structured = data.research.comparables.length > 0 ? data.research : null;
+          send({
+            type: 'source',
+            label: `eBay (${data.sources.join(', ')})`,
+            comparables: data.research.comparables.length,
+          });
+          if (data.research.comparables.length >= ENOUGH_COMPARABLES) {
+            market = data.research;
+            marketSource = { cached: false, researchedAt: new Date().toISOString(), ageDays: 0 };
+          }
         }
 
-        // Prima le fonti strutturate: gli stessi prezzi, senza far navigare il
-        // modello. Se bastano, la ricerca agentica non parte proprio.
-        let structured: MarketResearch | null = null;
+        // I comparabili descrivono il modello, e lo stato dell'esemplare lo
+        // applica la valutazione: una ricerca recente vale quanto una nuova.
+        // Quanto "recente" dipende da quanto in fretta si muove quel mercato.
         if (!market) {
-          const data = await collectMarketData(identification);
-          if (data) {
-            structured = data.research.comparables.length > 0 ? data.research : null;
+          const cached = await readCachedResearch(identification);
+          if (cached) {
+            market = structured
+              ? mergeMarketResearch([structured, cached.research])
+              : cached.research;
+            marketSource = {
+              cached: true,
+              researchedAt: cached.researchedAt,
+              ageDays: cached.ageDays,
+            };
             send({
-              type: 'source',
-              label: `eBay (${data.sources.join(', ')})`,
-              comparables: data.research.comparables.length,
+              type: 'cache',
+              ageDays: cached.ageDays,
+              comparables: cached.research.comparables.length,
             });
-            if (data.research.comparables.length >= ENOUGH_COMPARABLES) {
-              market = data.research;
-              marketSource = { cached: false, researchedAt: new Date().toISOString(), ageDays: 0 };
-            }
           }
         }
 
@@ -148,9 +165,10 @@ export async function POST(request: Request) {
             // Il costo si mostra solo in sviluppo: e' un dato sulla nostra infrastruttura.
             if (process.env.NODE_ENV !== 'production') send({ type: 'usage', usage: outcome.usage });
 
-            // Non blocca la risposta: se l'archiviazione fallisce, l'utente ha
-            // comunque la sua analisi.
-            void writeCachedResearch(identification, market);
+            // Si archivia solo cio' che e' costato: le inserzioni eBay sono
+            // gratis e fresche, e conservarle vorrebbe dire servire domani un
+            // annuncio scaduto al posto di uno vivo.
+            void writeCachedResearch(identification, outcome.research);
           }
         } catch (error) {
           // Senza chiave non c'e' analisi possibile: e' l'unico caso in cui

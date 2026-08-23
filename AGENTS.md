@@ -53,10 +53,13 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
   sarebbe la peggiore bugia possibile, visto che qui il numero *e'* il prodotto.
 - **Il costo di ogni analisi si misura**, non si stima a occhio: `src/services/ai/usage.ts` conta
   token, ricerche e dollari, e li scrive nei log del server. Il listino sta in `config.ts`.
-- **I prezzi si cercano prima dove sono dati, poi dove sono pagine.** Una ricerca agentica sul web
-  e' costata 300.000 token di input per analisi (~1,30 $); la stessa informazione da un'API arriva
-  strutturata a costo zero. `src/services/market-data` viene interrogato per primo e la ricerca col
-  modello parte solo sotto `ENOUGH_COMPARABLES`.
+- **Le fonti si interrogano in ordine di costo crescente:** fonti strutturate (gratis e fresche) →
+  cache (evita di ripagare il modello) → ricerca col modello (~1,30 $ e minuti, ultima risorsa).
+  Le inserzioni eBay non si archiviano in cache: sono gratis, e conservarle vorrebbe dire servire
+  domani un annuncio scaduto al posto di uno vivo.
+- **Il nome del modello va accorciato prima di usarlo** (`src/lib/model-name.ts`). "AE-1 con FD 50mm
+  f/1.8" e "AE-1" sono lo stesso oggetto: come chiave di cache fanno due voci, come query di
+  ricerca fanno passare da 11.455 inserzioni a una.
 - **Discogs misura la concorrenza, non la domanda.** `num_for_sale` dice quante copie sono in
   vendita, cioe' quante alternative ha chi compra. Dedurne la domanda sarebbe un'invenzione:
   `demand` e `liquidity` restano `unknown` finche' nessuno ha guardato i venduti. E `lowest_price`

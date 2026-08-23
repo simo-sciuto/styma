@@ -3,6 +3,7 @@ import * as z from 'zod/v4';
 import type { Condition } from '@/schemas/identification';
 import type { Comparable, Currency, MatchLevel } from '@/schemas/market';
 import { CURRENCIES } from '@/schemas/market';
+import { coreModel } from '@/lib/model-name';
 
 /**
  * Cio' che ci serve di una inserzione eBay. Lo schema e' volutamente
@@ -84,7 +85,9 @@ export function inferMatchLevel(
 ): MatchLevel {
   const haystack = normalize(title);
   const hasBrand = brand !== null && brand !== '' && haystack.includes(normalize(brand));
-  const modelTokens = model === null ? [] : normalize(model).split(' ').filter(Boolean);
+  // Stessa ragione della query: i token della coda ("con", "fd", "50mm") non
+  // compaiono quasi mai nel titolo, e pretenderli declasserebbe tutto.
+  const modelTokens = model === null ? [] : normalize(coreModel(model)).split(' ').filter(Boolean);
   const hasModel = modelTokens.length > 0 && modelTokens.every((token) => haystack.includes(token));
 
   if (hasBrand && hasModel) return 'exact_model';

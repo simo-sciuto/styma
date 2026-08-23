@@ -1,4 +1,5 @@
 import type { Identification, MarketPace } from '@/schemas/identification';
+import { coreModel } from '@/lib/model-name';
 import type { MarketResearch } from '@/schemas/market';
 
 /**
@@ -29,19 +30,6 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  * ricerca archiviata sulla chiave sbagliata contamina tutti quelli dopo.
  */
 export const MIN_CONFIDENCE_TO_CACHE = 0.75;
-
-/**
- * Il modello scrive il modello come gli viene: la stessa macchina e' uscita una
- * volta come "AE-1" e una come "AE-1 con FD 50mm f/1.8". Due chiavi diverse
- * significano cache mancata e ricerca ripagata, che e' il modo piu' silenzioso
- * di non funzionare. Si tiene solo cio' che precede un accessorio o una
- * precisazione.
- */
-const ACCESSORY_SEPARATORS = /\s+(?:con|with|avec|mit|piu'|più|\+|e)\s+|[,(\/]/i;
-
-function coreModel(model: string): string {
-  return model.split(ACCESSORY_SEPARATORS)[0] ?? model;
-}
 
 function normalize(value: string): string {
   return value
