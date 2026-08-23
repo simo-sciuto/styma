@@ -60,7 +60,7 @@ function messageForProviderError(error: unknown): { message: string; code: strin
  * evento `error`, perche' a quel punto la risposta e' gia' un 200 aperto.
  */
 export async function POST(request: Request) {
-  const limit = checkRateLimit(`valuate:${clientKey(request)}`, { limit: 10, windowMs: 60_000 });
+  const limit = await checkRateLimit(`valuate:${clientKey(request)}`, { limit: 10, windowMs: 60_000 });
   if (!limit.allowed) {
     return NextResponse.json(
       { error: 'Troppe analisi ravvicinate. Attendi qualche secondo.', code: 'rate_limited' },

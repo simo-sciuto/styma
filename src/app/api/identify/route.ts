@@ -16,7 +16,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 120;
 
 export async function POST(request: Request) {
-  const limit = checkRateLimit(`identify:${clientKey(request)}`, {
+  const limit = await checkRateLimit(`identify:${clientKey(request)}`, {
     limit: 10,
     windowMs: 60_000,
   });
