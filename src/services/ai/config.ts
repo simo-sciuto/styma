@@ -19,25 +19,20 @@ const researchLanes = [
   {
     id: 'auctions',
     label: 'aggiudicazioni e aste',
-    maxSearches: 2,
+    maxSearches: 3,
     maxFetches: 1,
     /**
      * Sostituisce la vecchia corsia "vendite concluse", che su una Canon AE-1
      * ha restituito zero: le pagine dei venduti eBay non sono raggiungibili
-     * dalla ricerca web, quindi quel mandato era irrealizzabile e costava
-     * comunque un terzo del conto. Gli archivi d'asta, invece, pubblicano i
-     * risultati come pagine indicizzate.
+     * dalla ricerca web. Gli archivi d'asta, invece, pubblicano i risultati
+     * come pagine indicizzate, quindi il mandato ha almeno senso.
+     *
+     * I domini erano fissati con `allowed_domains`. Misurato e tolto: filtra
+     * l'indice di ricerca, non solo le pagine, e le tre corsie sono passate da
+     * sette comparabili a zero mentre i token di input salivano del 70%. La
+     * direzione si da' col mandato, che non costa niente e non taglia fuori
+     * quello che il motore sa trovare.
      */
-    allowedDomains: [
-      'catawiki.com',
-      'liveauctioneers.com',
-      'invaluable.com',
-      'barnebys.com',
-      'the-saleroom.com',
-      'bidsquare.com',
-      'drouot.com',
-      'worthpoint.com',
-    ],
     mandate: `Cerca aggiudicazioni: prezzi a cui un pezzo del genere e' stato realmente battuto.
 Gli archivi d'asta pubblicano i risultati, quindi qui le vendite concluse esistono davvero.
 kind "sold" solo se la pagina mostra il prezzo di aggiudicazione; se mostra solo la stima
@@ -48,9 +43,8 @@ un esito normale per la merce corrente, e le altre corsie stanno coprendo quel m
   {
     id: 'listings',
     label: 'annunci italiani',
-    maxSearches: 2,
+    maxSearches: 3,
     maxFetches: 1,
-    allowedDomains: ['subito.it', 'vinted.it', 'ebay.it', 'etsy.com', 'kijiji.it'],
     mandate: `Cerca annunci attivi sul mercato italiano. Sono prezzi richiesti, quindi kind "asking"
 sempre, anche quando il prezzo sembra realistico: la valutazione li sconta per conto suo.
 E' la corsia che nella pratica trova piu' dati: puntare a 4-6 annunci dello stesso modello
@@ -60,9 +54,8 @@ Annota in notes se lo stesso oggetto risulta invenduto da tempo o ricompare spes
   {
     id: 'international',
     label: 'mercato estero',
-    maxSearches: 2,
+    maxSearches: 3,
     maxFetches: 1,
-    allowedDomains: ['ebay.de', 'ebay.fr', 'ebay.co.uk', 'ebay.com', 'leboncoin.fr', 'wallapop.com'],
     mandate: `Cerca lo stesso oggetto fuori dall'Italia, in inglese, tedesco e francese. Servono a
 capire se il prezzo italiano e' allineato o fuori mercato.
 Anche qui quasi tutto sara' kind "asking".
@@ -83,26 +76,28 @@ export const aiConfig = {
   },
   research: {
     /**
-     * Haiku e non Opus.
-     *
-     * Misurato: una ricerca su Sonnet 5 ha consumato 274.000 token di input e
-     * costato 1,22 $, perche' i risultati di ricerca rientrano in contesto a
-     * ogni iterazione interna. Su quel volume il prezzo per token e' tutto, e
-     * qui il lavoro e' cercare ed estrarre, non ragionare: le corsie hanno
-     * domini fissati e uno schema stretto da riempire.
-     *
+     * Sonnet e non Opus: qui il lavoro e' cercare ed estrarre, non ragionare.
      * L'onesta' dei dati non dipende dall'intelligenza del modello ma dallo
      * schema Zod e dall'aritmetica in `services/valuation`, che non cambiano.
-     * Se la qualita' dei comparabili peggiora, questa e' la prima riga da
-     * rimettere a `claude-sonnet-5`.
+     *
+     * Haiku e' stato provato e scartato, non per la qualita' ma per la
+     * meccanica: non supporta il programmatic tool calling, quindi le ricerche
+     * andrebbero chiamate con `allowed_callers: ["direct"]`, cioe' senza filtro
+     * dinamico, con ogni risultato intero in contesto. Costa un terzo per token
+     * ma ne consumerebbe molti di piu': il conto non torna, e la qualita'
+     * peggiorerebbe in cambio di niente. Rifiuta anche `output_config.effort`.
      */
-    model: 'claude-haiku-4-5',
+    model: 'claude-sonnet-5',
     /**
      * Ogni corsia ha un mandato stretto e poche ricerche: non le serve ragionare
      * a lungo, e i token di ragionamento si generano in serie, quindi sono tempo
      * oltre che denaro.
+     *
+     * `null` per i modelli che non accettano il parametro: Haiku 4.5 risponde
+     * 400 se lo riceve. Va tenuto insieme al modello, perche' cambiare l'uno
+     * senza guardare l'altro rompe tutte le corsie in una volta.
      */
-    effort: 'low' as const,
+    effort: 'low' as 'low' | 'medium' | 'high' | null,
     maxTokens: 8000,
     /**
      * Tetto al testo che una singola pagina puo' portare in contesto. Senza,

@@ -202,12 +202,6 @@ export class AnthropicProvider implements ObjectIntelligenceProvider {
         type: 'web_search_20260209',
         name: 'web_search',
         max_uses: lane.maxSearches,
-        /**
-         * Domini fissati per corsia. Non e' solo una questione di mandato: una
-         * ricerca sprecata su una pagina inutilizzabile costa comunque i suoi
-         * token di risultato, e i risultati rientrano in contesto a ogni giro.
-         */
-        allowed_domains: [...lane.allowedDomains],
         user_location: {
           type: 'approximate',
           country: aiConfig.market.country,
@@ -243,7 +237,9 @@ export class AnthropicProvider implements ObjectIntelligenceProvider {
         model: aiConfig.research.model,
         max_tokens: aiConfig.research.maxTokens,
         system: researchSystemPrompt(lane.mandate),
-        output_config: { effort: aiConfig.research.effort },
+        ...(aiConfig.research.effort === null
+          ? {}
+          : { output_config: { effort: aiConfig.research.effort } }),
         /**
          * Il loop rimanda ogni volta la conversazione intera, e i risultati di
          * ricerca ne sono la parte grossa. Senza cache il secondo giro ripaga
