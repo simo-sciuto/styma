@@ -74,6 +74,10 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
 - **La corsia delle aste si paga solo dove serve.** Sopra `soldDataWorthItAboveEur` e senza nemmeno
   una vendita confermata, si compra la sola corsia `auctions`: e' l'unica fonte di aggiudicazioni
   ancora raggiungibile, e su un pezzo di valore toglie piu' incertezza di quanto costi.
+- **La ricerca agentica e' spenta per scelta** (`research.agenticFallback`), e con lei l'acquisto
+  selettivo dei venduti (`research.buySoldData`). Misurato: ~0,96 $ per tre corsie contro i 4
+  centesimi di un'analisi che si ferma a eBay. Accenderle e' una decisione economica, da prendere
+  con un numero davanti — non un default.
 - **Le fonti si interrogano in ordine di costo crescente:** fonti strutturate (gratis e fresche) →
   cache (evita di ripagare il modello) → ricerca col modello (~1,30 $ e minuti, ultima risorsa).
   Le inserzioni eBay non si archiviano in cache: sono gratis, e conservarle vorrebbe dire servire
@@ -109,6 +113,8 @@ npm run lint       # eslint
 npm test           # vitest (valutazione, fusione delle corsie, lettura dello stream)
 
 node bench/research-bench.mjs [foto.jpg]   # cronometra e conta i costi di un'analisi contro `npm run dev`
+node bench/why-no-value.mjs foto.jpg ...   # segue l'imbuto quando non esce una stima
+node bench/compare-models.mjs foto.jpg ... # confronta i modelli sull'identificazione (si paga)
 ```
 
 ## Configurazione

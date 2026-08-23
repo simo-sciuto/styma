@@ -86,7 +86,21 @@ export class AnthropicProvider implements ObjectIntelligenceProvider {
       const response = await client.messages.parse({
         model: aiConfig.identification.model,
         max_tokens: aiConfig.identification.maxTokens,
-        system: IDENTIFICATION_SYSTEM_PROMPT,
+        /**
+         * Il prefisso statico — istruzioni e schema di uscita — e' identico a
+         * ogni analisi e vale piu' di meta' dei token di input quando la foto
+         * e' una sola. Memorizzarlo lo fa rileggere a un decimo del prezzo.
+         * Il marcatore sta qui e non a livello di richiesta: li' cadrebbe
+         * dopo le immagini, che cambiano ogni volta, e la cache non
+         * varrebbe mai — anzi, si pagherebbe la scrittura per niente.
+         */
+        system: [
+          {
+            type: 'text' as const,
+            text: IDENTIFICATION_SYSTEM_PROMPT,
+            cache_control: { type: 'ephemeral' as const },
+          },
+        ],
         output_config: {
           effort: aiConfig.identification.effort,
           format: zodOutputFormat(IdentificationSchema),

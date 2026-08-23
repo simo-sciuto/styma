@@ -169,6 +169,20 @@ export async function POST(request: Request) {
         }
 
         /**
+         * Poche inserzioni sono comunque meglio di niente.
+         *
+         * La soglia serve a decidere se vale la pena pagare la ricerca
+         * agentica, non a buttare cio' che si e' gia' trovato: con la ricaduta
+         * spenta, tre annunci veri restano tre annunci veri, e sara' la
+         * valutazione a dire se bastano per una forbice o solo per mostrare
+         * cosa si e' visto.
+         */
+        if (!market && structured && !aiConfig.research.agenticFallback) {
+          market = structured;
+          marketSource = { cached: false, researchedAt: new Date().toISOString(), ageDays: 0 };
+        }
+
+        /**
          * Le inserzioni bastano per una forbice, ma senza nemmeno una vendita
          * conclusa la confidenza resta ferma su "low" e il prodotto non dira'
          * mai "compra". Su un oggetto di valore quella incertezza costa piu' di
@@ -177,6 +191,7 @@ export async function POST(request: Request) {
          */
         const preliminary = market ? valuate(identification, market, { askingToSoldRatio }) : null;
         const worthBuyingSoldData =
+          aiConfig.research.buySoldData &&
           preliminary !== null &&
           preliminary.available &&
           preliminary.soldCount === 0 &&
@@ -204,7 +219,7 @@ export async function POST(request: Request) {
             }
           }
 
-          if (!market) {
+          if (!market && aiConfig.research.agenticFallback) {
             // Annunciate solo ora: se la cache o le fonti strutturate hanno
             // risposto, queste corsie non partono, e dichiararle comunque
             // sarebbe raccontare un lavoro che non stiamo facendo.
@@ -241,6 +256,14 @@ export async function POST(request: Request) {
           }
           console.error('[valuate] ricerca di mercato fallita', error);
           warnings.push('La ricerca di mercato non e’ andata a buon fine: nessuna stima disponibile.');
+        }
+
+        if (!market && !aiConfig.research.agenticFallback) {
+          // Dirlo e' doveroso: l'utente deve sapere che non abbiamo cercato
+          // oltre, e che la ragione e' economica e non tecnica.
+          warnings.push(
+            'Su questo oggetto non abbiamo trovato annunci nelle fonti dirette, e la ricerca estesa e’ disattivata perche’ costa molto piu’ di un’analisi normale.',
+          );
         }
 
         const valuation = valuate(identification, market, { askingToSoldRatio });

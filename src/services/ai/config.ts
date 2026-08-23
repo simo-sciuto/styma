@@ -76,6 +76,36 @@ export const aiConfig = {
   },
   research: {
     /**
+     * Se la ricerca agentica puo' partire quando le fonti strutturate non
+     * bastano.
+     *
+     * Misurato: ~0,96 $ per tre corsie, contro i 4 centesimi di un'analisi
+     * che si ferma a eBay. Trenta volte tanto, e l'86% se ne va in token di
+     * input perche' ogni risultato di ricerca rientra in contesto a ogni giro.
+     *
+     * Spenta per scelta. Da quando eBay copre gli oggetti con marca e modello,
+     * e da quando la valutazione usa anche i comparabili di categoria invece di
+     * scartarli, il caso che restava era l'oggetto anonimo *e* introvabile su
+     * eBay — dove peraltro le corsie hanno reso zero comparabili su una Panton
+     * Chair. Un euro e trenta per quel caso non si giustifica.
+     *
+     * Accendendola si torna a pagarla: e' una decisione economica, non tecnica.
+     */
+    agenticFallback: false,
+
+    /**
+     * Se comprare la sola corsia delle aste sugli oggetti di valore che non
+     * hanno nemmeno una vendita confermata.
+     *
+     * L'idea regge — gli archivi d'asta sono l'unica fonte di aggiudicazioni
+     * rimasta — ma non l'ho mai vista restituire un comparabile. Spenta finche'
+     * non ci sara' una misura che dice quanto rende: pagare ~0,40 $ a oggetto
+     * per qualcosa che non ha mai prodotto nulla e' esattamente il modo in cui
+     * i costi crescono senza che nessuno se ne accorga.
+     */
+    buySoldData: false,
+
+    /**
      * Sonnet e non Opus: qui il lavoro e' cercare ed estrarre, non ragionare.
      * L'onesta' dei dati non dipende dall'intelligenza del modello ma dallo
      * schema Zod e dall'aritmetica in `services/valuation`, che non cambiano.
