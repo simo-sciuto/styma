@@ -46,6 +46,12 @@ export type Valuation =
       available: false;
       reason: string;
       discarded: { comparable: Comparable; reason: string }[];
+      /**
+       * Cosa si e' comunque visto, quando non basta per una forbice.
+       * Un rifiuto secco lascia chi e' davanti al banco esattamente dove
+       * stava; due prezzi osservati, dichiarati come insufficienti, no.
+       */
+      observed: { count: number; lowEur: number; highEur: number } | null;
     };
 
 export type Recommendation = 'BUY' | 'MAYBE' | 'PASS';

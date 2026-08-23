@@ -32,6 +32,18 @@ function toProviderError(error: unknown): ProviderError {
         cause: error,
       });
     }
+    if (error.status === 400) {
+      const message = String((error as { message?: string }).message ?? '');
+      if (/usage limit|credit balance/i.test(message)) {
+        return new ProviderError(
+          /credit balance/i.test(message)
+            ? 'Credito Anthropic esaurito: ricaricalo da Plans & Billing.'
+            : 'Hai raggiunto il tetto di spesa impostato su Anthropic. Si alza da Settings → Limits nella console.',
+          'budget_exhausted',
+          { cause: error },
+        );
+      }
+    }
     if (error.status !== undefined && error.status >= 500) {
       return new ProviderError('Il modello non e’ raggiungibile', 'unavailable', { cause: error });
     }

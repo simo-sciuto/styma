@@ -15,6 +15,10 @@ export function providerErrorResponse(error: unknown) {
     console.error(`[api] ${error.code}: ${error.message}`);
 
     switch (error.code) {
+      case 'budget_exhausted':
+        // Il messaggio dice gia' dove si risolve: sostituirlo con una frase
+        // generica costringerebbe a leggere i log del server per scoprirlo.
+        return errorResponse(error.message, error.code, 503);
       case 'fixture_missing':
         // Il messaggio del provider dice esattamente cosa fare, e questo caso
         // esiste solo in sviluppo: sostituirlo con una frase generica

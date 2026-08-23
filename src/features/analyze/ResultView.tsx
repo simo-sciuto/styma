@@ -133,6 +133,24 @@ export function ResultView({
             Riusciamo a identificare l’oggetto, ma non abbiamo dati di mercato abbastanza affidabili
             per dire quanto vale. {valuation.reason}
           </p>
+          {/*
+            Anche senza forbice si mostra cio' che si e' visto: un rifiuto secco
+            lascia chi e' davanti al banco esattamente dove stava, mentre due
+            prezzi osservati — dichiarati come insufficienti — no.
+          */}
+          {valuation.observed ? (
+            <p className="mt-3 text-sm">
+              Quello che abbiamo visto:{' '}
+              <strong>
+                {valuation.observed.count === 1
+                  ? '1 annuncio'
+                  : `${valuation.observed.count} annunci`}
+              </strong>{' '}
+              fra {formatEur(valuation.observed.lowEur)} e {formatEur(valuation.observed.highEur)}.
+              Sono prezzi richiesti, troppo pochi o troppo diversi fra loro per ricavarne una stima:
+              guardali tu prima di decidere.
+            </p>
+          ) : null}
         </Card>
       )}
 

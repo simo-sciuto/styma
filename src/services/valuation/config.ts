@@ -117,6 +117,12 @@ export const valuationConfig = {
   dispersionMeaningfulFrom: 3,
 
   /** Tetti di confidenza legati alla dimensione del campione. */
+  /**
+   * Tetto quando la forbice esce da comparabili di categoria e non di modello.
+   * Sono un ordine di grandezza, non una stima, e vanno letti come tali.
+   */
+  weakEvidenceConfidenceCap: 0.2,
+
   /** Punteggio minimo per meritare l'etichetta. Sotto la soglia media e' "low". */
   confidenceLabelThresholds: {
     high: 0.7,

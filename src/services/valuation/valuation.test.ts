@@ -320,3 +320,79 @@ describe('annunci attivi e dati fuori scala', () => {
     expect(result.likely).toBeLessThanOrEqual(result.high);
   });
 });
+
+describe('oggetti senza marca ne’ modello', () => {
+  const categoryMatch = (price: number, index: number): Comparable => ({
+    title: `Vaso ceramica fat lava ${index}`,
+    source: 'eBay',
+    url: `https://ebay.it/itm/v${index}`,
+    price,
+    currency: 'EUR',
+    kind: 'asking',
+    soldAt: null,
+    condition: 'unknown',
+    // Senza marca ne' modello nel titolo, e' tutto cio' che si puo' dedurre.
+    matchLevel: 'similar_category',
+    notes: '',
+  });
+
+  const market = (comparables: Comparable[]): MarketResearch => ({
+    comparables,
+    demand: 'unknown',
+    liquidity: 'unknown',
+    notes: [],
+  });
+
+  const anonimo: Identification = { ...identification, brand: null, model: null, confidence: 0.55 };
+
+  it('usa gli annunci di categoria invece di lasciare "non lo so"', () => {
+    // Il caso vero: un vaso senza punzone, diciannove annunci trovati e tutti
+    // scartati perche' similar_category x asking cade sotto la soglia.
+    const found = [40, 55, 60, 65, 70, 90].map(categoryMatch);
+    const result = valuate(anonimo, market(found));
+
+    expect(result.available).toBe(true);
+  });
+
+  it('lo dichiara, e resta al minimo della confidenza', () => {
+    const result = valuate(anonimo, market([40, 55, 60, 65, 70, 90].map(categoryMatch)));
+
+    expect(result.available).toBe(true);
+    if (!result.available) return;
+    expect(result.confidence).toBe('low');
+    expect(result.reasons.join(' ')).toMatch(/stessa categoria, non dello stesso modello/);
+  });
+
+  it('non ripesca i deboli quando c’e’ di meglio', () => {
+    // Due buoni, perche' uno solo non fa comunque una forbice.
+    const buoni: Comparable[] = [200, 220].map((price, index) => ({
+      ...categoryMatch(price, 90 + index),
+      matchLevel: 'exact_model' as const,
+      condition: 'good' as const,
+    }));
+    const result = valuate(anonimo, market([...buoni, ...[10, 12].map(categoryMatch)]));
+
+    expect(result.available).toBe(true);
+    if (!result.available) return;
+    // I due deboli restano fuori: la soglia serve proprio a preferire il buono.
+    expect(result.used.every((entry) => entry.comparable.matchLevel === 'exact_model')).toBe(true);
+  });
+
+  it('quando non basta comunque, dice cosa ha visto', () => {
+    // Un solo annuncio non fa una forbice, ma tacere il prezzo osservato
+    // lascia chi e' davanti al banco esattamente dove stava.
+    const result = valuate(anonimo, market([categoryMatch(80, 1)]));
+
+    expect(result.available).toBe(false);
+    if (result.available) return;
+    expect(result.observed).toMatchObject({ count: 1, lowEur: 80, highEur: 80 });
+  });
+
+  it('senza nessun annuncio non inventa nemmeno quello', () => {
+    const result = valuate(anonimo, market([]));
+
+    expect(result.available).toBe(false);
+    if (result.available) return;
+    expect(result.observed).toBeNull();
+  });
+});

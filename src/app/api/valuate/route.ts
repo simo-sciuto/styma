@@ -39,6 +39,7 @@ function messageForProviderError(error: unknown): { message: string; code: strin
       case 'unavailable':
         return { message: 'Il servizio di analisi non risponde. Riprova fra poco.', code: error.code };
       case 'fixture_missing':
+      case 'budget_exhausted':
         return { message: error.message, code: error.code };
       case 'invalid_response':
         return { message: 'L’analisi non ha prodotto un risultato utilizzabile.', code: error.code };

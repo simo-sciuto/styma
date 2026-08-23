@@ -70,11 +70,37 @@ export function valuate(
   );
 
   const used: WeightedComparable[] = [];
+  const weak: WeightedComparable[] = [];
   const discarded: { comparable: Comparable; reason: string }[] = [];
 
   for (const evaluation of evaluations) {
-    if (evaluation.kept) used.push(evaluation.value);
-    else discarded.push({ comparable: evaluation.comparable, reason: evaluation.reason });
+    if (evaluation.kept) {
+      used.push(evaluation.value);
+      continue;
+    }
+    discarded.push({ comparable: evaluation.comparable, reason: evaluation.reason });
+    if (evaluation.weak) weak.push(evaluation.weak);
+  }
+
+  /**
+   * Nessun comparabile ha superato la soglia, ma qualcuno c'era.
+   *
+   * Succede sugli oggetti senza marca ne' modello — un vaso senza punzone, una
+   * lampada anonima — dove ogni risultato vale `similar_category` e finisce
+   * sotto il minimo. Diciannove annunci reali buttati per lasciare "non lo so"
+   * e' il comportamento sbagliato: la soglia serve a scegliere fra comparabili,
+   * non a rifiutarsi di rispondere quando non c'e' di meglio.
+   *
+   * Si ripescano, e la confidenza lo dichiara restando al minimo.
+   */
+  const onlyWeakEvidence = used.length === 0 && weak.length >= valuationConfig.minimumViable.comparables;
+  if (onlyWeakEvidence) {
+    used.push(...weak);
+    for (let index = discarded.length - 1; index >= 0; index -= 1) {
+      if (weak.some((entry) => entry.comparable === discarded[index]!.comparable)) {
+        discarded.splice(index, 1);
+      }
+    }
   }
 
   rejectOutliers(used, discarded);
@@ -85,7 +111,18 @@ export function valuate(
     used.length < minimumViable.comparables || effectiveSample < minimumViable.effectiveSample;
 
   if (used.length === 0 || tooFewComparables) {
+    // Anche quando non basta, si mostra cosa si e' visto: un rifiuto secco
+    // lascia chi e' davanti al banco esattamente dove stava.
+    const seen = [...used, ...weak];
     return {
+      observed:
+        seen.length > 0
+          ? {
+              count: seen.length,
+              lowEur: Math.round(Math.min(...seen.map((entry) => entry.priceEur))),
+              highEur: Math.round(Math.max(...seen.map((entry) => entry.priceEur))),
+            }
+          : null,
       available: false,
       reason:
         research === null
@@ -162,7 +199,13 @@ export function valuate(
    * mano che le finirebbe sopra al primo ritocco.
    */
   const noSoldDataCap = valuationConfig.confidenceLabelThresholds.medium - 0.01;
-  const confidenceScore = soldCount === 0 ? Math.min(cappedBySample, noSoldDataCap) : cappedBySample;
+  let confidenceScore = soldCount === 0 ? Math.min(cappedBySample, noSoldDataCap) : cappedBySample;
+
+  // Comparabili di categoria e non di modello: la forbice e' un ordine di
+  // grandezza, e la confidenza deve dirlo senza mezzi termini.
+  if (onlyWeakEvidence) {
+    confidenceScore = Math.min(confidenceScore, valuationConfig.weakEvidenceConfidenceCap);
+  }
 
   const reasons: string[] = [];
   reasons.push(
@@ -185,6 +228,11 @@ export function valuate(
   }
   if (!dispersionIsMeaningful) reasons.push('Troppo pochi dati per giudicare la stabilita’ dei prezzi');
   if (identification.confidence < 0.6) reasons.push('Identificazione dell’oggetto incerta');
+  if (onlyWeakEvidence) {
+    reasons.push(
+      'Nessun comparabile davvero vicino: la forbice esce da annunci della stessa categoria, non dello stesso modello',
+    );
+  }
 
   return {
     available: true,

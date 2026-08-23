@@ -14,22 +14,58 @@ const MARKETPLACES = ['EBAY_IT', 'EBAY_DE', 'EBAY_GB'] as const;
 /** Oltre questo numero per mercato si aggiungono solo doppioni della stessa inserzione. */
 const LIMIT_PER_MARKETPLACE = 20;
 
+/** Oltre questo numero non si allarga: le query dopo sono piu' vaghe. */
+const ENOUGH_FROM_ONE_QUERY = 8;
+
+/** Tetto ai tentativi: senza, un oggetto introvabile costerebbe otto giri. */
+const MAX_QUERIES = 3;
+
 /**
- * Query di ricerca. Marca e modello quando ci sono: sono i due campi su cui
- * i titoli eBay sono affidabili. Il nome libero e' l'ultima risorsa, perche'
- * contiene descrizioni ("rossa", "con valigetta") che restringono a caso.
+ * Le query da provare, in ordine di precisione.
+ *
+ * Marca e modello sono i due campi su cui i titoli eBay sono affidabili, ma
+ * meta' degli oggetti di un mercatino non ha ne' l'una ne' l'altro: un vaso
+ * senza punzone, una lampada anonima. Per quelli l'identificazione produce
+ * gia' `searchQueries`, scritte apposta per cercare comparabili — usarne una
+ * sola, o ripiegarci solo quando marca e modello mancano entrambi, buttava via
+ * l'unico appiglio disponibile.
+ *
+ * Provarne piu' di una non costa niente: eBay non si paga a chiamata.
  */
-export function buildQuery(identification: Identification): string | null {
+export function buildQueries(identification: Identification): string[] {
+  const queries: string[] = [];
   const brand = identification.brand?.trim();
   // Senza tagliare la coda, "Canon AE-1 con FD 50mm f/1.8" trova una
   // inserzione su undicimila: la ricerca cerca la frase, non l'oggetto.
-  const model = identification.model === null ? undefined : coreModel(identification.model);
-  if (brand && model) return `${brand} ${model}`;
-  if (brand) return brand;
-  if (model) return model;
+  const model = identification.model === null ? null : coreModel(identification.model);
 
-  const fallback = identification.searchQueries[0]?.trim();
-  return fallback && fallback.length > 0 ? fallback : null;
+  if (brand && model) {
+    // "Morenita Morenita Express" cercava la marca due volte: se il modello la
+    // contiene gia', ripeterla restringe senza aggiungere nulla.
+    const modelHasBrand = model.toLowerCase().includes(brand.toLowerCase());
+    queries.push(modelHasBrand ? model : `${brand} ${model}`);
+  } else if (model) {
+    queries.push(model);
+  } else if (brand) {
+    // La sola marca e' troppo larga per essere una query: si accompagna a cio'
+    // che il modello ha capito dell'oggetto.
+    queries.push(`${brand} ${identification.category}`.trim());
+  }
+
+  queries.push(...identification.searchQueries.map((query) => query.trim()));
+
+  const seen = new Set<string>();
+  return queries.filter((query) => {
+    const key = query.toLowerCase();
+    if (query.length < 3 || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+/** Compatibilita': la prima query e' quella piu' precisa. */
+export function buildQuery(identification: Identification): string | null {
+  return buildQueries(identification)[0] ?? null;
 }
 
 async function searchMarketplace(
@@ -69,6 +105,8 @@ export type EbayOutcome = {
   comparables: Comparable[];
   /** Mercati che hanno risposto, per poter dire su cosa poggia il risultato. */
   marketplaces: string[];
+  /** Query effettivamente usate: serve a capire perche' un risultato e' vago. */
+  queries: string[];
 };
 
 /**
@@ -83,32 +121,45 @@ export async function searchEbay(identification: Identification): Promise<EbayOu
   const config = getEbayConfig();
   if (!config) return null;
 
-  const query = buildQuery(identification);
-  if (query === null) return null;
+  const queries = buildQueries(identification);
+  if (queries.length === 0) return null;
 
   const token = await getApplicationToken(config);
   const host = ebayHost(config);
 
-  const settled = await Promise.allSettled(
-    MARKETPLACES.map((marketplace) =>
-      searchMarketplace(host, token, marketplace, query, identification).then((comparables) => ({
-        marketplace,
-        comparables,
-      })),
-    ),
-  );
-
   const comparables: Comparable[] = [];
-  const marketplaces: string[] = [];
+  const marketplaces = new Set<string>();
+  const used: string[] = [];
 
-  for (const outcome of settled) {
-    if (outcome.status !== 'fulfilled') {
-      console.warn('[ebay] un mercato non ha risposto', outcome.reason);
-      continue;
+  // Si prova una query alla volta e ci si ferma appena il campione basta:
+  // le query successive sono via via piu' vaghe, e allargare quando non serve
+  // peggiora la qualita' dei comparabili invece di migliorarla.
+  for (const query of queries.slice(0, MAX_QUERIES)) {
+    const settled = await Promise.allSettled(
+      MARKETPLACES.map((marketplace) =>
+        searchMarketplace(host, token, marketplace, query, identification).then((found) => ({
+          marketplace,
+          found,
+        })),
+      ),
+    );
+
+    for (const outcome of settled) {
+      if (outcome.status !== 'fulfilled') {
+        console.warn('[ebay] un mercato non ha risposto', outcome.reason);
+        continue;
+      }
+      comparables.push(...outcome.value.found);
+      marketplaces.add(outcome.value.marketplace);
     }
-    comparables.push(...outcome.value.comparables);
-    marketplaces.push(outcome.value.marketplace);
+
+    used.push(query);
+    if (comparables.length >= ENOUGH_FROM_ONE_QUERY) break;
   }
 
-  return { comparables, marketplaces };
+  if (used.length > 1) {
+    console.info(`[ebay] ${used.length} query provate: ${used.map((q) => `"${q}"`).join(', ')}`);
+  }
+
+  return { comparables, marketplaces: [...marketplaces], queries: used };
 }

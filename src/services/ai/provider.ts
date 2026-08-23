@@ -76,6 +76,13 @@ export class ProviderError extends Error {
        * produzione, dove le registrazioni sono vietate.
        */
       | 'fixture_missing'
+      /**
+       * Tetto di spesa raggiunto o credito finito. E' un 400 come tanti altri,
+       * ma la causa e la soluzione sono altrove: nella console di fatturazione,
+       * non nel codice. Confonderlo con "errore inatteso" manda a cercare un
+       * bug che non c'e'.
+       */
+      | 'budget_exhausted'
       | 'unknown',
     options?: { cause?: unknown },
   ) {

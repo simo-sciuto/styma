@@ -40,7 +40,17 @@ function conditionWeight(objectCondition: Condition, comparableCondition: Condit
 
 export type ComparableEvaluation =
   | { kept: true; value: WeightedComparable }
-  | { kept: false; comparable: Comparable; reason: string };
+  | {
+      kept: false;
+      comparable: Comparable;
+      reason: string;
+      /**
+       * Presente quando lo scarto e' solo questione di peso, non di dato
+       * inutilizzabile. Serve a poterli ripescare: se non c'e' niente di
+       * meglio, diciannove annunci deboli dicono piu' di un "non lo so".
+       */
+      weak?: WeightedComparable;
+    };
 
 export function evaluateComparable(
   comparable: Comparable,
@@ -80,6 +90,7 @@ export function evaluateComparable(
       kept: false,
       comparable,
       reason: 'Comparabile troppo debole (somiglianza, eta’ o stato non allineati)',
+      weak: { comparable, priceEur, saleEstimateEur, weight, weightBreakdown },
     };
   }
 
