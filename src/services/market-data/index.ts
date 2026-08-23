@@ -1,6 +1,7 @@
 import type { Identification } from '@/schemas/identification';
 import type { MarketResearch } from '@/schemas/market';
 import { searchEbay } from './ebay';
+import { describeRelease, lookupRelease } from './discogs';
 
 export type MarketDataOutcome = {
   research: MarketResearch;
@@ -29,23 +30,34 @@ export async function collectMarketData(
   identification: Identification,
 ): Promise<MarketDataOutcome | null> {
   try {
-    const ebay = await searchEbay(identification);
+    // Le due fonti non si sovrappongono: eBay porta inserzioni con un prezzo,
+    // Discogs porta il catalogo e la situazione di mercato di un'edizione.
+    const [ebay, release] = await Promise.all([
+      searchEbay(identification),
+      lookupRelease(identification),
+    ]);
     // Zero inserzioni e' un esito, non un'assenza di esito: va detto a chi
     // aspetta, altrimenti sembra che non ci abbiamo nemmeno provato. Null solo
     // quando la fonte non e' configurata o non ha risposto.
-    if (ebay === null) return null;
+    if (ebay === null && release === null) return null;
+
+    const sources = [...(ebay?.marketplaces ?? [])];
+    if (release) sources.push('Discogs');
 
     return {
       research: {
-        comparables: ebay.comparables,
+        comparables: ebay?.comparables ?? [],
         // Domanda e liquidita' non si deducono da un elenco di inserzioni:
         // servirebbero i venduti e i tempi di vendita, che questa API non da'.
         // "unknown" e' la risposta corretta, e il voto fra corsie la ignora.
         demand: 'unknown',
         liquidity: 'unknown',
-        notes: [],
+        // Discogs misura la concorrenza, non la domanda: dedurre l'una
+        // dall'altra sarebbe un'invenzione, e "unknown" resta la risposta
+        // corretta finche' nessuno ha guardato i venduti.
+        notes: release ? describeRelease(release) : [],
       },
-      sources: ebay.marketplaces,
+      sources,
     };
   } catch (error) {
     // Una fonte che non risponde non deve far fallire l'analisi: si ricade

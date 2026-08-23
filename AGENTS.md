@@ -26,8 +26,9 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
 - `src/services/inventory` — lettura e scrittura degli oggetti salvati.
 - `src/services/market-cache` — riuso delle ricerche di mercato per modello, con scadenza
   per ritmo di mercato. `policy.ts` e' puro e testato.
-- `src/services/market-data` — prezzi da fonti strutturate (per ora eBay Browse API). Vengono
-  prima della ricerca col modello, che parte solo se questi non bastano.
+- `src/services/market-data` — fonti strutturate: eBay Browse API per le inserzioni con prezzo,
+  Discogs per il catalogo musicale. Vengono prima della ricerca col modello, che parte solo se
+  questi non bastano.
 - `src/lib` — utilita' (upload, immagini, formattazione, rate limit) e client Supabase.
 - `supabase/migrations` — schema e policy RLS.
 
@@ -56,6 +57,10 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
   e' costata 300.000 token di input per analisi (~1,30 $); la stessa informazione da un'API arriva
   strutturata a costo zero. `src/services/market-data` viene interrogato per primo e la ricerca col
   modello parte solo sotto `ENOUGH_COMPARABLES`.
+- **Discogs misura la concorrenza, non la domanda.** `num_for_sale` dice quante copie sono in
+  vendita, cioe' quante alternative ha chi compra. Dedurne la domanda sarebbe un'invenzione:
+  `demand` e `liquidity` restano `unknown` finche' nessuno ha guardato i venduti. E `lowest_price`
+  e' un pavimento, non una media: non entra fra i comparabili, si dichiara come pavimento.
 - **Le inserzioni attive sono `asking`, mai `sold`.** La Browse API restituisce annunci in corso.
   Spacciarli per vendite concluse sarebbe la bugia piu' facile da fare qui, e la piu' costosa: il
   peso di una vendita conclusa e' quasi il doppio.
@@ -92,6 +97,7 @@ node bench/research-bench.mjs [foto.jpg]   # cronometra e conta i costi di un'an
   l'inventario si disattiva da solo dichiarandolo, invece di rompersi.
 - `SUPABASE_SERVICE_ROLE_KEY` — solo lato server, mai con prefisso `NEXT_PUBLIC_`. Senza, la cache
   delle ricerche si spegne da sola e ogni analisi paga la propria ricerca.
+- `DISCOGS_TOKEN` — facoltativo, alza solo il limite di richieste. Senza, Discogs risponde lo stesso.
 - `EBAY_CLIENT_ID`, `EBAY_CLIENT_SECRET`, `EBAY_ENV` — prezzi strutturati. Senza, si ricade sulla
   ricerca col modello. Il sandbox si autentica ma non ha inserzioni: per dati veri serve
   `EBAY_ENV=production` con un keyset di produzione attivo.
