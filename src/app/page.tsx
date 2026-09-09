@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { Footer } from '@/components/Footer';
+import { Reveal } from '@/components/Reveal';
 
 // Icone lineari, disegnate a mano nel file invece che prese da una libreria:
 // tre gesti veri (inquadrare, ispezionare, spuntare) non tre astrazioni.
@@ -62,68 +64,87 @@ const NUMBERS = [
 
 export default function HomePage() {
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-5 pb-16 pt-8 sm:pt-14">
-      <h1 className="text-[clamp(2.75rem,2.1rem+3.2vw,5.25rem)] font-semibold leading-[0.95] tracking-tighter text-balance">
-        Quanto vale,
-        <br />
-        davvero.
-      </h1>
+    <>
+      {/*
+        A tutta larghezza e a tutta altezza, come l'hero del sito di
+        riferimento (min-height:100svh, sfondo pieno, testo centrato) —
+        non piu' tutto incassato in una colonna stretta su sfondo neutro.
+        Il teal e' il colore "marchio" di STYMA (nav, pulsanti, logo): il
+        verde di --accent-vivid resta riservato al prezzo e al verdetto,
+        non diventa anche lo sfondo della prima cosa che si vede.
+      */}
+      <section className="relative flex min-h-[88svh] flex-col items-center justify-center overflow-hidden bg-tile-teal px-5 py-20 text-center text-tile-cream sm:min-h-[92svh]">
+        <h1 className="reveal max-w-3xl text-balance text-[clamp(2.75rem,2.1rem+5.5vw,6.75rem)] font-semibold leading-[0.92] tracking-tighter">
+          Quanto vale,
+          <br />
+          davvero.
+        </h1>
 
-      <p className="mt-3 text-2xl font-medium leading-tight tracking-tight text-accent sm:text-3xl">
-        Prima di comprare, non dopo.
-      </p>
+        <p className="reveal reveal-delay-1 mt-5 max-w-xl text-2xl font-medium leading-snug tracking-tight sm:text-3xl">
+          Prima di comprare, non dopo.
+        </p>
 
-      <p className="mt-5 max-w-lg text-lg text-muted">
-        Fotografa quello che hai in mano: in pochi secondi sai cos’e’, quanto vale e se conviene.
-      </p>
+        <p className="reveal reveal-delay-2 mt-6 max-w-md text-base leading-relaxed">
+          Fotografa quello che hai in mano: in pochi secondi sai cos’e’, quanto vale e se conviene.
+        </p>
 
-      <div className="mt-9 flex flex-wrap items-center gap-3">
-        <Link
-          href="/analizza"
-          className="inline-flex items-center justify-center rounded-full bg-tile-teal px-7 py-4 text-base font-medium text-tile-cream transition hover:opacity-90"
-        >
-          Fotografa un oggetto
-        </Link>
-        <Link
-          href="/inventario"
-          className="rounded-full border border-line px-4 py-2 text-sm text-muted transition hover:border-accent hover:text-foreground"
-        >
-          Inventario
-        </Link>
-      </div>
-
-      <section className="mt-14 rounded-block bg-surface-warm p-6 sm:p-8">
-        <p className="text-sm font-medium text-muted">Misurato, non tirato a indovinare.</p>
-        <div className="mt-5 grid grid-cols-3 gap-4">
-          {NUMBERS.map((stat) => (
-            <div key={stat.label}>
-              <p className="text-3xl font-semibold tracking-tighter sm:text-4xl">{stat.value}</p>
-              <p className="mt-1.5 text-xs leading-snug text-muted">{stat.label}</p>
-            </div>
-          ))}
+        <div className="reveal reveal-delay-3 mt-9 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            href="/analizza"
+            className="inline-flex items-center justify-center rounded-full bg-tile-cream px-7 py-4 text-base font-medium text-tile-ink transition hover:opacity-90"
+          >
+            Fotografa un oggetto
+          </Link>
+          <Link
+            href="/inventario"
+            className="rounded-full border border-tile-cream/50 px-4 py-2 text-sm transition hover:border-tile-cream hover:bg-black/10"
+          >
+            Inventario
+          </Link>
         </div>
       </section>
 
-      <ol className="mt-6 grid gap-4 sm:grid-cols-3">
-        {STEPS.map((step, index) => (
-          <li key={step.title} className={`rounded-block p-6 ${step.tone}`}>
-            <div className="flex items-center justify-between">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-black/10">
-                <step.icon />
-              </span>
-              <span className="font-mono text-xs">0{index + 1}</span>
-            </div>
-            <h2 className="mt-4 text-xl font-semibold tracking-tight">{step.title}</h2>
-            <p className="mt-1.5 text-sm leading-relaxed">{step.body}</p>
-          </li>
-        ))}
-      </ol>
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-5 pb-16 pt-10">
+        <Reveal className="rounded-block bg-surface-warm p-6 sm:p-8">
+          <p className="text-sm font-medium text-muted">Misurato, non tirato a indovinare.</p>
+          <div className="mt-5 grid grid-cols-3 gap-4">
+            {NUMBERS.map((stat) => (
+              <div key={stat.label}>
+                <p className="text-3xl font-semibold tracking-tighter sm:text-4xl">{stat.value}</p>
+                <p className="mt-1.5 text-xs leading-snug text-muted">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </Reveal>
 
-      <p className="mt-10 text-sm text-muted">
-        La stima nasce da annunci comparabili trovati sul mercato, non dall’intuito di un modello.
-        Sono prezzi richiesti, non vendite concluse — nessuna fonte gratuita ci dice a quanto si
-        sono vendute davvero. Quando i dati non bastano, lo diciamo invece di inventare un numero.
-      </p>
-    </main>
+        <ol className="mt-6 grid gap-4 sm:grid-cols-3">
+          {STEPS.map((step, index) => (
+            <Reveal
+              key={step.title}
+              as="li"
+              delay={index * 90}
+              className={`rounded-block p-6 ${step.tone}`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-black/10">
+                  <step.icon />
+                </span>
+                <span className="font-mono text-xs">0{index + 1}</span>
+              </div>
+              <h2 className="mt-4 text-xl font-semibold tracking-tight">{step.title}</h2>
+              <p className="mt-1.5 text-sm leading-relaxed">{step.body}</p>
+            </Reveal>
+          ))}
+        </ol>
+
+        <p className="mt-10 text-sm text-muted">
+          La stima nasce da annunci comparabili trovati sul mercato, non dall’intuito di un modello.
+          Sono prezzi richiesti, non vendite concluse — nessuna fonte gratuita ci dice a quanto si
+          sono vendute davvero. Quando i dati non bastano, lo diciamo invece di inventare un numero.
+        </p>
+      </main>
+
+      <Footer />
+    </>
   );
 }

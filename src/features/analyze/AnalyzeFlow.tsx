@@ -168,6 +168,7 @@ export function AnalyzeFlow() {
       <>
         <ResultView
           result={result}
+          images={images}
           saveSlot={
             <SaveToInventory
               result={result}

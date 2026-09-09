@@ -41,27 +41,34 @@ export default async function InventoryPage() {
           </p>
         </Card>
       ) : (
-        <ul className="mt-6 space-y-3">
+        // Da riga a card immagine-avanti: una collezione di oggetti si
+        // scorre con gli occhi sulla foto, non sul testo — l'oggetto e'
+        // sempre la prima cosa che si riconosce, in un mercatino vero.
+        <ul className="mt-6 grid gap-4 sm:grid-cols-2">
           {result.entries.map(({ item, valuation, coverUrl }) => (
             <li key={item.id}>
               <Link
                 href={`/inventario/${item.id}`}
-                className="flex gap-4 rounded-block border border-line bg-surface p-4 transition hover:border-tile-teal hover:shadow-sm"
+                className="group block overflow-hidden rounded-block border border-line bg-surface transition hover:border-tile-teal hover:shadow-sm"
               >
-                {coverUrl ? (
-                  <Image
-                    src={coverUrl}
-                    alt=""
-                    width={80}
-                    height={80}
-                    unoptimized
-                    className="h-20 w-20 shrink-0 rounded-2xl object-cover"
-                  />
-                ) : (
-                  <div className="h-20 w-20 shrink-0 rounded-2xl border border-dashed border-line" />
-                )}
+                <div className="aspect-4/3 overflow-hidden bg-surface-warm">
+                  {coverUrl ? (
+                    <Image
+                      src={coverUrl}
+                      alt=""
+                      width={400}
+                      height={300}
+                      unoptimized
+                      className="h-full w-full object-cover transition duration-[600ms] ease-out group-hover:scale-105 group-hover:rotate-1"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-xs text-muted">
+                      Nessuna foto
+                    </div>
+                  )}
+                </div>
 
-                <div className="min-w-0 flex-1">
+                <div className="p-4">
                   <p className="truncate font-medium">{item.title}</p>
                   <p className="mt-0.5 truncate text-sm text-muted">
                     {[item.brand, item.estimated_period].filter(Boolean).join(' · ') || item.category}

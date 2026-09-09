@@ -1,8 +1,10 @@
 'use client';
 
+import Image from 'next/image';
 import type { ReactNode } from 'react';
 
 import type { AnalysisResult, MarketSource, WeightedComparable } from '@/schemas/analysis';
+import type { PreparedImage } from '@/lib/images';
 import { Card, Disclosure, Pill } from '@/components/ui';
 import {
   CONDITION_LABELS,
@@ -61,16 +63,34 @@ function ComparableRow({ item }: { item: WeightedComparable }) {
 
 export function ResultView({
   result,
+  images = [],
   saveSlot,
 }: {
   result: AnalysisResult;
+  images?: PreparedImage[];
   saveSlot?: ReactNode;
 }) {
   const { identification, market, marketSource, valuation, flip, warnings } = result;
   const decision = flip?.atPrice ?? null;
+  const cover = images[0] ?? null;
 
   return (
     <div className="mt-6 space-y-4">
+      {cover ? (
+        // La foto vera, non un'illustrazione: e' l'oggetto che hai appena
+        // fotografato, la prima cosa che si vede del risultato.
+        <div className="overflow-hidden rounded-block">
+          <Image
+            src={cover.previewUrl}
+            alt=""
+            width={640}
+            height={480}
+            unoptimized
+            className="aspect-4/3 w-full object-cover"
+          />
+        </div>
+      ) : null}
+
       <Card>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
