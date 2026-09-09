@@ -11,10 +11,30 @@ export const dynamic = 'force-dynamic';
 
 export default async function ItemPage({ params }: PageProps<'/inventario/[id]'>) {
   const { id } = await params;
-  const detail = await getItemDetail(id);
-  if (!detail) notFound();
+  const result = await getItemDetail(id);
 
-  const { item, valuation, comparables, imageUrls } = detail;
+  // Un database irraggiungibile non e' un oggetto che non esiste: un 404 qui
+  // direbbe "l'hai perso", quando invece e' solo Supabase che al momento non
+  // risponde. `not_found` e `not_configured` restano 404, perche' in
+  // entrambi i casi non c'e' niente da mostrare in questa pagina.
+  if (result.status === 'unreachable') {
+    return (
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-5 pb-20 pt-8">
+        <Link href="/inventario" className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
+          ← Inventario
+        </Link>
+        <Card className="mt-6 border-danger/40 bg-danger-soft">
+          <p className="text-sm text-danger">
+            Non riusciamo a raggiungere questo oggetto in questo momento. E’ ancora al sicuro:
+            riprova fra poco.
+          </p>
+        </Card>
+      </main>
+    );
+  }
+  if (result.status !== 'ok') notFound();
+
+  const { item, valuation, comparables, imageUrls } = result.detail;
   const used = comparables.filter((comparable) => comparable.used);
   const discarded = comparables.filter((comparable) => !comparable.used);
 

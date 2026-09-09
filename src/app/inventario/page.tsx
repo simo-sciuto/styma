@@ -30,7 +30,7 @@ export const metadata = { title: 'Inventario — STYMA' };
 export const dynamic = 'force-dynamic';
 
 export default async function InventoryPage() {
-  const [entries, calibration] = await Promise.all([listInventory(), readCalibration()]);
+  const [result, calibration] = await Promise.all([listInventory(), readCalibration()]);
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-5 pb-20 pt-8">
@@ -56,14 +56,24 @@ export default async function InventoryPage() {
         </Card>
       ) : null}
 
-      {entries === null ? (
+      {result.status === 'not_configured' ? (
         <Card className="mt-6">
           <p className="text-sm">
             L’inventario non e’ configurato: manca la connessione a Supabase. L’analisi funziona
             comunque.
           </p>
         </Card>
-      ) : entries.length === 0 ? (
+      ) : result.status === 'unreachable' ? (
+        // Diverso apposta dal caso "vuoto": un database irraggiungibile non e'
+        // un inventario senza oggetti, e dirlo con le stesse parole farebbe
+        // credere a chi ha gia' salvato qualcosa di averlo perso.
+        <Card className="mt-6 border-danger/40 bg-danger-soft">
+          <p className="text-sm text-danger">
+            Non riusciamo a raggiungere l’inventario in questo momento. I tuoi oggetti sono al
+            sicuro: riprova fra poco.
+          </p>
+        </Card>
+      ) : result.entries.length === 0 ? (
         <Card className="mt-6">
           <p className="text-sm text-muted">
             Ancora niente qui. Analizza un oggetto e salvalo: lo ritrovi in questa pagina con la
@@ -72,7 +82,7 @@ export default async function InventoryPage() {
         </Card>
       ) : (
         <ul className="mt-6 space-y-3">
-          {entries.map(({ item, valuation, coverUrl }) => (
+          {result.entries.map(({ item, valuation, coverUrl }) => (
             <li key={item.id}>
               <Link
                 href={`/inventario/${item.id}`}
