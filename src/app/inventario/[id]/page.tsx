@@ -3,7 +3,14 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { Card, Disclosure, Pill } from '@/components/ui';
-import { CONDITION_LABELS, MATCH_LABELS, formatDate, formatEur, formatRange } from '@/lib/format';
+import {
+  CONDITION_LABELS,
+  MATCH_LABELS,
+  RECOMMENDATION_STYLES_ON_VIVID,
+  formatDate,
+  formatEur,
+  formatRange,
+} from '@/lib/format';
 import { getItemDetail } from '@/services/inventory/repository';
 import {
   ITEM_STATUS_LABELS,
@@ -24,7 +31,7 @@ export default async function ItemPage({ params }: PageProps<'/inventario/[id]'>
   // entrambi i casi non c'e' niente da mostrare in questa pagina.
   if (result.status === 'unreachable') {
     return (
-      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-5 pb-20 pt-8">
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-5 pb-20 pt-6">
         <Link href="/inventario" className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
           ← Inventario
         </Link>
@@ -49,7 +56,7 @@ export default async function ItemPage({ params }: PageProps<'/inventario/[id]'>
       : null;
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-5 pb-20 pt-8">
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-5 pb-20 pt-6">
       <Link href="/inventario" className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
         ← Inventario
       </Link>
@@ -70,7 +77,7 @@ export default async function ItemPage({ params }: PageProps<'/inventario/[id]'>
         </div>
       ) : null}
 
-      <h1 className="mt-6 text-2xl font-semibold tracking-tight">{item.title}</h1>
+      <h1 className="mt-6 text-3xl font-semibold leading-[0.95] tracking-tight">{item.title}</h1>
       <p className="mt-1 text-sm text-muted">
         {[item.category, item.brand, item.model, item.estimated_period].filter(Boolean).join(' · ')}
       </p>
@@ -85,35 +92,41 @@ export default async function ItemPage({ params }: PageProps<'/inventario/[id]'>
 
       <div className="mt-5 space-y-4">
         {valuation && valuation.low_value !== null && valuation.high_value !== null ? (
-          <Card>
-            <p className="text-sm text-muted">
+          // Stesso cartellino della pagina di analisi: e' lo stesso numero,
+          // deve leggersi identico ovunque compaia.
+          <div className="price-tag rounded-block bg-accent-vivid p-6 text-accent-on-vivid">
+            <p className="text-sm font-medium">
               Valutazione del {formatDate(valuation.created_at) ?? '—'}
             </p>
-            <p className="mt-1 text-3xl font-semibold tracking-tight">
+            <p className="mt-1 text-4xl font-semibold tracking-tight sm:text-5xl">
               {formatRange(valuation.low_value, valuation.high_value)}
             </p>
             {valuation.likely_value !== null ? (
-              <p className="mt-1 text-sm text-muted">
+              <p className="mt-2 text-sm">
                 Piu’ probabile {formatEur(valuation.likely_value)}
                 {valuation.confidence ? ` · confidenza ${valuation.confidence}` : ''}
               </p>
             ) : null}
             {valuation.recommendation ? (
-              <p className="mt-3 text-sm">
-                All’epoca, a {formatEur(valuation.assessed_at_price ?? 0)}:{' '}
-                <strong>{valuation.recommendation}</strong>
-                {valuation.flip_score !== null ? ` (${valuation.flip_score}/100)` : ''}
+              <p className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+                <span>All’epoca, a {formatEur(valuation.assessed_at_price ?? 0)}:</span>
+                <span
+                  className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${RECOMMENDATION_STYLES_ON_VIVID[valuation.recommendation].tone}`}
+                >
+                  {RECOMMENDATION_STYLES_ON_VIVID[valuation.recommendation].label}
+                </span>
+                {valuation.flip_score !== null ? (
+                  <span className="text-xs">{valuation.flip_score}/100</span>
+                ) : null}
               </p>
             ) : null}
             {describeSavedMarketSource(valuation) ? (
-              <p className="mt-3 text-xs text-muted">{describeSavedMarketSource(valuation)}</p>
+              <p className="mt-3 text-xs">{describeSavedMarketSource(valuation)}</p>
             ) : null}
             {describeSavedComparableTier(valuation.comparable_tier) ? (
-              <p className="mt-1 text-xs text-muted">
-                {describeSavedComparableTier(valuation.comparable_tier)}
-              </p>
+              <p className="mt-1 text-xs">{describeSavedComparableTier(valuation.comparable_tier)}</p>
             ) : null}
-          </Card>
+          </div>
         ) : (
           <Card className="border-warn/40 bg-warn-soft">
             <p className="text-sm">

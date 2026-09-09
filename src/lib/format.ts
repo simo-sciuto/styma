@@ -1,3 +1,5 @@
+import type { Recommendation } from '@/schemas/analysis';
+
 const eur = new Intl.NumberFormat('it-IT', {
   style: 'currency',
   currency: 'EUR',
@@ -59,4 +61,21 @@ export const CONFIDENCE_LABELS: Record<string, string> = {
   high: 'Confidenza alta',
   medium: 'Confidenza media',
   low: 'Confidenza bassa',
+};
+
+/** Condivisa fra la pagina di analisi e la scheda salvata in inventario:
+ * lo stesso verdetto deve leggersi identico ovunque compaia. */
+export const RECOMMENDATION_STYLES: Record<Recommendation, { tone: string; label: string }> = {
+  BUY: { tone: 'bg-accent-soft text-accent', label: 'Compralo' },
+  MAYBE: { tone: 'bg-warn-soft text-warn', label: 'Forse' },
+  PASS: { tone: 'bg-danger-soft text-danger', label: 'Lascia stare' },
+};
+
+/** Variante per quando il verdetto compare dentro un blocco gia' verde
+ * (il cartellino del prezzo): il tono "soft" di RECOMMENDATION_STYLES
+ * sparirebbe su quello sfondo, specialmente BUY su BUY. */
+export const RECOMMENDATION_STYLES_ON_VIVID: Record<Recommendation, { tone: string; label: string }> = {
+  BUY: { tone: 'bg-background text-accent', label: 'Compralo' },
+  MAYBE: { tone: 'bg-background text-warn', label: 'Forse' },
+  PASS: { tone: 'bg-background text-danger', label: 'Lascia stare' },
 };

@@ -2,12 +2,7 @@
 
 import type { ReactNode } from 'react';
 
-import type {
-  AnalysisResult,
-  MarketSource,
-  Recommendation,
-  WeightedComparable,
-} from '@/schemas/analysis';
+import type { AnalysisResult, MarketSource, WeightedComparable } from '@/schemas/analysis';
 import { Card, Disclosure, Pill } from '@/components/ui';
 import {
   CONDITION_LABELS,
@@ -15,6 +10,7 @@ import {
   DEMAND_LABELS,
   LIQUIDITY_LABELS,
   MATCH_LABELS,
+  RECOMMENDATION_STYLES,
   formatDate,
   formatEur,
   formatRange,
@@ -31,12 +27,6 @@ function describeMarketSource(source: MarketSource): string {
   if (source.ageDays === 1) return 'Ricerca riusata, fatta ieri per lo stesso modello.';
   return `Ricerca riusata, fatta ${source.ageDays} giorni fa per lo stesso modello.`;
 }
-
-const RECOMMENDATION_STYLES: Record<Recommendation, { tone: string; label: string }> = {
-  BUY: { tone: 'bg-accent-soft text-accent', label: 'Compralo' },
-  MAYBE: { tone: 'bg-warn-soft text-warn', label: 'Forse' },
-  PASS: { tone: 'bg-danger-soft text-danger', label: 'Lascia stare' },
-};
 
 function ComparableRow({ item }: { item: WeightedComparable }) {
   const { comparable } = item;

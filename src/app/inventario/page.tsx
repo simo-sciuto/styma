@@ -13,22 +13,8 @@ export default async function InventoryPage() {
   const result = await listInventory();
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-5 pb-20 pt-8">
-      <Link href="/" className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
-        ← STYMA
-      </Link>
-
-      <div className="mt-6 flex items-baseline justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Inventario</h1>
-        <div className="flex gap-4 text-sm">
-          <Link href="/account" className="underline decoration-line underline-offset-4">
-            Account
-          </Link>
-          <Link href="/analizza" className="underline decoration-line underline-offset-4">
-            Analizza
-          </Link>
-        </div>
-      </div>
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-5 pb-20 pt-6">
+      <h1 className="text-3xl font-semibold leading-[0.95] tracking-tighter">Inventario</h1>
 
       {result.status === 'not_configured' ? (
         <Card className="mt-6">
@@ -60,7 +46,7 @@ export default async function InventoryPage() {
             <li key={item.id}>
               <Link
                 href={`/inventario/${item.id}`}
-                className="flex gap-4 rounded-3xl border border-line bg-surface p-4 transition hover:border-accent"
+                className="flex gap-4 rounded-block border border-line bg-surface p-4 transition hover:border-tile-teal hover:shadow-sm"
               >
                 {coverUrl ? (
                   <Image
