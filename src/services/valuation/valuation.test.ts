@@ -275,13 +275,28 @@ describe('annunci attivi e dati fuori scala', () => {
     expect(result.likely).toBeGreaterThan(100);
   });
 
-  it('non supera mai "low" senza una vendita confermata', () => {
+  it('con un campione ampio e concorde arriva a "medium" anche senza vendite confermate', () => {
+    // Deciso il 2026-09-09: un tetto fisso a "low" nascondeva la differenza fra
+    // due annunci deboli e trenta concordi sullo stesso modello. Ora il
+    // campione puo' farsi valere, ma solo fino a un punto — vedi il test dopo.
     const many = Array.from({ length: 10 }, () => listing(150, { matchLevel: 'exact_model' }));
     const result = valuate(identification, market(many));
 
     expect(result.available).toBe(true);
     if (!result.available) return;
-    expect(result.confidence).toBe('low');
+    expect(result.confidence).not.toBe('low');
+  });
+
+  it('non arriva mai a "high" senza almeno una vendita confermata', () => {
+    // Per quanto il campione sia grande e concorde, resta un'incertezza che
+    // nessun numero di annunci puo' colmare: quanto si scende dal prezzo
+    // richiesto e' un coefficiente assunto, non misurato su questo oggetto.
+    const many = Array.from({ length: 40 }, () => listing(150, { matchLevel: 'exact_model' }));
+    const result = valuate(identification, market(many));
+
+    expect(result.available).toBe(true);
+    if (!result.available) return;
+    expect(result.confidence).not.toBe('high');
   });
 
   it('scarta un prezzo fuori scala invece di lasciarlo spostare la media', () => {

@@ -191,14 +191,20 @@ export function valuate(
   );
 
   /**
-   * Senza nemmeno una vendita conclusa la confidenza non puo' superare "low",
-   * per quanti annunci concordi ci siano: sotto ci sono due incertezze
-   * sovrapposte — quanto valgono davvero quegli oggetti, e quanto si scende dal
-   * cartellino, che e' un coefficiente assunto e non misurato. Il tetto e'
-   * espresso rispetto alla soglia dell'etichetta, non con un numero scelto a
-   * mano che le finirebbe sopra al primo ritocco.
+   * Senza nemmeno una vendita conclusa la confidenza non puo' superare
+   * "medium", mai "high": quel gradino resta riservato a chi ha visto un
+   * prezzo davvero pagato. Fino al 2026-09-09 il tetto era piu' basso e
+   * bloccava tutto su "low" a prescindere dal campione — ma un'identificazione
+   * sicura, decine di annunci concordi sullo stesso modello e una dispersione
+   * bassa sono un'evidenza reale anche senza una vendita confermata, e
+   * trattarli sempre come "poco affidabili" nascondeva quella differenza.
+   * Restano due incertezze sovrapposte — quanto valgono davvero quegli
+   * oggetti, e quanto si scende dal cartellino, che e' un coefficiente assunto
+   * e non misurato — motivo per cui il soffitto resta "medium" e non piu' su.
+   * Il tetto e' espresso rispetto alla soglia dell'etichetta, non con un
+   * numero scelto a mano che le finirebbe sopra al primo ritocco.
    */
-  const noSoldDataCap = valuationConfig.confidenceLabelThresholds.medium - 0.01;
+  const noSoldDataCap = valuationConfig.confidenceLabelThresholds.high - 0.01;
   let confidenceScore = soldCount === 0 ? Math.min(cappedBySample, noSoldDataCap) : cappedBySample;
 
   // Comparabili di categoria e non di modello: la forbice e' un ordine di
