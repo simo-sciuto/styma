@@ -1,66 +1,89 @@
 @import "tailwindcss";
 
 /**
- * Palette derivata da mindmarket.com (estratta dal CSS reale del sito, non a
- * memoria): base crema calda, inchiostro quasi-nero caldo invece di un nero
- * puro, un solo accento vivido usato a blocco pieno nei momenti che contano
- * — non cinque colori decorativi come sul sito di partenza, perche' qui la
- * domanda non e' "che sezione sto leggendo" ma "conviene comprarlo": un solo
- * segnale forte batte una tavolozza intera.
+ * Seconda revisione. La prima aveva preso solo la palette del sito di
+ * riferimento (mindmarket.com) senza una voce propria: sembrava un altro
+ * sito SaaS con lo sfondo color crema. Qui la palette e' rifatta da capo
+ * attorno a un'idea sola — un cartellino del prezzo, quello che un
+ * rigattiere lega a un oggetto — non un dashboard.
  *
- * `--accent` resta scuro e leggibile come testo su sfondo chiaro (etichette,
- * link, icone). `--accent-vivid` e' il verde pieno del sito di riferimento
- * (#8ed462): usato solo come sfondo a blocco — mai come testo, dove la resa
- * sarebbe illeggibile — per il verdetto BUY e per il numero del prezzo, gli
- * unici due punti dell'app dove un colpo d'occhio deve bastare.
+ * Sfondo caldo da carta kraft, non crema chiara: si vede, non solo si
+ * dichiara "neutro sul serio". Inchiostro quasi-nero con una base calda
+ * (bruno, non grigio-verde) per tutto il testo. Un solo colore ha un
+ * significato — il verde di --accent-vivid, riservato al prezzo e al
+ * verdetto BUY — il teal e il terracotta sono ritmo decorativo sui tile,
+ * mai su un numero che conta.
  */
 :root {
-  --background: #f7f4ec;
-  --surface: #ffffff;
-  --surface-warm: #f5f1e4;
-  --foreground: #262a24;
-  --muted: #6f6b5c;
-  --border: #e3dcc9;
-  --accent: #3f7a2e;
-  --accent-vivid: #8ed462;
-  --accent-on-vivid: #1c2e12;
-  --accent-soft: #e9f3df;
-  --warn: #9a5c12;
-  --warn-soft: #fbf1dd;
-  --danger: #c2402a;
-  --danger-soft: #fbe9e4;
+  --background: #eee0c2;
+  --surface: #fffaf0;
+  --surface-warm: #e4d3a8;
+  --foreground: #241c10;
+  --muted: #6b5b3f;
+  --border: #d6c391;
+  --accent: #3c6b1f;
+  --accent-vivid: #63b83f;
+  --accent-on-vivid: #16260c;
+  --accent-soft: #e3f0d7;
+  --warn: #8f4e10;
+  --warn-soft: #f7ecd3;
+  --danger: #a83a24;
+  --danger-soft: #f6e2da;
   /**
-   * Le altre due tinte del sito di riferimento, usate solo come sfondo a
-   * blocco piatto sui tile decorativi (i tre passi "come funziona"): non
-   * portano un significato come --accent-vivid, sono ritmo visivo. Fisse
-   * fra chiaro e scuro apposta, come --accent-vivid/--accent-on-vivid: un
-   * blocco di colore deve restare leggibile a prescindere dal tema attivo.
+   * Colori dei tile decorativi (i tre passi "come funziona"): fissi fra
+   * chiaro e scuro, come --accent-vivid — un blocco di colore deve restare
+   * leggibile a prescindere dal tema attivo. --tile-cream e --tile-ink sono
+   * i due soli testi ammessi sopra questi sfondi, scelti per contrasto,
+   * mai il --foreground del tema (che su teal o terracotta illeggibile).
    */
-  --tile-blue: #2ba0ff;
-  --tile-pink: #ebc1ff;
-  --tile-ink: #20231d;
+  --tile-teal: #155f59;
+  --tile-terracotta: #cf7a44;
+  --tile-ink: #241c10;
+  --tile-cream: #f8ecd2;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #16150f;
-    --surface: #1f1e17;
-    --surface-warm: #26241a;
-    --foreground: #f3f1e6;
-    --muted: #a8a390;
-    --border: #34311f;
-    --accent: #8ed462;
-    --accent-vivid: #8ed462;
-    --accent-on-vivid: #1c2e12;
-    --accent-soft: #253319;
-    --warn: #e3b45f;
-    --warn-soft: #332711;
-    --danger: #e88a7d;
-    --danger-soft: #3a1e19;
-    --tile-blue: #2ba0ff;
-    --tile-pink: #ebc1ff;
-    --tile-ink: #20231d;
+  :root:not([data-theme="light"]) {
+    --background: #171009;
+    --surface: #211809;
+    --surface-warm: #2a1f0f;
+    --foreground: #f2e6c9;
+    --muted: #b7a480;
+    --border: #3c2f18;
+    --accent: #7fcf57;
+    --accent-vivid: #63b83f;
+    --accent-on-vivid: #16260c;
+    --accent-soft: #24371a;
+    --warn: #e3ab5c;
+    --warn-soft: #3a2a10;
+    --danger: #e2896b;
+    --danger-soft: #3c1c12;
+    --tile-teal: #155f59;
+    --tile-terracotta: #cf7a44;
+    --tile-ink: #241c10;
+    --tile-cream: #f8ecd2;
   }
+}
+
+:root[data-theme="dark"] {
+  --background: #171009;
+  --surface: #211809;
+  --surface-warm: #2a1f0f;
+  --foreground: #f2e6c9;
+  --muted: #b7a480;
+  --border: #3c2f18;
+  --accent: #7fcf57;
+  --accent-vivid: #63b83f;
+  --accent-on-vivid: #16260c;
+  --accent-soft: #24371a;
+  --warn: #e3ab5c;
+  --warn-soft: #3a2a10;
+  --danger: #e2896b;
+  --danger-soft: #3c1c12;
+  --tile-teal: #155f59;
+  --tile-terracotta: #cf7a44;
+  --tile-ink: #241c10;
+  --tile-cream: #f8ecd2;
 }
 
 @theme inline {
@@ -78,24 +101,59 @@
   --color-warn-soft: var(--warn-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
-  --color-tile-blue: var(--tile-blue);
-  --color-tile-pink: var(--tile-pink);
+  --color-tile-teal: var(--tile-teal);
+  --color-tile-terracotta: var(--tile-terracotta);
   --color-tile-ink: var(--tile-ink);
+  --color-tile-cream: var(--tile-cream);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   /**
    * Raggio generoso per i blocchi che devono leggersi come una dichiarazione
-   * — il prezzo, il verdetto — non come una scheda qualunque. Piu' arrotondato
-   * di una Card normale (rounded-3xl), ma lontano dai 35-50px del sito di
-   * riferimento: su una card larga quanto un telefono sembrerebbero una bolla.
+   * — il prezzo, il verdetto, i tile decorativi — non come una scheda
+   * qualunque.
    */
   --radius-block: 1.75rem;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
+  /* Vignetta calda in alto + grana leggerissima: uno sfondo piatto a
+     tinta unica e' quello che ci veniva rimproverato ("troppo neutro").
+     Nessuna immagine da scaricare — solo gradiente e rumore SVG inline,
+     al 4% di opacita': si sente, non si vede come texture a se'. */
+  background-image:
+    radial-gradient(
+      ellipse 140% 60% at 50% -20%,
+      color-mix(in srgb, var(--surface-warm) 70%, transparent),
+      transparent 65%
+    ),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-attachment: fixed, fixed;
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/**
+ * Il cartellino: la forma di un vero prezzo appeso a un oggetto, riservata
+ * al blocco che porta il numero piu' importante della pagina. Un solo
+ * rischio visivo speso in un punto solo, non ripetuto ovunque.
+ */
+.price-tag {
+  position: relative;
+  clip-path: polygon(0 0, 92% 0, 100% 50%, 92% 100%, 0 100%);
+  padding-right: calc(var(--spacing, 0.25rem) * 5) !important;
+}
+.price-tag::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 6%;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: var(--background);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+  transform: translateY(-50%);
 }
 
 @keyframes styma-pulse {

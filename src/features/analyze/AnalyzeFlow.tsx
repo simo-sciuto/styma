@@ -186,7 +186,7 @@ export function AnalyzeFlow() {
   return (
     <div className="mt-6 space-y-5">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Analizza un oggetto</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Fotografa l’oggetto</h1>
         <p className="mt-1 text-sm text-muted">
           Da 4 a 8 foto danno il risultato migliore. Se l’oggetto e’ evidente, ne bastano meno.
         </p>

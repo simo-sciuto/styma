@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useRef, useState, type DragEvent } from 'react';
 import { MAX_IMAGES } from '@/lib/uploads';
 import { prepareImages, type PreparedImage } from '@/lib/images';
+import { Button, Pill } from '@/components/ui';
 
 const GUIDANCE = [
   'Fronte',
@@ -67,8 +68,8 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
-        className={`rounded-3xl border-2 border-dashed p-6 text-center transition ${
-          dragging ? 'border-accent bg-accent-soft' : 'border-line bg-surface'
+        className={`rounded-block border-2 border-dashed p-8 text-center transition ${
+          dragging ? 'border-tile-teal bg-accent-soft' : 'border-line bg-surface'
         } ${disabled ? 'opacity-60' : ''}`}
       >
         <input
@@ -83,14 +84,24 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
           }}
         />
 
-        <button
+        <div
+          aria-hidden
+          className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-tile-teal text-tile-cream"
+        >
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" />
+            <circle cx="12" cy="13" r="3.4" />
+          </svg>
+        </div>
+
+        <Button
           type="button"
+          className="mt-4"
           disabled={disabled || full || busy}
           onClick={() => inputRef.current?.click()}
-          className="rounded-full bg-foreground px-6 py-3 text-base font-medium text-background transition hover:opacity-90 disabled:opacity-40"
         >
           {busy ? 'Preparo le foto…' : images.length === 0 ? 'Scatta o scegli le foto' : 'Aggiungi foto'}
-        </button>
+        </Button>
 
         <p className="mt-3 text-sm text-muted">
           {images.length}/{MAX_IMAGES} foto · trascina qui i file su desktop
@@ -106,36 +117,43 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
       ) : null}
 
       {images.length > 0 ? (
-        <ul className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
+        <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {images.map((image, index) => (
-            <li key={image.id} className="group relative overflow-hidden rounded-2xl border border-line">
-              <Image
-                src={image.previewUrl}
-                alt={`Foto ${index + 1}`}
-                width={200}
-                height={200}
-                unoptimized
-                className="aspect-square w-full object-cover"
-              />
-              <span className="absolute left-1 top-1 rounded bg-background/80 px-1.5 py-0.5 font-mono text-[10px]">
-                {index + 1}
-              </span>
+            <li
+              key={image.id}
+              className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm"
+            >
+              <div className="relative">
+                <Image
+                  src={image.previewUrl}
+                  alt={`Foto ${index + 1}`}
+                  width={200}
+                  height={200}
+                  unoptimized
+                  className="aspect-square w-full object-cover"
+                />
+                <span className="absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-tile-teal font-mono text-xs text-tile-cream">
+                  {index + 1}
+                </span>
+              </div>
               {!disabled ? (
-                <div className="absolute inset-x-1 bottom-1 flex justify-between gap-1">
-                  <div className="flex gap-1">
+                <div className="flex items-center justify-between gap-1 border-t border-line px-1.5 py-1">
+                  <div className="flex">
                     <button
                       type="button"
                       onClick={() => move(index, -1)}
+                      disabled={index === 0}
                       aria-label={`Sposta la foto ${index + 1} indietro`}
-                      className="rounded bg-background/85 px-1.5 text-xs"
+                      className="rounded-full px-2.5 py-1.5 text-sm text-muted transition hover:bg-accent-soft hover:text-foreground disabled:opacity-30"
                     >
                       ←
                     </button>
                     <button
                       type="button"
                       onClick={() => move(index, 1)}
+                      disabled={index === images.length - 1}
                       aria-label={`Sposta la foto ${index + 1} avanti`}
-                      className="rounded bg-background/85 px-1.5 text-xs"
+                      className="rounded-full px-2.5 py-1.5 text-sm text-muted transition hover:bg-accent-soft hover:text-foreground disabled:opacity-30"
                     >
                       →
                     </button>
@@ -144,9 +162,9 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
                     type="button"
                     onClick={() => remove(image.id)}
                     aria-label={`Rimuovi la foto ${index + 1}`}
-                    className="rounded bg-background/85 px-1.5 text-xs text-danger"
+                    className="rounded-full px-2.5 py-1.5 text-sm text-danger transition hover:bg-danger-soft"
                   >
-                    ✕
+                    Rimuovi
                   </button>
                 </div>
               ) : null}
@@ -155,15 +173,13 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
         </ul>
       ) : null}
 
-      <div className="mt-4 rounded-3xl border border-line bg-surface p-4">
+      <div className="mt-4 rounded-block border border-line bg-surface p-4">
         <p className="text-sm font-medium">Cosa fotografare</p>
-        <ul className="mt-2 flex flex-wrap gap-2 text-xs text-muted">
+        <div className="mt-2 flex flex-wrap gap-1.5">
           {GUIDANCE.map((item) => (
-            <li key={item} className="rounded-full border border-line px-2.5 py-1">
-              {item}
-            </li>
+            <Pill key={item}>{item}</Pill>
           ))}
-        </ul>
+        </div>
         <p className="mt-3 text-xs text-muted">
           Il marchio sotto la base e i difetti sono gli scatti che cambiano di piu’ il risultato.
         </p>

@@ -113,10 +113,10 @@ export function ResultView({
       </Card>
 
       {valuation.available ? (
-        // L'unico altro punto oltre al verdetto BUY che si guadagna il blocco
-        // a colore pieno: e' il numero su cui si decide tutto, deve leggersi
-        // prima di ogni altra riga della pagina.
-        <div className="rounded-block bg-accent-vivid p-6 text-accent-on-vivid">
+        // Il numero su cui si decide tutto prende la forma di un vero
+        // cartellino del prezzo — l'unico rischio visivo della pagina,
+        // speso qui e da nessun'altra parte.
+        <div className="price-tag rounded-block bg-accent-vivid p-6 text-accent-on-vivid">
           <p className="text-sm font-medium">Valore di rivendita stimato</p>
           <p className="mt-1 text-4xl font-semibold tracking-tight sm:text-5xl">
             {formatRange(valuation.low, valuation.high)}
