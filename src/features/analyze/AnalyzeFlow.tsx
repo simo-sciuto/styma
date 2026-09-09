@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { Button, Card, Field } from '@/components/ui';
+import { Button, Card, Field, PageHeader } from '@/components/ui';
 import { readAnalysisEvents } from '@/lib/analysis-stream';
 import type { PreparedImage } from '@/lib/images';
 import type { AnalysisResult } from '@/schemas/analysis';
@@ -186,12 +186,10 @@ export function AnalyzeFlow() {
 
   return (
     <div className="mt-6 space-y-5">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Fotografa l’oggetto</h1>
-        <p className="mt-1 text-sm text-muted">
-          Da 4 a 8 foto danno il risultato migliore. Se l’oggetto e’ evidente, ne bastano meno.
-        </p>
-      </div>
+      <PageHeader
+        title="Fotografa l’oggetto"
+        subtitle="Da 4 a 8 foto danno il risultato migliore. Se l’oggetto e’ evidente, ne bastano meno."
+      />
 
       <PhotoPicker images={images} onChange={setImages} disabled={busy} />
 

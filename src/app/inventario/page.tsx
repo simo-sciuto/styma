@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { Card, Pill } from '@/components/ui';
+import { Card, PageHeader, Pill } from '@/components/ui';
 import { formatEur, formatRange } from '@/lib/format';
 import { listInventory } from '@/services/inventory/repository';
 import { ITEM_STATUS_LABELS } from '@/services/inventory/types';
@@ -14,7 +14,10 @@ export default async function InventoryPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-5 pb-20 pt-6">
-      <h1 className="text-3xl font-semibold leading-[0.95] tracking-tighter">Inventario</h1>
+      <PageHeader
+        title="Inventario"
+        subtitle="Ogni oggetto con la valutazione che aveva il giorno in cui l’hai salvato."
+      />
 
       {result.status === 'not_configured' ? (
         <Card className="mt-6">

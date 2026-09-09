@@ -20,13 +20,17 @@ export function Pill({
   tone = 'neutral',
 }: {
   children: ReactNode;
-  tone?: 'neutral' | 'accent' | 'warn' | 'danger';
+  tone?: 'neutral' | 'accent' | 'warn' | 'danger' | 'onTile';
 }) {
   const tones = {
     neutral: 'border-line text-muted',
     accent: 'border-transparent bg-accent-soft text-accent',
     warn: 'border-transparent bg-warn-soft text-warn',
     danger: 'border-transparent bg-danger-soft text-danger',
+    // Per quando la pillola sta sopra un tile a colore pieno (teal,
+    // terracotta): tile-cream/tile-ink sono fissi fra i temi, come i tile
+    // stessi — text-muted o border-line ci sparirebbero sotto.
+    onTile: 'border-transparent bg-tile-cream text-tile-ink',
   } as const;
 
   return (
@@ -70,6 +74,34 @@ export function Disclosure({ summary, children }: { summary: string; children: R
       </summary>
       <div className="border-t border-line px-5 py-4 text-sm">{children}</div>
     </details>
+  );
+}
+
+/**
+ * Lo stesso linguaggio dell'hero della home, in formato pagina: blocco a
+ * colore pieno, titolo enorme e stretto — cosi' le pagine "utility"
+ * (analizza, inventario, account) non sembrano un'altra app rispetto alla
+ * home solo perche' sono dense. Teal e' il colore "si comincia qui" —
+ * stesso ruolo del pulsante primario e della nav attiva.
+ */
+export function PageHeader({
+  title,
+  subtitle,
+  tone = 'teal',
+}: {
+  title: string;
+  subtitle?: string;
+  tone?: 'teal' | 'terracotta';
+}) {
+  const toneClass = tone === 'teal' ? 'bg-tile-teal text-tile-cream' : 'bg-tile-terracotta text-tile-ink';
+
+  return (
+    <div className={`rounded-block px-6 py-8 sm:py-10 ${toneClass}`}>
+      <h1 className="text-[clamp(2rem,1.6rem+2vw,3rem)] font-semibold leading-[0.95] tracking-tighter text-balance">
+        {title}
+      </h1>
+      {subtitle ? <p className="mt-2 max-w-md text-sm sm:text-base">{subtitle}</p> : null}
+    </div>
   );
 }
 

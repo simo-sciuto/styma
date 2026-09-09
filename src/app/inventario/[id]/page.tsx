@@ -77,17 +77,26 @@ export default async function ItemPage({ params }: PageProps<'/inventario/[id]'>
         </div>
       ) : null}
 
-      <h1 className="mt-6 text-3xl font-semibold leading-[0.95] tracking-tight">{item.title}</h1>
-      <p className="mt-1 text-sm text-muted">
-        {[item.category, item.brand, item.model, item.estimated_period].filter(Boolean).join(' · ')}
-      </p>
+      {/* Stesso terracotta del blocco identificazione in analisi: stesso
+          ruolo, sempre — cosi' la scheda salvata non sembra un'altra app
+          rispetto al risultato appena visto. */}
+      <div className="mt-6 rounded-block bg-tile-terracotta p-6 text-tile-ink">
+        <h1 className="text-3xl font-semibold leading-[0.95] tracking-tight">{item.title}</h1>
+        <p className="mt-1 text-sm">
+          {[item.category, item.brand, item.model, item.estimated_period].filter(Boolean).join(' · ')}
+        </p>
 
-      <div className="mt-3 flex flex-wrap gap-1.5">
-        <Pill>{ITEM_STATUS_LABELS[item.status]}</Pill>
-        {item.condition ? <Pill>{CONDITION_LABELS[item.condition] ?? item.condition}</Pill> : null}
-        {item.identification_confidence !== null ? (
-          <Pill>Identificazione {Math.round(item.identification_confidence * 100)}%</Pill>
-        ) : null}
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          <Pill tone="onTile">{ITEM_STATUS_LABELS[item.status]}</Pill>
+          {item.condition ? (
+            <Pill tone="onTile">{CONDITION_LABELS[item.condition] ?? item.condition}</Pill>
+          ) : null}
+          {item.identification_confidence !== null ? (
+            <Pill tone="onTile">
+              Identificazione {Math.round(item.identification_confidence * 100)}%
+            </Pill>
+          ) : null}
+        </div>
       </div>
 
       <div className="mt-5 space-y-4">

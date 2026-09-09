@@ -91,13 +91,19 @@ export function ResultView({
         </div>
       ) : null}
 
-      <Card>
+      {/*
+        Terracotta: lo stesso colore del tile "Identifica" in home — lo
+        stesso ruolo, sempre. Un blocco pieno come il prezzo e il verdetto,
+        non una Card neutra, cosi' la pagina di risultato non sembra
+        un'altra app rispetto alla home.
+      */}
+      <div className="rounded-block bg-tile-terracotta p-6 text-tile-ink">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="text-3xl font-semibold leading-[0.95] tracking-tight">
               {identification.name}
             </h1>
-            <p className="mt-1 text-sm text-muted">
+            <p className="mt-1 text-sm">
               {[
                 identification.category,
                 identification.brand,
@@ -120,7 +126,7 @@ export function ResultView({
             Identificazione {Math.round(identification.confidence * 100)}%
           </Pill>
         </div>
-      </Card>
+      </div>
 
       {valuation.available ? (
         // Il numero su cui si decide tutto prende la forma di un vero

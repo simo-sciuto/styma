@@ -73,9 +73,10 @@ export const RECOMMENDATION_STYLES: Record<Recommendation, { tone: string; label
 
 /** Variante per quando il verdetto compare dentro un blocco gia' verde
  * (il cartellino del prezzo): il tono "soft" di RECOMMENDATION_STYLES
- * sparirebbe su quello sfondo, specialmente BUY su BUY. */
+ * sparirebbe su quello sfondo, specialmente BUY su BUY. bg-tile-cream
+ * invece di bg-background: fisso fra i temi, come il blocco che lo ospita. */
 export const RECOMMENDATION_STYLES_ON_VIVID: Record<Recommendation, { tone: string; label: string }> = {
-  BUY: { tone: 'bg-background text-accent', label: 'Compralo' },
-  MAYBE: { tone: 'bg-background text-warn', label: 'Forse' },
-  PASS: { tone: 'bg-background text-danger', label: 'Lascia stare' },
+  BUY: { tone: 'bg-tile-cream text-accent', label: 'Compralo' },
+  MAYBE: { tone: 'bg-tile-cream text-warn', label: 'Forse' },
+  PASS: { tone: 'bg-tile-cream text-danger', label: 'Lascia stare' },
 };
