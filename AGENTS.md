@@ -111,6 +111,12 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
 - **Le inserzioni attive sono `asking`, mai `sold`.** La Browse API restituisce annunci in corso.
   Spacciarli per vendite concluse sarebbe la bugia piu' facile da fare qui, e la piu' costosa: il
   peso di una vendita conclusa e' quasi il doppio.
+- **`similar_category` non e' un livello di somiglianza qualunque: e' il caso in cui non c'e'
+  nessuna prova.** Senza marca ne' modello da confermare, un errore di corrispondenza di eBay (una
+  ricerca di "borsa" che risponde con un trolley) entrerebbe come comparabile valido quanto uno
+  vero. `isRelevantTitle` in `market-data/ebay/mapping.ts` richiede almeno una parola vera in
+  comune con la query prima di accettarlo; scatta solo a `similar_category`, perche' altrove marca
+  o modello sono gia' una prova migliore del testo libero.
 - **Una ricerca riusata si dichiara.** La cache riusa i comparabili di un modello gia' cercato
   (30 giorni per il modernariato, 14 per il medio, 7 per l'elettronica, che si deprezza a gradini).
   L'interfaccia dice sempre quanti giorni ha la ricerca: un dato riusato che sembra fresco e'

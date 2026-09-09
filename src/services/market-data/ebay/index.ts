@@ -97,7 +97,7 @@ async function searchMarketplace(
   if (!parsed.success) return [];
 
   return (parsed.data.itemSummaries ?? [])
-    .map((item) => toComparable(item, identification.brand, identification.model))
+    .map((item) => toComparable(item, identification.brand, identification.model, query))
     .filter((comparable): comparable is Comparable => comparable !== null);
 }
 

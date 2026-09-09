@@ -96,6 +96,41 @@ export function inferMatchLevel(
   return 'similar_category';
 }
 
+/**
+ * Parole troppo comuni per contare come prova di pertinenza: compaiono tanto
+ * su una pochette quanto su un trolley, messe li' da chi vende per farsi
+ * trovare, non perche' descrivano l'oggetto.
+ */
+const GENERIC_TOKENS = new Set([
+  'vintage', 'anni', 'anno', 'style', 'stile', 'originale', 'original',
+  'nuovo', 'nuova', 'new', 'usato', 'usata', 'used', 'con', 'per', 'with',
+  'from', 'della', 'delle', 'dello', 'degli', 'del', 'the', 'and',
+]);
+
+/**
+ * Se il titolo di un'inserzione ha almeno una parola in comune con la query
+ * che l'ha trovata.
+ *
+ * Serve solo quando marca e modello non dicono nulla sull'inserzione — un
+ * vaso senza punzone, una borsa senza marca — perche' in quel caso
+ * `similar_category` e' l'unico livello possibile qualunque cosa eBay abbia
+ * restituito. Una ricerca di "borsa" che risponde con un trolley e' un
+ * errore di corrispondenza di eBay, non un comparabile debole: senza questo
+ * controllo entrerebbe con lo stesso peso di uno vero, e nessun numero a
+ * valle lo distinguerebbe.
+ */
+export function isRelevantTitle(title: string, query: string): boolean {
+  const queryTokens = normalize(query)
+    .split(' ')
+    .filter((token) => token.length >= 4 && !GENERIC_TOKENS.has(token));
+  // Niente da confrontare (query cortissima, o solo parole generiche): si
+  // lascia decidere al resto della pipeline invece di rifiutare alla cieca.
+  if (queryTokens.length === 0) return true;
+
+  const haystack = normalize(title);
+  return queryTokens.some((token) => haystack.includes(token));
+}
+
 function toCurrency(raw: string): Currency | null {
   return (CURRENCIES as readonly string[]).includes(raw) ? (raw as Currency) : null;
 }
@@ -112,6 +147,7 @@ export function toComparable(
   raw: unknown,
   brand: string | null,
   model: string | null,
+  query: string,
 ): Comparable | null {
   const parsed = EbayItemSummarySchema.safeParse(raw);
   if (!parsed.success) return null;
@@ -123,6 +159,14 @@ export function toComparable(
   const currency = toCurrency(item.price.currency);
   if (currency === null) return null;
 
+  const matchLevel = inferMatchLevel(item.title, brand, model);
+  // Sotto exact/family/brand marca e modello hanno gia' confermato qualcosa.
+  // Solo a similar_category non c'e' nessuna prova che il titolo c'entri
+  // con cio' che cercavamo: e' l'unico caso in cui vale la pena controllare.
+  if (matchLevel === 'similar_category' && !isRelevantTitle(item.title, query)) {
+    return null;
+  }
+
   return {
     title: item.title,
     source: 'eBay',
@@ -132,7 +176,7 @@ export function toComparable(
     kind: 'asking',
     soldAt: null,
     condition: mapCondition(item),
-    matchLevel: inferMatchLevel(item.title, brand, model),
+    matchLevel,
     notes: item.condition ? `Stato dichiarato: ${item.condition}` : '',
   };
 }
