@@ -19,6 +19,10 @@ export type ItemRow = {
   estimated_period: string | null;
   condition: string | null;
   identification_confidence: number | null;
+  materials: string[];
+  characteristics: string[];
+  condition_notes: string[];
+  markings: string[];
   purchase_price: number | null;
   purchase_currency: string;
   purchase_date: string | null;

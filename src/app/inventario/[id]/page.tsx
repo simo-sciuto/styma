@@ -6,6 +6,7 @@ import { Card, Disclosure, Pill } from '@/components/ui';
 import { CONDITION_LABELS, MATCH_LABELS, formatDate, formatEur, formatRange } from '@/lib/format';
 import { getItemDetail } from '@/services/inventory/repository';
 import { ITEM_STATUS_LABELS, describeSavedMarketSource } from '@/services/inventory/types';
+import { GenerateListing } from '@/features/listing/GenerateListing';
 
 export const dynamic = 'force-dynamic';
 
@@ -213,6 +214,8 @@ export default async function ItemPage({ params }: PageProps<'/inventario/[id]'>
             </ul>
           </Disclosure>
         ) : null}
+
+        <GenerateListing itemId={item.id} />
       </div>
     </main>
   );

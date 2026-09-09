@@ -97,6 +97,19 @@ export const aiConfig = {
     effort: null as 'low' | 'medium' | 'high' | null,
     maxTokens: 8000,
   },
+  /**
+   * Testo dell'annuncio, generato solo su richiesta da un oggetto gia' salvato
+   * e gia' identificato. Stessa scelta di modello dell'identificazione, per lo
+   * stesso motivo: qui il compito e' scrivere in italiano naturale a partire
+   * da fatti gia' verificati, non decidere nulla. Il prezzo non passa di qui:
+   * lo calcola `services/listing/price.ts` dalla valutazione salvata.
+   */
+  listing: {
+    model: 'claude-haiku-4-5-20251001',
+    fallbackModel: 'claude-opus-5',
+    effort: null as 'low' | 'medium' | 'high' | null,
+    maxTokens: 2000,
+  },
   research: {
     /**
      * Se la ricerca agentica puo' partire quando le fonti strutturate non

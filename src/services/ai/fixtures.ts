@@ -4,11 +4,14 @@ import path from 'node:path';
 
 import { IdentificationSchema, type Identification } from '@/schemas/identification';
 import { MarketResearchSchema } from '@/schemas/market';
+import { ListingCopySchema } from '@/schemas/listing';
 import { aiConfig } from './config';
 import {
   ProviderError,
   type IdentificationOutcome,
   type ImageInput,
+  type ListingFacts,
+  type ListingOutcome,
   type MarketResearchOutcome,
   type ObjectIntelligenceProvider,
   type ResearchOptions,
@@ -44,19 +47,37 @@ const researchKey = (identification: Identification) =>
     identification.name.toLowerCase().trim(),
   ]);
 
-function fixturePath(kind: 'identify' | 'research', key: string): string {
+const listingKey = (facts: ListingFacts) =>
+  digest([
+    facts.name,
+    facts.brand ?? '',
+    facts.model ?? '',
+    facts.condition ?? '',
+    facts.conditionNotes.join('|'),
+  ]);
+
+type FixtureKind = 'identify' | 'research' | 'listing';
+
+function fixturePath(kind: FixtureKind, key: string): string {
   return path.join(FIXTURE_DIR, `${kind}-${key}.json`);
 }
 
-function readFixture(kind: 'identify' | 'research', key: string): unknown | null {
+function readFixture(kind: FixtureKind, key: string): unknown | null {
   const file = fixturePath(kind, key);
   if (!existsSync(file)) return null;
   return JSON.parse(readFileSync(file, 'utf8'));
 }
 
-function writeFixture(kind: 'identify' | 'research', key: string, value: unknown): void {
+function writeFixture(kind: FixtureKind, key: string, value: unknown): void {
   mkdirSync(FIXTURE_DIR, { recursive: true });
   writeFileSync(fixturePath(kind, key), `${JSON.stringify(value, null, 2)}\n`);
+}
+
+function missingFixtureError(kind: FixtureKind, key: string, label: string): ProviderError {
+  return new ProviderError(
+    `Nessuna registrazione per ${label}. L'app sta rigiocando risposte salvate: riavvia senza STYMA_AI_FIXTURES per chiamare il modello davvero, oppure con STYMA_AI_RECORD=1 per registrare (file atteso: ${kind}-${key}.json).`,
+    'fixture_missing',
+  );
 }
 
 /**
@@ -71,12 +92,7 @@ export class FixtureProvider implements ObjectIntelligenceProvider {
   async identify(images: ImageInput[]): Promise<IdentificationOutcome> {
     const key = identifyKey(images);
     const raw = readFixture('identify', key);
-    if (raw === null) {
-      throw new ProviderError(
-        `Nessuna registrazione per queste foto. L'app sta rigiocando risposte salvate (STYMA_AI_FIXTURES=1) e questa immagine non e' fra quelle in bench/fixtures. Usa una foto di bench/photos, oppure riavvia senza STYMA_AI_FIXTURES per chiamare il modello davvero, oppure con STYMA_AI_RECORD=1 per registrare questa (file atteso: identify-${key}.json).`,
-        'fixture_missing',
-      );
-    }
+    if (raw === null) throw missingFixtureError('identify', key, 'queste foto');
 
     const parsed = IdentificationSchema.safeParse(raw);
     if (!parsed.success) {
@@ -97,10 +113,7 @@ export class FixtureProvider implements ObjectIntelligenceProvider {
     const key = researchKey(identification);
     const raw = readFixture('research', key);
     if (raw === null) {
-      throw new ProviderError(
-        `Nessuna registrazione di mercato per "${identification.name}". L'app sta rigiocando risposte salvate: riavvia senza STYMA_AI_FIXTURES per cercare davvero, o con STYMA_AI_RECORD=1 per registrare (file atteso: research-${key}.json).`,
-        'fixture_missing',
-      );
+      throw missingFixtureError('research', key, `il mercato di "${identification.name}"`);
     }
 
     const parsed = MarketResearchSchema.safeParse(raw);
@@ -124,6 +137,23 @@ export class FixtureProvider implements ObjectIntelligenceProvider {
     }
 
     return { research: parsed.data, warnings: [], usage: { ...NO_USAGE } };
+  }
+
+  async generateListing(facts: ListingFacts): Promise<ListingOutcome> {
+    const key = listingKey(facts);
+    const raw = readFixture('listing', key);
+    if (raw === null) throw missingFixtureError('listing', key, `l'annuncio di "${facts.name}"`);
+
+    const parsed = ListingCopySchema.safeParse(raw);
+    if (!parsed.success) {
+      throw new ProviderError(
+        `La registrazione listing-${key}.json non corrisponde piu' allo schema.`,
+        'invalid_response',
+        { cause: parsed.error },
+      );
+    }
+
+    return { listing: parsed.data, usage: { ...NO_USAGE } };
   }
 }
 
@@ -150,6 +180,14 @@ export class RecordingProvider implements ObjectIntelligenceProvider {
     const key = researchKey(identification);
     writeFixture('research', key, outcome.research);
     console.info(`[fixtures] registrato research-${key}.json`);
+    return outcome;
+  }
+
+  async generateListing(facts: ListingFacts): Promise<ListingOutcome> {
+    const outcome = await this.inner.generateListing(facts);
+    const key = listingKey(facts);
+    writeFixture('listing', key, outcome.listing);
+    console.info(`[fixtures] registrato listing-${key}.json`);
     return outcome;
   }
 }

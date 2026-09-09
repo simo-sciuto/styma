@@ -4,6 +4,7 @@ import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 
 import { IdentificationSchema, type Identification } from '@/schemas/identification';
 import { MarketResearchSchema, type MarketResearch } from '@/schemas/market';
+import { ListingCopySchema } from '@/schemas/listing';
 import { toStrictToolSchema } from '@/lib/json-schema';
 import { aiConfig, type ResearchLane } from '../config';
 import { mergeMarketResearch } from '../merge';
@@ -12,12 +13,14 @@ import {
   ProviderError,
   type IdentificationOutcome,
   type ImageInput,
+  type ListingFacts,
+  type ListingOutcome,
   type MarketResearchOutcome,
   type ObjectIntelligenceProvider,
   type ResearchOptions,
 } from '../provider';
 import { getAnthropicClient } from './client';
-import { IDENTIFICATION_SYSTEM_PROMPT, researchSystemPrompt } from './prompts';
+import { IDENTIFICATION_SYSTEM_PROMPT, LISTING_SYSTEM_PROMPT, researchSystemPrompt } from './prompts';
 
 const REPORT_TOOL_NAME = 'report_market_research';
 
@@ -83,6 +86,24 @@ function identificationBrief(identification: Identification): string {
     lines.push(`Query suggerite: ${identification.searchQueries.join(' | ')}`);
   }
 
+  return lines.join('\n');
+}
+
+function listingFactsBrief(facts: ListingFacts): string {
+  const lines = [
+    `Nome: ${facts.name}`,
+    `Categoria: ${facts.category ?? 'non specificata'}`,
+    `Marca: ${facts.brand ?? 'non identificata'}`,
+    `Modello: ${facts.model ?? 'non identificato'}`,
+    `Epoca: ${facts.period ?? 'non determinata'}`,
+    `Materiali: ${facts.materials.join(', ') || 'non specificati'}`,
+    `Caratteristiche: ${facts.characteristics.join('; ') || 'nessuna'}`,
+    `Marchi letti: ${facts.markings.join('; ') || 'nessuno'}`,
+    `Stato: ${facts.condition ?? 'non specificato'}${
+      facts.conditionNotes.length ? ` (${facts.conditionNotes.join('; ')})` : ''
+    }`,
+  ];
+  if (facts.history) lines.push(`Storia: ${facts.history}`);
   return lines.join('\n');
 }
 
@@ -172,6 +193,60 @@ export class AnthropicProvider implements ObjectIntelligenceProvider {
     }
 
     return { identification: response.parsed_output, usage: meter.totals };
+  }
+
+  async generateListing(facts: ListingFacts): Promise<ListingOutcome> {
+    try {
+      return await this.#generateListingWith(aiConfig.listing.model, facts);
+    } catch (error) {
+      // Stesso ripiego dell'identificazione, stessa ragione: il modello
+      // economico non e' verificato su questo compito specifico, e un 400
+      // di capacita' costa niente da correggere al volo.
+      if (!isCapabilityError(error)) throw toProviderError(error);
+
+      console.warn(
+        `[listing] ${aiConfig.listing.model} ha rifiutato la richiesta, si ripiega su ${aiConfig.listing.fallbackModel}.`,
+        error instanceof APIError ? error.message : error,
+      );
+      try {
+        return await this.#generateListingWith(aiConfig.listing.fallbackModel, facts);
+      } catch (fallbackError) {
+        throw toProviderError(fallbackError);
+      }
+    }
+  }
+
+  async #generateListingWith(model: string, facts: ListingFacts): Promise<ListingOutcome> {
+    const client = getAnthropicClient();
+
+    const response = await client.messages.parse({
+      model,
+      max_tokens: aiConfig.listing.maxTokens,
+      system: LISTING_SYSTEM_PROMPT,
+      output_config: {
+        ...(aiConfig.listing.effort === null ? {} : { effort: aiConfig.listing.effort }),
+        format: zodOutputFormat(ListingCopySchema),
+      },
+      messages: [
+        {
+          role: 'user',
+          content: `Scrivi l'annuncio per questo oggetto.\n\n${listingFactsBrief(facts)}`,
+        },
+      ],
+    });
+
+    const meter = new UsageMeter();
+    meter.add(model, response.usage);
+    console.info(describeUsage(`annuncio (${model})`, meter.totals));
+
+    if (response.stop_reason === 'refusal') {
+      throw new ProviderError('Il modello ha rifiutato di scrivere questo annuncio', 'invalid_response');
+    }
+    if (!response.parsed_output) {
+      throw new ProviderError('Il modello non ha restituito un annuncio valido', 'invalid_response');
+    }
+
+    return { listing: response.parsed_output, usage: meter.totals };
   }
 
   /**

@@ -16,7 +16,7 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
 ## Come e' organizzato
 
 - `src/app` — route e API. Le route orchestrano, non contengono logica di business.
-- `src/features` — componenti di flusso lato client (per ora solo `analyze`).
+- `src/features` — componenti di flusso lato client (`analyze`, `inventory`, `listing`, `auth`).
 - `src/components` — primitive UI riusabili.
 - `src/schemas` — schemi Zod per l'input esterno (output del modello) e tipi di dominio.
 - `src/services/ai` — integrazione col modello, isolata dietro `ObjectIntelligenceProvider`.
@@ -29,6 +29,9 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
 - `src/services/market-data` — fonti strutturate: eBay Browse API per le inserzioni con prezzo,
   Discogs per il catalogo musicale. Vengono prima della ricerca col modello, che parte solo se
   questi non bastano.
+- `src/services/listing` — prezzo suggerito per un annuncio (`price.ts`, puro e testato). Il testo
+  lo scrive il modello via `ObjectIntelligenceProvider.generateListing`, il prezzo mai: viene
+  sempre dalla valutazione gia' salvata.
 - `src/lib` — utilita' (upload, immagini, formattazione, rate limit) e client Supabase.
 - `supabase/migrations` — schema e policy RLS.
 
@@ -36,7 +39,14 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
 
 - **Il modello non decide il prezzo.** Identifica l'oggetto e trova comparabili; la valutazione
   e' aritmetica su quei dati, in `src/services/valuation`. Se i comparabili non ci sono, il
-  prodotto dice che non lo sa: non si inventa mai un numero per riempire la UI.
+  prodotto dice che non lo sa: non si inventa mai un numero per riempire la UI. Vale anche per
+  gli annunci: `generateListing` scrive testo da fatti gia' verificati, mai un prezzo — quello
+  arriva sempre da `services/listing/price.ts`, dalla valutazione salvata.
+- **Il modello non afferma cio' che non ha verificato.** Un test reale sulla generazione di
+  annunci ha prodotto "i meccanismi funzionano, la tastiera risponde bene" senza che nessuno
+  l'avesse mai controllato: un'invenzione uguale a un colore sbagliato, solo piu' facile da
+  scrivere senza accorgersene. Il prompt lo vieta esplicitamente ora; se si aggiungono altri
+  compiti di scrittura, va verificato di nuovo con un test vero, non solo letto sulla carta.
 - **Tutto cio' che arriva dal modello passa da uno schema Zod** prima di entrare nell'applicazione.
 - **Niente SDK inizializzati a livello di modulo**: `next build` valuta le route senza variabili
   d'ambiente e fallirebbe. Vedi `src/services/ai/anthropic/client.ts`.

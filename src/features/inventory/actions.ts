@@ -38,6 +38,13 @@ export async function saveAnalysis(
       estimated_period: identification.period,
       condition: identification.condition,
       identification_confidence: identification.confidence,
+      // Prima si perdevano al salvataggio: chi riapriva l'oggetto, o generava
+      // un annuncio da un pezzo gia' salvato, aveva meno da dire di quanto
+      // l'analisi avesse davvero visto.
+      materials: identification.materials,
+      characteristics: identification.characteristics,
+      condition_notes: identification.conditionNotes,
+      markings: identification.markings,
       purchase_price: purchasePrice,
       status: purchasePrice === null ? 'found' : 'bought',
     })

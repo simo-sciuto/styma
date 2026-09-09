@@ -1,5 +1,6 @@
 import type { Identification } from '@/schemas/identification';
 import type { MarketResearch } from '@/schemas/market';
+import type { ListingCopy } from '@/schemas/listing';
 import type { UsageTotals } from './usage';
 
 export type ImageInput = {
@@ -10,6 +11,31 @@ export type ImageInput = {
 
 export type IdentificationOutcome = {
   identification: Identification;
+  usage: UsageTotals;
+};
+
+/**
+ * Cio' che serve per scrivere un annuncio: solo fatti gia' verificati
+ * dall'identificazione originale, mai il prezzo. Disaccoppiato da `ItemRow`
+ * apposta — i servizi AI non devono sapere come sono salvati gli oggetti,
+ * solo cosa raccontarne.
+ */
+export type ListingFacts = {
+  name: string;
+  category: string | null;
+  brand: string | null;
+  model: string | null;
+  period: string | null;
+  condition: string | null;
+  materials: string[];
+  characteristics: string[];
+  conditionNotes: string[];
+  markings: string[];
+  history: string | null;
+};
+
+export type ListingOutcome = {
+  listing: ListingCopy;
   usage: UsageTotals;
 };
 
@@ -58,6 +84,7 @@ export interface ObjectIntelligenceProvider {
     identification: Identification,
     options?: ResearchOptions,
   ): Promise<MarketResearchOutcome>;
+  generateListing(facts: ListingFacts): Promise<ListingOutcome>;
 }
 
 export class ProviderError extends Error {
