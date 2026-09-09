@@ -84,7 +84,9 @@ export function ResultView({
       <Card>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold leading-tight">{identification.name}</h1>
+            <h1 className="text-3xl font-semibold leading-[0.95] tracking-tight">
+              {identification.name}
+            </h1>
             <p className="mt-1 text-sm text-muted">
               {[
                 identification.category,
