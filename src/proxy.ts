@@ -6,7 +6,7 @@ import { getSupabaseEnv } from '@/lib/supabase/env';
  * Tiene viva la sessione: senza questo passaggio il token scade e le pagine
  * server smettono di vedere l'utente.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const env = getSupabaseEnv();
   if (!env) return NextResponse.next({ request });
 

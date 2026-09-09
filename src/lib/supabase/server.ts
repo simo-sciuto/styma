@@ -22,7 +22,7 @@ export async function getServerSupabase() {
           }
         } catch {
           // In un Server Component i cookie sono in sola lettura: la sessione
-          // viene comunque rinfrescata dal middleware.
+          // viene comunque rinfrescata dal proxy.
         }
       },
     },
