@@ -64,7 +64,7 @@ export default async function ItemPage({ params }: PageProps<'/inventario/[id]'>
               width={200}
               height={200}
               unoptimized
-              className="h-32 w-32 shrink-0 rounded-xl border border-line object-cover"
+              className="h-32 w-32 shrink-0 rounded-2xl border border-line object-cover"
             />
           ))}
         </div>

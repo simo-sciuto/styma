@@ -111,21 +111,24 @@ export function ResultView({
       </Card>
 
       {valuation.available ? (
-        <Card>
-          <p className="text-sm text-muted">Valore di rivendita stimato</p>
-          <p className="mt-1 text-4xl font-semibold tracking-tight">
+        // L'unico altro punto oltre al verdetto BUY che si guadagna il blocco
+        // a colore pieno: e' il numero su cui si decide tutto, deve leggersi
+        // prima di ogni altra riga della pagina.
+        <div className="rounded-block bg-accent-vivid p-6 text-accent-on-vivid">
+          <p className="text-sm font-medium">Valore di rivendita stimato</p>
+          <p className="mt-1 text-4xl font-semibold tracking-tight sm:text-5xl">
             {formatRange(valuation.low, valuation.high)}
           </p>
-          <p className="mt-2 text-sm text-muted">
-            Piu’ probabile intorno a <strong className="text-foreground">{formatEur(valuation.likely)}</strong> ·{' '}
+          <p className="mt-2 text-sm">
+            Piu’ probabile intorno a <strong>{formatEur(valuation.likely)}</strong> ·{' '}
             {CONFIDENCE_LABELS[valuation.confidence]}
           </p>
-          <ul className="mt-3 space-y-1 text-xs text-muted">
+          <ul className="mt-3 space-y-1 text-xs">
             {valuation.reasons.map((reason) => (
               <li key={reason}>— {reason}</li>
             ))}
           </ul>
-        </Card>
+        </div>
       ) : (
         <Card className="border-warn/40 bg-warn-soft">
           <p className="text-sm font-medium text-warn">Valore non stimabile</p>
@@ -157,31 +160,53 @@ export function ResultView({
       {flip ? (
         <Card>
           {decision ? (
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <p className="text-sm text-muted">
-                  A {formatEur(decision.purchasePrice)} di prezzo di acquisto
-                </p>
-                <p
-                  className={`mt-1 inline-flex rounded-xl px-3 py-1.5 text-3xl font-semibold ${
-                    RECOMMENDATION_STYLES[decision.recommendation].tone
-                  }`}
-                >
-                  {RECOMMENDATION_STYLES[decision.recommendation].label}
-                </p>
+            decision.recommendation === 'BUY' ? (
+              // Il verdetto che conta di piu' si vede prima di leggerlo: stesso
+              // trattamento a blocco pieno del prezzo, non piu' una pillola fra
+              // le altre.
+              <div className="rounded-block bg-accent-vivid p-5 text-accent-on-vivid">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-medium">
+                      A {formatEur(decision.purchasePrice)} di prezzo di acquisto
+                    </p>
+                    <p className="mt-1 text-3xl font-semibold">
+                      {RECOMMENDATION_STYLES.BUY.label}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-mono text-3xl font-semibold">{decision.score}</p>
+                    <p className="text-xs">flip score / 100</p>
+                  </div>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="font-mono text-3xl font-semibold">{decision.score}</p>
-                <p className="text-xs text-muted">flip score / 100</p>
+            ) : (
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm text-muted">
+                    A {formatEur(decision.purchasePrice)} di prezzo di acquisto
+                  </p>
+                  <p
+                    className={`mt-1 inline-flex rounded-full px-3 py-1.5 text-3xl font-semibold ${
+                      RECOMMENDATION_STYLES[decision.recommendation].tone
+                    }`}
+                  >
+                    {RECOMMENDATION_STYLES[decision.recommendation].label}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-mono text-3xl font-semibold">{decision.score}</p>
+                  <p className="text-xs text-muted">flip score / 100</p>
+                </div>
               </div>
-            </div>
+            )
           ) : (
             <p className="text-sm text-muted">
               Indica il prezzo richiesto per avere una raccomandazione secca.
             </p>
           )}
 
-          <div className="mt-4 rounded-xl border border-line p-4 text-sm">
+          <div className="mt-4 rounded-2xl border border-line p-4 text-sm">
             <p className="font-medium">Fino a quanto conviene pagarlo</p>
             {flip.thresholds.maybeUpTo === null ? (
               <p className="mt-2 text-muted">
@@ -225,7 +250,7 @@ export function ResultView({
           </div>
 
           {decision ? (
-            <dl className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-line p-4 text-sm">
+            <dl className="mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-line p-4 text-sm">
               <div>
                 <dt className="text-muted">Vendita attesa</dt>
                 <dd className="font-mono">{formatEur(decision.economics.expectedSalePrice)}</dd>

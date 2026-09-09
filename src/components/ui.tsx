@@ -7,7 +7,7 @@ export function Card({
 }: ComponentProps<'section'> & { children: ReactNode }) {
   return (
     <section
-      className={`rounded-2xl border border-line bg-surface p-5 ${className}`}
+      className={`rounded-3xl border border-line bg-surface p-5 ${className}`}
       {...props}
     >
       {children}
@@ -51,7 +51,7 @@ export function Button({
 
   return (
     <button
-      className={`inline-flex items-center justify-center rounded-xl px-5 py-3 text-base font-medium transition ${variants[variant]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-full px-6 py-3.5 text-base font-medium transition ${variants[variant]} ${className}`}
       {...props}
     />
   );
@@ -59,7 +59,7 @@ export function Button({
 
 export function Disclosure({ summary, children }: { summary: string; children: ReactNode }) {
   return (
-    <details className="group rounded-2xl border border-line bg-surface">
+    <details className="group rounded-3xl border border-line bg-surface">
       <summary className="cursor-pointer list-none px-5 py-4 text-sm font-medium marker:hidden">
         <span className="flex items-center justify-between gap-3">
           {summary}

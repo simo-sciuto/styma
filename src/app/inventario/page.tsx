@@ -60,7 +60,7 @@ export default async function InventoryPage() {
             <li key={item.id}>
               <Link
                 href={`/inventario/${item.id}`}
-                className="flex gap-4 rounded-2xl border border-line bg-surface p-4 transition hover:border-accent"
+                className="flex gap-4 rounded-3xl border border-line bg-surface p-4 transition hover:border-accent"
               >
                 {coverUrl ? (
                   <Image
@@ -69,10 +69,10 @@ export default async function InventoryPage() {
                     width={80}
                     height={80}
                     unoptimized
-                    className="h-20 w-20 shrink-0 rounded-xl object-cover"
+                    className="h-20 w-20 shrink-0 rounded-2xl object-cover"
                   />
                 ) : (
-                  <div className="h-20 w-20 shrink-0 rounded-xl border border-dashed border-line" />
+                  <div className="h-20 w-20 shrink-0 rounded-2xl border border-dashed border-line" />
                 )}
 
                 <div className="min-w-0 flex-1">

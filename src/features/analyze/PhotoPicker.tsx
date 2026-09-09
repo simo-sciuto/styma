@@ -67,7 +67,7 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
-        className={`rounded-2xl border-2 border-dashed p-6 text-center transition ${
+        className={`rounded-3xl border-2 border-dashed p-6 text-center transition ${
           dragging ? 'border-accent bg-accent-soft' : 'border-line bg-surface'
         } ${disabled ? 'opacity-60' : ''}`}
       >
@@ -87,7 +87,7 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
           type="button"
           disabled={disabled || full || busy}
           onClick={() => inputRef.current?.click()}
-          className="rounded-xl bg-foreground px-5 py-3 text-base font-medium text-background transition hover:opacity-90 disabled:opacity-40"
+          className="rounded-full bg-foreground px-6 py-3 text-base font-medium text-background transition hover:opacity-90 disabled:opacity-40"
         >
           {busy ? 'Preparo le foto…' : images.length === 0 ? 'Scatta o scegli le foto' : 'Aggiungi foto'}
         </button>
@@ -108,7 +108,7 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
       {images.length > 0 ? (
         <ul className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
           {images.map((image, index) => (
-            <li key={image.id} className="group relative overflow-hidden rounded-xl border border-line">
+            <li key={image.id} className="group relative overflow-hidden rounded-2xl border border-line">
               <Image
                 src={image.previewUrl}
                 alt={`Foto ${index + 1}`}
@@ -155,7 +155,7 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
         </ul>
       ) : null}
 
-      <div className="mt-4 rounded-2xl border border-line bg-surface p-4">
+      <div className="mt-4 rounded-3xl border border-line bg-surface p-4">
         <p className="text-sm font-medium">Cosa fotografare</p>
         <ul className="mt-2 flex flex-wrap gap-2 text-xs text-muted">
           {GUIDANCE.map((item) => (

@@ -1,30 +1,50 @@
 @import "tailwindcss";
 
+/**
+ * Palette derivata da mindmarket.com (estratta dal CSS reale del sito, non a
+ * memoria): base crema calda, inchiostro quasi-nero caldo invece di un nero
+ * puro, un solo accento vivido usato a blocco pieno nei momenti che contano
+ * — non cinque colori decorativi come sul sito di partenza, perche' qui la
+ * domanda non e' "che sezione sto leggendo" ma "conviene comprarlo": un solo
+ * segnale forte batte una tavolozza intera.
+ *
+ * `--accent` resta scuro e leggibile come testo su sfondo chiaro (etichette,
+ * link, icone). `--accent-vivid` e' il verde pieno del sito di riferimento
+ * (#8ed462): usato solo come sfondo a blocco — mai come testo, dove la resa
+ * sarebbe illeggibile — per il verdetto BUY e per il numero del prezzo, gli
+ * unici due punti dell'app dove un colpo d'occhio deve bastare.
+ */
 :root {
-  --background: #fbfaf7;
+  --background: #f7f4ec;
   --surface: #ffffff;
-  --foreground: #16150f;
-  --muted: #6b6858;
-  --border: #e5e0d3;
-  --accent: #1f6f4a;
-  --accent-soft: #e7f1ea;
-  --warn: #8a5a12;
+  --surface-warm: #f5f1e4;
+  --foreground: #262a24;
+  --muted: #6f6b5c;
+  --border: #e3dcc9;
+  --accent: #3f7a2e;
+  --accent-vivid: #8ed462;
+  --accent-on-vivid: #1c2e12;
+  --accent-soft: #e9f3df;
+  --warn: #9a5c12;
   --warn-soft: #fbf1dd;
-  --danger: #9b2c22;
-  --danger-soft: #fbeae7;
+  --danger: #c2402a;
+  --danger-soft: #fbe9e4;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #12110d;
-    --surface: #1b1a15;
-    --foreground: #f3f1e9;
-    --muted: #a5a08d;
-    --border: #302d24;
-    --accent: #6ec295;
-    --accent-soft: #1b3328;
+    --background: #16150f;
+    --surface: #1f1e17;
+    --surface-warm: #26241a;
+    --foreground: #f3f1e6;
+    --muted: #a8a390;
+    --border: #34311f;
+    --accent: #8ed462;
+    --accent-vivid: #8ed462;
+    --accent-on-vivid: #1c2e12;
+    --accent-soft: #253319;
     --warn: #e3b45f;
-    --warn-soft: #33280f;
+    --warn-soft: #332711;
     --danger: #e88a7d;
     --danger-soft: #3a1e19;
   }
@@ -33,10 +53,13 @@
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
+  --color-surface-warm: var(--surface-warm);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-line: var(--border);
   --color-accent: var(--accent);
+  --color-accent-vivid: var(--accent-vivid);
+  --color-accent-on-vivid: var(--accent-on-vivid);
   --color-accent-soft: var(--accent-soft);
   --color-warn: var(--warn);
   --color-warn-soft: var(--warn-soft);
@@ -44,6 +67,13 @@
   --color-danger-soft: var(--danger-soft);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  /**
+   * Raggio generoso per i blocchi che devono leggersi come una dichiarazione
+   * — il prezzo, il verdetto — non come una scheda qualunque. Piu' arrotondato
+   * di una Card normale (rounded-3xl), ma lontano dai 35-50px del sito di
+   * riferimento: su una card larga quanto un telefono sembrerebbero una bolla.
+   */
+  --radius-block: 1.75rem;
 }
 
 body {

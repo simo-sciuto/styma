@@ -33,7 +33,7 @@ export default function HomePage() {
 
       <Link
         href="/analizza"
-        className="mt-9 inline-flex items-center justify-center rounded-xl bg-foreground px-6 py-4 text-base font-medium text-background transition hover:opacity-90"
+        className="mt-9 inline-flex items-center justify-center rounded-full bg-foreground px-7 py-4 text-base font-medium text-background transition hover:opacity-90"
       >
         Analizza un oggetto
       </Link>
@@ -49,7 +49,7 @@ export default function HomePage() {
 
       <ol className="mt-16 grid gap-4 sm:grid-cols-3">
         {STEPS.map((step, index) => (
-          <li key={step.title} className="rounded-2xl border border-line bg-surface p-5">
+          <li key={step.title} className="rounded-3xl border border-line bg-surface p-5">
             <span className="font-mono text-xs text-muted">0{index + 1}</span>
             <h2 className="mt-2 text-base font-semibold">{step.title}</h2>
             <p className="mt-1 text-sm text-muted">{step.body}</p>
