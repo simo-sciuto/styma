@@ -43,9 +43,12 @@ export function Button({
   variant = 'primary',
   ...props
 }: ComponentProps<'button'> & { variant?: 'primary' | 'ghost' }) {
+  // Il pulsante primario non e' piu' nero su crema come tutto il resto:
+  // un colore pieno e franco, preso di peso dal sito di riferimento, dove
+  // ogni call-to-action porta un colore vero invece di sparire nel testo.
   const variants = {
     primary:
-      'bg-foreground text-background hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed',
+      'bg-tile-blue text-tile-ink hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed',
     ghost: 'border border-line text-foreground hover:bg-accent-soft disabled:opacity-40',
   } as const;
 
