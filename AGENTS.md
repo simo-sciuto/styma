@@ -81,19 +81,21 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
   trovano nulla e l'analisi lo dichiara: degrada in silenzio, non in un prezzo sbagliato. Il
   ripiego automatico su Opus scatta solo se il modello economico rifiuta una capacita' — se compare
   nei log, il modello in `config.ts` va cambiato.
-- **Le vendite vere calibrano lo sconto sui prezzi richiesti.** `askingToSoldRatio` e' l'unico
-  numero scelto a tavolino, perche' i venduti non sono comprabili da nessuna fonte gratuita. Ogni
-  oggetto venduto con `sale_price` registrato e' pero' un confronto fra la nostra stima e cio' che
-  il mercato ha pagato: sopra `MINIMUM_SAMPLES` vendite, `services/valuation/calibration.ts`
-  sostituisce l'assunzione con la misura, e l'inventario lo dichiara. Mediano e non media: una
-  vendita fortunata non deve spostare le stime di tutti.
-- **La corsia delle aste si paga solo dove serve.** Sopra `soldDataWorthItAboveEur` e senza nemmeno
-  una vendita confermata, si compra la sola corsia `auctions`: e' l'unica fonte di aggiudicazioni
-  ancora raggiungibile, e su un pezzo di valore toglie piu' incertezza di quanto costi.
-- **La ricerca agentica e' spenta per scelta** (`research.agenticFallback`), e con lei l'acquisto
-  selettivo dei venduti (`research.buySoldData`). Misurato: ~0,96 $ per tre corsie contro i 4
-  centesimi di un'analisi che si ferma a eBay. Accenderle e' una decisione economica, da prendere
-  con un numero davanti — non un default.
+- **Non esiste una fonte gratuita di vendite concluse, quindi non fingiamo di stimarle.** Deciso
+  il 2026-09-09: Marketplace Insights di eBay e' Limited Release e chiusa a nuovi utenti, la
+  vecchia Finding API risponde 418, Discogs vuole un account venditore. La stima si basa sempre su
+  prezzi richiesti — niente sconto sintetico, niente calibrazione, niente corsia dedicata a
+  cacciare vendite. Il numero che conta e' se l'oggetto confrontato e' davvero lo stesso modello.
+- **Il livello dei comparabili sostituisce la vecchia distinzione sold/asking.**
+  `valuate.ts` sceglie fra tre livelli, in ordine: `identical` (solo lo stesso modello — se bastano
+  da soli, gli altri comparabili non entrano, anche se avrebbero superato la soglia di peso da
+  soli), `similar` (marca/famiglia/categoria vicina, dichiarato, tetto di confidenza a "medium"),
+  `weak` (solo categoria, ultima spiaggia prima di "non lo so", tetto a "low"). Solo `identical`
+  puo' arrivare a "high": e' l'unico caso in cui non resta un'incertezza sovrapposta fra "quanto
+  vale l'oggetto" e "e' davvero lo stesso oggetto".
+- **La ricerca agentica e' spenta per scelta** (`research.agenticFallback`). Misurato: ~0,96 $ per
+  tre corsie contro i 4 centesimi di un'analisi che si ferma a eBay. Accenderla e' una decisione
+  economica, da prendere con un numero davanti — non un default.
 - **eBay si interroga su cinque mercati** (IT, DE, GB, ES, FR): l'API non si paga a chiamata, quindi
   allargare il campione non costa. Misurato: 93 inserzioni contro 56 su un oggetto reale, passando
   da tre a cinque mercati.

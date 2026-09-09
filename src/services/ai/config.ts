@@ -17,30 +17,6 @@
  */
 const researchLanes = [
   {
-    id: 'auctions',
-    label: 'aggiudicazioni e aste',
-    maxSearches: 3,
-    maxFetches: 1,
-    /**
-     * Sostituisce la vecchia corsia "vendite concluse", che su una Canon AE-1
-     * ha restituito zero: le pagine dei venduti eBay non sono raggiungibili
-     * dalla ricerca web. Gli archivi d'asta, invece, pubblicano i risultati
-     * come pagine indicizzate, quindi il mandato ha almeno senso.
-     *
-     * I domini erano fissati con `allowed_domains`. Misurato e tolto: filtra
-     * l'indice di ricerca, non solo le pagine, e le tre corsie sono passate da
-     * sette comparabili a zero mentre i token di input salivano del 70%. La
-     * direzione si da' col mandato, che non costa niente e non taglia fuori
-     * quello che il motore sa trovare.
-     */
-    mandate: `Cerca aggiudicazioni: prezzi a cui un pezzo del genere e' stato realmente battuto.
-Gli archivi d'asta pubblicano i risultati, quindi qui le vendite concluse esistono davvero.
-kind "sold" solo se la pagina mostra il prezzo di aggiudicazione; se mostra solo la stima
-pre-asta, non e' una vendita e non va riportata.
-Se questo oggetto non passa dalle aste, restituisci comparables vuoto senza insistere: e'
-un esito normale per la merce corrente, e le altre corsie stanno coprendo quel mercato.`,
-  },
-  {
     id: 'listings',
     label: 'annunci italiani',
     maxSearches: 3,
@@ -130,18 +106,6 @@ export const aiConfig = {
     agenticFallback: false,
 
     /**
-     * Se comprare la sola corsia delle aste sugli oggetti di valore che non
-     * hanno nemmeno una vendita confermata.
-     *
-     * L'idea regge — gli archivi d'asta sono l'unica fonte di aggiudicazioni
-     * rimasta — ma non l'ho mai vista restituire un comparabile. Spenta finche'
-     * non ci sara' una misura che dice quanto rende: pagare ~0,40 $ a oggetto
-     * per qualcosa che non ha mai prodotto nulla e' esattamente il modo in cui
-     * i costi crescono senza che nessuno se ne accorga.
-     */
-    buySoldData: false,
-
-    /**
      * Sonnet e non Opus: qui il lavoro e' cercare ed estrarre, non ragionare.
      * L'onesta' dei dati non dipende dall'intelligenza del modello ma dallo
      * schema Zod e dall'aritmetica in `services/valuation`, che non cambiano.
@@ -174,20 +138,6 @@ export const aiConfig = {
     lanes: researchLanes,
     /** Giri massimi del loop di tool use, per corsia, prima di arrenderci. */
     maxIterations: 5,
-
-    /**
-     * Sopra quale stima vale la pena pagare una corsia per cercare vendite vere.
-     *
-     * Gli archivi d'asta sono l'unica fonte di aggiudicazioni ancora
-     * raggiungibile: la Marketplace Insights di eBay e' chiusa a nuovi utenti e
-     * la vecchia Finding API risponde 418. Quella corsia costa qualche decina di
-     * centesimo, quindi ha senso su un pezzo da 500 euro e non su uno da 90:
-     * sotto, l'incertezza che toglie vale meno di quello che costa.
-     *
-     * La decisione si prende sulla stima preliminare ricavata dalle inserzioni,
-     * non su un'impressione: e' un dato che a quel punto abbiamo gia'.
-     */
-    soldDataWorthItAboveEur: 150,
   },
   /** Mercato di riferimento: orienta i risultati di ricerca. */
   market: {

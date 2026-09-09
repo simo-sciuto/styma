@@ -103,13 +103,15 @@ export function assessFlip(
       direction: 'positive',
     });
   }
-  if (valuation.soldCount > 0) {
+  if (valuation.comparableTier === 'identical') {
     factors.push({
-      label: `${valuation.soldCount} vendite realmente concluse`,
+      label: `${valuation.identicalCount} annunci dello stesso modello`,
       direction: 'positive',
     });
+  } else if (valuation.comparableTier === 'similar') {
+    factors.push({ label: 'Nessun annuncio dello stesso identico modello', direction: 'negative' });
   } else {
-    factors.push({ label: 'Nessuna vendita confermata, solo prezzi richiesti', direction: 'negative' });
+    factors.push({ label: 'Nessun comparabile davvero vicino', direction: 'negative' });
   }
   if (identification.brand) {
     factors.push({ label: `Marca riconoscibile: ${identification.brand}`, direction: 'positive' });

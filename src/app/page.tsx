@@ -11,7 +11,7 @@ const STEPS = [
   },
   {
     title: 'Decidi',
-    body: 'Cerchiamo vendite reali, calcoliamo la forbice di prezzo e diciamo fino a quanto conviene pagarlo.',
+    body: 'Cerchiamo annunci reali dello stesso oggetto, calcoliamo la forbice di prezzo e diciamo fino a quanto conviene pagarlo.',
   },
 ];
 
@@ -58,8 +58,9 @@ export default function HomePage() {
       </ol>
 
       <p className="mt-10 text-sm text-muted">
-        La stima nasce da vendite comparabili trovate sul mercato, non dall’intuito di un modello.
-        Quando i dati non bastano, lo diciamo invece di inventare un numero.
+        La stima nasce da annunci comparabili trovati sul mercato, non dall’intuito di un modello.
+        Sono prezzi richiesti, non vendite concluse — nessuna fonte gratuita ci dice a quanto si
+        sono vendute davvero. Quando i dati non bastano, lo diciamo invece di inventare un numero.
       </p>
     </main>
   );

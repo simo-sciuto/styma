@@ -51,10 +51,8 @@ export type ValuationRow = {
   /** Quando e' stata fatta la ricerca su cui poggia la forbice. Null se non c'e' stata. */
   market_researched_at: string | null;
   market_research_cached: boolean | null;
-  /** Sconto applicato ai prezzi richiesti quando la riga e' stata calcolata. */
-  asking_to_sold_ratio: number | null;
-  /** Vendite confermate fra i comparabili. Zero = stima ricavata solo da annunci. */
-  sold_comparable_count: number | null;
+  /** Su cosa poggiava la forbice: solo stesso modello, anche simili, o solo debole evidenza. */
+  comparable_tier: 'identical' | 'similar' | 'weak' | null;
   reasoning: {
     factors?: { label: string; direction: 'positive' | 'negative' }[];
     reasons?: string[];
@@ -113,10 +111,6 @@ export const IMAGE_BUCKET = 'item-photos';
 export function describeSavedMarketSource(valuation: {
   market_researched_at: string | null;
   market_research_cached: boolean | null;
-  /** Sconto applicato ai prezzi richiesti quando la riga e' stata calcolata. */
-  asking_to_sold_ratio: number | null;
-  /** Vendite confermate fra i comparabili. Zero = stima ricavata solo da annunci. */
-  sold_comparable_count: number | null;
   created_at: string;
 }): string | null {
   if (!valuation.market_researched_at) return null;
@@ -133,4 +127,19 @@ export function describeSavedMarketSource(valuation: {
   if (days <= 0) return 'Comparabili riusati da una ricerca dello stesso giorno.';
   if (days === 1) return 'Comparabili riusati da una ricerca del giorno prima.';
   return `Comparabili riusati da una ricerca di ${days} giorni prima dell’analisi.`;
+}
+
+/**
+ * Se la forbice salvata poggiava sullo stesso identico modello o su oggetti
+ * solo simili. Il caso "identical" e' quello normale e non si segnala: si
+ * dice solo quando la forbice e' uscita da un ripiego.
+ */
+export function describeSavedComparableTier(tier: ValuationRow['comparable_tier']): string | null {
+  if (tier === 'similar') {
+    return 'Nessun annuncio dello stesso identico modello: la forbice include anche oggetti simili.';
+  }
+  if (tier === 'weak') {
+    return 'Nessun comparabile davvero vicino: la forbice esce da annunci della stessa categoria.';
+  }
+  return null;
 }

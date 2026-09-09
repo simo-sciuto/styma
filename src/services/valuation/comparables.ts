@@ -3,28 +3,6 @@ import type { Comparable } from '@/schemas/market';
 import type { WeightedComparable } from '@/schemas/analysis';
 import { CONDITION_ORDER, valuationConfig } from './config';
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-function recencyWeight(comparable: Comparable): number {
-  const { recencyWeights } = valuationConfig;
-  const { soldAt, kind } = comparable;
-
-  // Un annuncio attivo non ha data perche' non e' ancora una vendita, non
-  // perche' sia vecchio: e' esposto adesso.
-  const missing = kind === 'asking' ? recencyWeights.activeListing : recencyWeights.unknown;
-
-  if (!soldAt) return missing;
-  const timestamp = Date.parse(soldAt);
-  if (Number.isNaN(timestamp)) return missing;
-
-  const ageDays = (Date.now() - timestamp) / DAY_MS;
-  if (ageDays < 0) return recencyWeights.unknown; // data futura: dato sospetto
-  if (ageDays <= 90) return recencyWeights.within90Days;
-  if (ageDays <= 365) return recencyWeights.within1Year;
-  if (ageDays <= 365 * 3) return recencyWeights.within3Years;
-  return recencyWeights.older;
-}
-
 function conditionWeight(objectCondition: Condition, comparableCondition: Condition): number {
   const { conditionWeights } = valuationConfig;
   const a = CONDITION_ORDER.indexOf(objectCondition);
@@ -52,11 +30,7 @@ export type ComparableEvaluation =
       weak?: WeightedComparable;
     };
 
-export function evaluateComparable(
-  comparable: Comparable,
-  objectCondition: Condition,
-  askingToSoldRatio: number = valuationConfig.askingToSoldRatio,
-): ComparableEvaluation {
+export function evaluateComparable(comparable: Comparable, objectCondition: Condition): ComparableEvaluation {
   if (!Number.isFinite(comparable.price) || comparable.price <= 0) {
     return { kept: false, comparable, reason: 'Prezzo non valido' };
   }
@@ -64,37 +38,23 @@ export function evaluateComparable(
   const rate = valuationConfig.fxToEur[comparable.currency];
   const priceEur = Math.round(comparable.price * rate * 100) / 100;
 
-  // Il prezzo osservato resta quello che si legge sulla pagina; il calcolo usa
-  // il prezzo di vendita atteso. Tenerli separati permette di mostrare
-  // entrambi, invece di far apparire uno sconto come se fosse il cartellino.
-  const saleEstimateEur =
-    comparable.kind === 'asking'
-      ? Math.round(priceEur * askingToSoldRatio * 100) / 100
-      : priceEur;
-
   const weightBreakdown = {
     match: valuationConfig.matchWeights[comparable.matchLevel],
-    kind: valuationConfig.kindWeights[comparable.kind],
-    recency: recencyWeight(comparable),
     condition: conditionWeight(objectCondition, comparable.condition),
   };
 
-  const weight =
-    weightBreakdown.match *
-    weightBreakdown.kind *
-    weightBreakdown.recency *
-    weightBreakdown.condition;
+  const weight = weightBreakdown.match * weightBreakdown.condition;
 
   if (weight < valuationConfig.minComparableWeight) {
     return {
       kept: false,
       comparable,
-      reason: 'Comparabile troppo debole (somiglianza, eta’ o stato non allineati)',
-      weak: { comparable, priceEur, saleEstimateEur, weight, weightBreakdown },
+      reason: 'Comparabile troppo debole (somiglianza o stato non allineati)',
+      weak: { comparable, priceEur, weight, weightBreakdown },
     };
   }
 
-  return { kept: true, value: { comparable, priceEur, saleEstimateEur, weight, weightBreakdown } };
+  return { kept: true, value: { comparable, priceEur, weight, weightBreakdown } };
 }
 
 /**
@@ -102,22 +62,22 @@ export function evaluateComparable(
  * sulla retta una porzione pari al proprio peso.
  */
 export function weightedPercentile(items: WeightedComparable[], percentile: number): number {
-  const sorted = [...items].sort((a, b) => a.saleEstimateEur - b.saleEstimateEur);
+  const sorted = [...items].sort((a, b) => a.priceEur - b.priceEur);
   const totalWeight = sorted.reduce((sum, item) => sum + item.weight, 0);
-  if (totalWeight === 0) return sorted[0]?.saleEstimateEur ?? 0;
+  if (totalWeight === 0) return sorted[0]?.priceEur ?? 0;
 
   const target = totalWeight * percentile;
   let cumulative = 0;
   for (const item of sorted) {
     cumulative += item.weight;
-    if (cumulative >= target) return item.saleEstimateEur;
+    if (cumulative >= target) return item.priceEur;
   }
-  return sorted[sorted.length - 1]!.saleEstimateEur;
+  return sorted[sorted.length - 1]!.priceEur;
 }
 
 /** Media pesata: con campioni piccoli e' piu' stabile del mediano, che salta fra i pochi punti osservati. */
 export function weightedMean(items: WeightedComparable[]): number {
   const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
-  if (totalWeight === 0) return items[0]?.saleEstimateEur ?? 0;
-  return items.reduce((sum, item) => sum + item.saleEstimateEur * item.weight, 0) / totalWeight;
+  if (totalWeight === 0) return items[0]?.priceEur ?? 0;
+  return items.reduce((sum, item) => sum + item.priceEur * item.weight, 0) / totalWeight;
 }

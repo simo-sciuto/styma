@@ -5,23 +5,23 @@ export type ValuationConfidence = 'high' | 'medium' | 'low';
 
 export type WeightedComparable = {
   comparable: Comparable;
-  /** Prezzo letto sulla pagina, normalizzato in EUR. */
+  /** Prezzo letto sulla pagina, normalizzato in EUR. E' questo che entra nel calcolo, senza sconti. */
   priceEur: number;
-  /**
-   * Prezzo di vendita atteso: uguale a `priceEur` per una vendita conclusa,
-   * scontato per un prezzo richiesto. E' questo che entra nel calcolo.
-   */
-  saleEstimateEur: number;
   /** Peso complessivo 0-1 usato nel calcolo della forbice. */
   weight: number;
   /** Contributi al peso, per trasparenza. */
   weightBreakdown: {
     match: number;
-    kind: number;
-    recency: number;
     condition: number;
   };
 };
+
+/**
+ * Su cosa poggiava la forbice: solo sullo stesso modello, o anche su oggetti
+ * simili perche' di identici non ce n'erano abbastanza. Non e' un dettaglio
+ * interno — cambia quanto fidarsi del numero, e va detto.
+ */
+export type ComparableTier = 'identical' | 'similar' | 'weak';
 
 export type Valuation =
   | {
@@ -37,7 +37,9 @@ export type Valuation =
       /** Comparabili scartati e il motivo. */
       discarded: { comparable: Comparable; reason: string }[];
       strongCount: number;
-      soldCount: number;
+      /** Quanti dei comparabili usati sono lo stesso identico modello. */
+      identicalCount: number;
+      comparableTier: ComparableTier;
       /** Dispersione dei prezzi: alta = mercato volatile. */
       dispersion: number;
       reasons: string[];

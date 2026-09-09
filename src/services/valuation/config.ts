@@ -1,42 +1,25 @@
 import type { Condition } from '@/schemas/identification';
-import type { MatchLevel, PriceKind, Currency } from '@/schemas/market';
+import type { MatchLevel, Currency } from '@/schemas/market';
 
 /**
  * Tutti i numeri che governano valutazione e flip score vivono qui.
  * Sono punti di partenza da tarare sui dati reali, non regole immutabili.
  */
 export const valuationConfig = {
-  /** Quanto pesa un comparabile in base a quanto assomiglia all'oggetto. */
+  /**
+   * Quanto pesa un comparabile in base a quanto assomiglia all'oggetto.
+   *
+   * Non decide piu' se un comparabile entra nel calcolo — quello lo decide il
+   * livello (`identical`/`similar`/`weak`) in `valuate.ts`. Qui resta solo per
+   * ordinare i comparabili dentro il livello `similar`, dove same_family conta
+   * piu' di similar_category anche se nessuno dei due e' lo stesso modello.
+   */
   matchWeights: {
     exact_model: 1.0,
     same_family: 0.8,
     same_brand: 0.6,
     similar_category: 0.35,
   } satisfies Record<MatchLevel, number>,
-
-  /** Un prezzo richiesto non e' una vendita: pesa meno. */
-  kindWeights: {
-    sold: 1.0,
-    asking: 0.55,
-  } satisfies Record<PriceKind, number>,
-
-  /** Piu' e' vecchio il dato, meno conta. */
-  recencyWeights: {
-    within90Days: 1.0,
-    within1Year: 0.85,
-    within3Years: 0.6,
-    older: 0.4,
-    /** Vendita conclusa di cui non conosciamo la data: puo' essere di ieri o di anni fa. */
-    unknown: 0.6,
-    /**
-     * Annuncio attivo senza data. Non e' un dato vecchio: la data manca perche'
-     * la vendita non e' avvenuta, non perche' sia lontana. Trattarlo come
-     * "forse di tre anni fa" lo penalizzava due volte — una qui e una in
-     * kindWeights — e azzerava quasi ogni annuncio che la ricerca web sa
-     * trovare, che e' la maggior parte dei dati realmente disponibili.
-     */
-    activeListing: 1.0,
-  },
 
   /** Penalita' per distanza di stato di conservazione rispetto all'oggetto. */
   conditionWeights: {
@@ -73,20 +56,6 @@ export const valuationConfig = {
   /** Sotto questi punti non si distingue un errore da una coda: non si scarta nulla. */
   outlierMinimumSample: 3,
 
-  /**
-   * Da prezzo richiesto a prezzo di vendita atteso.
-   *
-   * Un annuncio non e' una vendita: su Subito e Vinted si tratta, e si chiude
-   * sotto. Scontare e' piu' onesto che scartare — cosi' il dato entra nel
-   * calcolo dichiarando cio' che e', invece di sparire e lasciare l'utente
-   * senza risposta.
-   *
-   * E' un'assunzione, non una misura: va verificata contro vendite vere
-   * appena ne avremo abbastanza. Finche' resta un'assunzione, l'interfaccia
-   * deve dire che la stima viene da prezzi richiesti scontati.
-   */
-  askingToSoldRatio: 0.75,
-
   /** Somma dei pesi necessaria per considerare la forbice affidabile. */
   effectiveSampleTargets: {
     high: 6,
@@ -116,17 +85,34 @@ export const valuationConfig = {
   /** La dispersione osservata ha senso solo con abbastanza punti. */
   dispersionMeaningfulFrom: 3,
 
-  /** Tetti di confidenza legati alla dimensione del campione. */
-  /**
-   * Tetto quando la forbice esce da comparabili di categoria e non di modello.
-   * Sono un ordine di grandezza, non una stima, e vanno letti come tali.
-   */
-  weakEvidenceConfidenceCap: 0.2,
-
   /** Punteggio minimo per meritare l'etichetta. Sotto la soglia media e' "low". */
   confidenceLabelThresholds: {
     high: 0.7,
     medium: 0.45,
+  },
+
+  /**
+   * Tetti di confidenza legati a *cosa* si sta confrontando, non a quanti
+   * comparabili ci sono.
+   *
+   * Deciso il 2026-09-09: la stima si basa solo su prezzi richiesti — non
+   * possiamo verificare le vendite, quindi non fingiamo di stimarle. Diventa
+   * allora decisivo se i prezzi confrontati sono dello stesso identico
+   * oggetto o solo di oggetti simili: due incertezze diverse.
+   *
+   * - `identical`: solo lo stesso modello. Nessun tetto oltre a quelli sul
+   *   campione: un campione ampio e concorde di oggetti davvero uguali puo'
+   *   arrivare a "high".
+   * - `similar`: nessun oggetto identico a sufficienza, si include anche
+   *   marca/famiglia/categoria vicina. Tetto a "medium": non e' piu' lo
+   *   stesso oggetto, e dirlo "high" affermerebbe una precisione che i dati
+   *   non hanno.
+   * - `weak`: nemmeno quello, solo comparabili di categoria. La forbice e'
+   *   un ordine di grandezza, non una stima, e resta su "low".
+   */
+  comparableTierConfidenceCaps: {
+    similar: 0.69,
+    weak: 0.2,
   },
 
   confidenceCaps: [

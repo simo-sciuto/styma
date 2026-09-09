@@ -4,7 +4,6 @@ import { revalidatePath } from 'next/cache';
 
 import { getServerSupabase } from '@/lib/supabase/server';
 import type { AnalysisResult } from '@/schemas/analysis';
-import { valuationConfig } from '@/services/valuation/config';
 
 export type SaveResult = { ok: true; itemId: string } | { ok: false; error: string };
 
@@ -74,11 +73,10 @@ export async function saveAnalysis(
       // questo, la forbice sembrerebbe piu' fresca di quanto fosse.
       market_researched_at: marketSource?.researchedAt ?? null,
       market_research_cached: marketSource?.cached ?? null,
-      // La riga deve poter essere riletta anche quando la configurazione
-      // cambia: senza il rapporto usato, confrontarla con una vendita vera
-      // darebbe un risultato sbagliato e silenzioso.
-      asking_to_sold_ratio: valuationConfig.askingToSoldRatio,
-      sold_comparable_count: valuation.available ? valuation.soldCount : null,
+      // Su cosa poggiava la forbice: solo stesso modello, o anche oggetti
+      // simili perche' di identici non ce n'erano abbastanza. Riletto fra un
+      // mese, chi vede la forbice deve poter capire quanto fidarsene.
+      comparable_tier: valuation.available ? valuation.comparableTier : null,
       reasoning: {
         factors: flip?.factors ?? [],
         reasons: valuation.available ? valuation.reasons : [],

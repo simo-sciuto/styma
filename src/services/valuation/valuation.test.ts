@@ -25,6 +25,11 @@ const identification: Identification = {
   searchQueries: ['artemide tolomeo usata'],
 };
 
+/**
+ * Default coerente con cio' che il prodotto trova davvero: un'inserzione
+ * attiva dello stesso modello. `kind`/`soldAt` restano nello schema ma non
+ * influenzano piu' il calcolo — vedi la nota in valuate.ts.
+ */
 function comparable(overrides: Partial<Comparable>): Comparable {
   return {
     title: 'Artemide Tolomeo',
@@ -32,8 +37,8 @@ function comparable(overrides: Partial<Comparable>): Comparable {
     url: 'https://example.test/1',
     price: 100,
     currency: 'EUR',
-    kind: 'sold',
-    soldAt: new Date().toISOString().slice(0, 10),
+    kind: 'asking',
+    soldAt: null,
     condition: 'good',
     matchLevel: 'exact_model',
     notes: '',
@@ -61,8 +66,6 @@ describe('valuate', () => {
           url: 'https://example.test/c',
           price: 9000,
           matchLevel: 'similar_category',
-          kind: 'asking',
-          soldAt: null,
           condition: 'poor',
         }),
       ]),
@@ -70,6 +73,9 @@ describe('valuate', () => {
 
     expect(valuation.available).toBe(true);
     if (!valuation.available) return;
+    // I due dello stesso modello bastano da soli: il terzo, che non lo e',
+    // resta fuori anche se il suo peso individuale avrebbe retto.
+    expect(valuation.comparableTier).toBe('identical');
     expect(valuation.used).toHaveLength(2);
     expect(valuation.discarded).toHaveLength(1);
     expect(valuation.high).toBeLessThan(1000);
@@ -94,23 +100,26 @@ describe('valuate', () => {
 
     expect(valuation.available).toBe(true);
     if (!valuation.available) return;
-    // identification.confidence e' 0.96 e i due prezzi coincidono:
-    // senza il tetto sul campione uscirebbe "confidenza alta".
+    // identification.confidence e' 0.9 e i due prezzi coincidono: senza il
+    // tetto sul campione uscirebbe "confidenza alta" da soli due punti.
     expect(valuation.confidence).not.toBe('high');
     // e la forbice non puo' collassare su un punto solo.
     expect(valuation.high).toBeGreaterThan(valuation.low);
 
-    const weak = valuate(
+    const fewer = valuate(
       identification,
       research(
         [110, 115, 120].map((price, index) =>
-          comparable({ url: `https://example.test/w${index}`, price, kind: 'asking', soldAt: null }),
+          comparable({ url: `https://example.test/w${index}`, price }),
         ),
       ),
     );
-    expect(weak.available).toBe(true);
-    if (!weak.available) return;
-    expect(weak.confidence).toBe('low');
+    expect(fewer.available).toBe(true);
+    if (!fewer.available) return;
+    // Tre punti concordi non bastano comunque per "high": il tetto sul
+    // campione (sotto una certa soglia di comparabili) vale a prescindere
+    // da quanto sono d'accordo fra loro.
+    expect(fewer.confidence).not.toBe('high');
   });
 
   it('restringe la forbice quando i comparabili sono molti', () => {
@@ -148,17 +157,17 @@ describe('valuate', () => {
     expect(valuation.likely).toBeLessThanOrEqual(valuation.high);
     expect(valuation.likely).toBeGreaterThanOrEqual(80);
     expect(valuation.likely).toBeLessThanOrEqual(120);
-    expect(valuation.soldCount).toBe(5);
+    expect(valuation.identicalCount).toBe(5);
   });
 
   it('tiene il valore probabile dentro la forbice, non sul bordo', () => {
-    // Distribuzione reale osservata in campo: tre vendite molto distanti fra loro.
+    // Distribuzione reale osservata in campo: tre annunci molto distanti fra loro.
     const valuation = valuate(
       identification,
       research([
         comparable({ url: 'https://example.test/a', price: 190, source: 'Catawiki' }),
         comparable({ url: 'https://example.test/b', price: 546, condition: 'excellent' }),
-        comparable({ url: 'https://example.test/c', price: 690, kind: 'asking', soldAt: null }),
+        comparable({ url: 'https://example.test/c', price: 690 }),
       ]),
     );
 
@@ -166,27 +175,6 @@ describe('valuate', () => {
     if (!valuation.available) return;
     expect(valuation.likely).toBeGreaterThan(valuation.low);
     expect(valuation.likely).toBeLessThan(valuation.high);
-  });
-
-  it('abbassa la confidenza quando ci sono solo prezzi richiesti', () => {
-    const asking = valuate(
-      identification,
-      research(
-        [80, 100, 120].map((price, index) =>
-          comparable({ price, kind: 'asking', soldAt: null, url: `https://example.test/${index}` }),
-        ),
-      ),
-    );
-    const sold = valuate(
-      identification,
-      research(
-        [80, 100, 120].map((price, index) => comparable({ price, url: `https://example.test/${index}` })),
-      ),
-    );
-
-    expect(asking.available && sold.available).toBe(true);
-    if (!asking.available || !sold.available) return;
-    expect(asking.confidenceScore).toBeLessThan(sold.confidenceScore);
   });
 });
 
@@ -232,7 +220,7 @@ describe('assessFlip', () => {
   });
 });
 
-describe('annunci attivi e dati fuori scala', () => {
+describe('livello identical / similar / weak', () => {
   const listing = (price: number, overrides: Partial<Comparable> = {}): Comparable => ({
     title: `Canon AE-1 a ${price}`,
     source: 'Subito',
@@ -255,8 +243,8 @@ describe('annunci attivi e dati fuori scala', () => {
   });
 
   it('usa gli annunci senza data invece di scartarli', () => {
-    // Prima valevano 0,185 di peso e finivano tutti nel cestino: sette Canon
-    // AE-1 in vendita producevano "non lo so".
+    // Un annuncio attivo non ha soldAt perche' non e' ancora una vendita, non
+    // perche' sia vecchio: sei Canon AE-1 in vendita producono comunque una stima.
     const result = valuate(
       identification,
       market([listing(75), listing(100), listing(150), listing(150), listing(170), listing(190)]),
@@ -265,38 +253,47 @@ describe('annunci attivi e dati fuori scala', () => {
     expect(result.available).toBe(true);
   });
 
-  it('sconta i prezzi richiesti invece di prenderli per buoni', () => {
-    const result = valuate(identification, market([listing(200), listing(200), listing(200)]));
-
-    expect(result.available).toBe(true);
-    if (!result.available) return;
-    // 200 richiesti non sono 200 incassati.
-    expect(result.likely).toBeLessThan(200);
-    expect(result.likely).toBeGreaterThan(100);
-  });
-
-  it('con un campione ampio e concorde arriva a "medium" anche senza vendite confermate', () => {
-    // Deciso il 2026-09-09: un tetto fisso a "low" nascondeva la differenza fra
-    // due annunci deboli e trenta concordi sullo stesso modello. Ora il
-    // campione puo' farsi valere, ma solo fino a un punto — vedi il test dopo.
-    const many = Array.from({ length: 10 }, () => listing(150, { matchLevel: 'exact_model' }));
-    const result = valuate(identification, market(many));
-
-    expect(result.available).toBe(true);
-    if (!result.available) return;
-    expect(result.confidence).not.toBe('low');
-  });
-
-  it('non arriva mai a "high" senza almeno una vendita confermata', () => {
-    // Per quanto il campione sia grande e concorde, resta un'incertezza che
-    // nessun numero di annunci puo' colmare: quanto si scende dal prezzo
-    // richiesto e' un coefficiente assunto, non misurato su questo oggetto.
+  it('con abbastanza annunci dello stesso modello, la confidenza arriva a "high"', () => {
+    // Deciso il 2026-09-09: la stima si basa solo su prezzi richiesti, non su
+    // vendite confermate — nessuna fonte gratuita le dice. Cio' che conta
+    // allora e' se il modello e' davvero lo stesso, non se e' stato venduto.
+    // Un campione ampio e concorde di oggetti identici puo' arrivare a "high".
     const many = Array.from({ length: 40 }, () => listing(150, { matchLevel: 'exact_model' }));
     const result = valuate(identification, market(many));
 
     expect(result.available).toBe(true);
     if (!result.available) return;
+    expect(result.comparableTier).toBe('identical');
+    expect(result.confidence).toBe('high');
+  });
+
+  it('senza annunci dello stesso modello non supera mai "medium"', () => {
+    // Stesso campione, ma nessuno e' lo stesso identico modello: restano
+    // marca o famiglia vicina. Per quanto siano numerosi e concordi, non e'
+    // piu' lo stesso oggetto, e "high" affermerebbe una precisione che i
+    // dati non hanno.
+    const many = Array.from({ length: 40 }, () => listing(150, { matchLevel: 'same_family' }));
+    const result = valuate(identification, market(many));
+
+    expect(result.available).toBe(true);
+    if (!result.available) return;
+    expect(result.comparableTier).toBe('similar');
     expect(result.confidence).not.toBe('high');
+  });
+
+  it('preferisce gli annunci dello stesso modello quando bastano da soli', () => {
+    const mixed = [
+      ...Array.from({ length: 5 }, (_, i) => listing(150 + i, { matchLevel: 'exact_model' })),
+      ...Array.from({ length: 5 }, (_, i) => listing(400 + i, { matchLevel: 'same_brand' })),
+    ];
+    const result = valuate(identification, market(mixed));
+
+    expect(result.available).toBe(true);
+    if (!result.available) return;
+    expect(result.comparableTier).toBe('identical');
+    expect(result.used.every((entry) => entry.comparable.matchLevel === 'exact_model')).toBe(true);
+    // Il prezzo riflette solo gli identici: la forbice non si sposta verso i 400+.
+    expect(result.high).toBeLessThan(300);
   });
 
   it('scarta un prezzo fuori scala invece di lasciarlo spostare la media', () => {
@@ -337,7 +334,7 @@ describe('annunci attivi e dati fuori scala', () => {
 });
 
 describe('oggetti senza marca ne’ modello', () => {
-  const categoryMatch = (price: number, index: number): Comparable => ({
+  const categoryMatch = (price: number, index: number, overrides: Partial<Comparable> = {}): Comparable => ({
     title: `Vaso ceramica fat lava ${index}`,
     source: 'eBay',
     url: `https://ebay.it/itm/v${index}`,
@@ -349,6 +346,7 @@ describe('oggetti senza marca ne’ modello', () => {
     // Senza marca ne' modello nel titolo, e' tutto cio' che si puo' dedurre.
     matchLevel: 'similar_category',
     notes: '',
+    ...overrides,
   });
 
   const market = (comparables: Comparable[]): MarketResearch => ({
@@ -361,21 +359,23 @@ describe('oggetti senza marca ne’ modello', () => {
   const anonimo: Identification = { ...identification, brand: null, model: null, confidence: 0.55 };
 
   it('usa gli annunci di categoria invece di lasciare "non lo so"', () => {
-    // Il caso vero: un vaso senza punzone, diciannove annunci trovati e tutti
-    // scartati perche' similar_category x asking cade sotto la soglia.
-    const found = [40, 55, 60, 65, 70, 90].map(categoryMatch);
+    // Il caso vero: un vaso senza punzone, sei annunci trovati, nessuno dello
+    // stesso modello — ma sono comunque dati reali, non si butta via nulla.
+    const found = [40, 55, 60, 65, 70, 90].map((price, i) => categoryMatch(price, i));
     const result = valuate(anonimo, market(found));
 
     expect(result.available).toBe(true);
+    if (!result.available) return;
+    expect(result.comparableTier).toBe('similar');
   });
 
-  it('lo dichiara, e resta al minimo della confidenza', () => {
-    const result = valuate(anonimo, market([40, 55, 60, 65, 70, 90].map(categoryMatch)));
+  it('lo dichiara, e la confidenza non supera "medium"', () => {
+    const result = valuate(anonimo, market([40, 55, 60, 65, 70, 90].map((price, i) => categoryMatch(price, i))));
 
     expect(result.available).toBe(true);
     if (!result.available) return;
-    expect(result.confidence).toBe('low');
-    expect(result.reasons.join(' ')).toMatch(/stessa categoria, non dello stesso modello/);
+    expect(result.confidence).not.toBe('high');
+    expect(result.reasons.join(' ')).toMatch(/nessun annuncio dello stesso modello/i);
   });
 
   it('non ripesca i deboli quando c’e’ di meglio', () => {
@@ -385,12 +385,31 @@ describe('oggetti senza marca ne’ modello', () => {
       matchLevel: 'exact_model' as const,
       condition: 'good' as const,
     }));
-    const result = valuate(anonimo, market([...buoni, ...[10, 12].map(categoryMatch)]));
+    const result = valuate(anonimo, market([...buoni, ...[10, 12].map((price, i) => categoryMatch(price, i))]));
 
     expect(result.available).toBe(true);
     if (!result.available) return;
-    // I due deboli restano fuori: la soglia serve proprio a preferire il buono.
+    // I due deboli restano fuori: bastano gli identici, quindi la forbice
+    // non li usa anche se il loro peso individuale avrebbe retto.
+    expect(result.comparableTier).toBe('identical');
     expect(result.used.every((entry) => entry.comparable.matchLevel === 'exact_model')).toBe(true);
+  });
+
+  it('con condizione molto distante nemmeno un comparabile di categoria regge da solo: si ripesca', () => {
+    // Qui il peso individuale (categoria + stato agli antipodi) cade sotto
+    // la soglia minima: e' il caso genuino del livello "weak", diverso dal
+    // caso normale sopra dove i comparabili di categoria reggevano gia' da soli.
+    const estremo: Identification = { ...anonimo, condition: 'mint' };
+    const deboli = [30, 35, 45, 50, 60, 65].map((price, i) =>
+      categoryMatch(price, i, { condition: 'poor' }),
+    );
+    const result = valuate(estremo, market(deboli));
+
+    expect(result.available).toBe(true);
+    if (!result.available) return;
+    expect(result.comparableTier).toBe('weak');
+    expect(result.confidence).toBe('low');
+    expect(result.reasons.join(' ')).toMatch(/stessa categoria, non dello stesso modello/);
   });
 
   it('quando non basta comunque, dice cosa ha visto', () => {

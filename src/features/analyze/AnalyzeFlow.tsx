@@ -16,7 +16,7 @@ type Stage = 'idle' | 'identifying' | 'researching' | 'done';
 /** Ogni messaggio corrisponde a una fase reale del backend, non a un timer. */
 const STAGE_MESSAGES: Record<Exclude<Stage, 'idle' | 'done'>, string> = {
   identifying: 'Leggo l’oggetto e i suoi marchi…',
-  researching: 'Cerco vendite comparabili e stimo il valore…',
+  researching: 'Cerco annunci comparabili e stimo il valore…',
 };
 
 /**
@@ -276,7 +276,7 @@ export function AnalyzeFlow() {
           ) : null}
 
           <p className="mt-4 text-xs text-muted">
-            Le ricerche girano in parallelo su mercati diversi: consultiamo vendite reali, non stime.
+            Le ricerche girano in parallelo su mercati diversi: consultiamo annunci reali, non stime.
           </p>
         </Card>
       ) : (

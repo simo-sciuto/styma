@@ -1,6 +1,6 @@
 import type { Identification } from '@/schemas/identification';
 import type { Comparable, MarketResearch } from '@/schemas/market';
-import type { Valuation, ValuationConfidence, WeightedComparable } from '@/schemas/analysis';
+import type { ComparableTier, Valuation, ValuationConfidence, WeightedComparable } from '@/schemas/analysis';
 import { valuationConfig } from './config';
 import { evaluateComparable, weightedMean, weightedPercentile } from './comparables';
 
@@ -29,12 +29,12 @@ function rejectOutliers(
   const { outlierFactor, outlierMinimumSample } = valuationConfig;
   if (used.length < outlierMinimumSample) return;
 
-  const prices = used.map((item) => item.saleEstimateEur).sort((a, b) => a - b);
+  const prices = used.map((item) => item.priceEur).sort((a, b) => a - b);
   const median = prices[Math.floor(prices.length / 2)]!;
   if (median <= 0) return;
 
   for (let index = used.length - 1; index >= 0; index -= 1) {
-    const ratio = used[index]!.saleEstimateEur / median;
+    const ratio = used[index]!.priceEur / median;
     if (ratio > outlierFactor || ratio < 1 / outlierFactor) {
       discarded.push({
         comparable: used[index]!.comparable,
@@ -49,53 +49,72 @@ function rejectOutliers(
  * Trasforma i comparabili in una forbice di mercato.
  * Il modello linguistico non entra mai in questo calcolo: qui si lavora
  * solo sui dati raccolti e sui pesi configurati.
+ *
+ * Non esiste una fonte gratuita di vendite concluse (eBay lo chiude ai nuovi
+ * utenti, Discogs vuole un account venditore): la stima si basa sempre su
+ * prezzi richiesti. La domanda che conta allora non e' "e' una vendita?" ma
+ * "e' lo stesso oggetto?" — vedi il livello `identical`/`similar`/`weak` qui
+ * sotto, che sostituisce la vecchia distinzione sold/asking.
  */
-export type ValuationOptions = {
-  /**
-   * Sconto sui prezzi richiesti. Arriva dall'esterno perche' puo' essere
-   * calibrato sulle vendite reali di chi usa l'app: vedi `calibration.ts`.
-   * Assente, si usa l'assunzione di configurazione.
-   */
-  askingToSoldRatio?: number;
-};
-
-export function valuate(
-  identification: Identification,
-  research: MarketResearch | null,
-  options?: ValuationOptions,
-): Valuation {
-  const askingToSoldRatio = options?.askingToSoldRatio ?? valuationConfig.askingToSoldRatio;
+export function valuate(identification: Identification, research: MarketResearch | null): Valuation {
   const evaluations = (research?.comparables ?? []).map((comparable) =>
-    evaluateComparable(comparable, identification.condition, askingToSoldRatio),
+    evaluateComparable(comparable, identification.condition),
   );
 
-  const used: WeightedComparable[] = [];
+  const cleared: WeightedComparable[] = [];
   const weak: WeightedComparable[] = [];
   const discarded: { comparable: Comparable; reason: string }[] = [];
 
   for (const evaluation of evaluations) {
     if (evaluation.kept) {
-      used.push(evaluation.value);
+      cleared.push(evaluation.value);
       continue;
     }
     discarded.push({ comparable: evaluation.comparable, reason: evaluation.reason });
     if (evaluation.weak) weak.push(evaluation.weak);
   }
 
+  const { minimumViable } = valuationConfig;
+  const isViable = (items: WeightedComparable[]) =>
+    items.length >= minimumViable.comparables &&
+    items.reduce((sum, item) => sum + item.weight, 0) >= minimumViable.effectiveSample;
+
+  const identical = cleared.filter((item) => item.comparable.matchLevel === 'exact_model');
+
   /**
-   * Nessun comparabile ha superato la soglia, ma qualcuno c'era.
+   * Tre livelli, in ordine di quanto ci si puo' fidare:
    *
-   * Succede sugli oggetti senza marca ne' modello — un vaso senza punzone, una
-   * lampada anonima — dove ogni risultato vale `similar_category` e finisce
-   * sotto il minimo. Diciannove annunci reali buttati per lasciare "non lo so"
-   * e' il comportamento sbagliato: la soglia serve a scegliere fra comparabili,
-   * non a rifiutarsi di rispondere quando non c'e' di meglio.
-   *
-   * Si ripescano, e la confidenza lo dichiara restando al minimo.
+   * 1. `identical` — solo lo stesso modello. E' cio' che si cerca sempre per
+   *    primo: il prezzo richiesto di un oggetto davvero uguale, non di uno
+   *    che gli somiglia.
+   * 2. `similar` — lo stesso modello non basta da solo: si aggiungono marca,
+   *    famiglia o categoria vicina. Dichiarato, con un tetto di confidenza.
+   * 3. `weak` — nemmeno quello: si ripescano comparabili sotto la soglia di
+   *    peso piuttosto che rispondere "non lo so" quando qualcosa c'era
+   *    (diciannove annunci di categoria dicono piu' di un rifiuto secco).
    */
-  const onlyWeakEvidence = used.length === 0 && weak.length >= valuationConfig.minimumViable.comparables;
-  if (onlyWeakEvidence) {
-    used.push(...weak);
+  let used: WeightedComparable[];
+  let comparableTier: ComparableTier;
+
+  if (isViable(identical)) {
+    used = identical;
+    comparableTier = 'identical';
+    // Il resto ha superato la soglia di peso ma non e' lo stesso modello:
+    // qui non entra, e va detto perche' non sparisca senza spiegazione.
+    for (const item of cleared) {
+      if (item.comparable.matchLevel !== 'exact_model') {
+        discarded.push({
+          comparable: item.comparable,
+          reason: 'Non e’ lo stesso modello: gli annunci identici bastavano gia’ da soli',
+        });
+      }
+    }
+  } else if (isViable(cleared)) {
+    used = cleared;
+    comparableTier = 'similar';
+  } else {
+    used = [...cleared, ...weak];
+    comparableTier = 'weak';
     for (let index = discarded.length - 1; index >= 0; index -= 1) {
       if (weak.some((entry) => entry.comparable === discarded[index]!.comparable)) {
         discarded.splice(index, 1);
@@ -106,14 +125,13 @@ export function valuate(
   rejectOutliers(used, discarded);
 
   const effectiveSample = used.reduce((sum, item) => sum + item.weight, 0);
-  const { minimumViable } = valuationConfig;
   const tooFewComparables =
     used.length < minimumViable.comparables || effectiveSample < minimumViable.effectiveSample;
 
   if (used.length === 0 || tooFewComparables) {
     // Anche quando non basta, si mostra cosa si e' visto: un rifiuto secco
     // lascia chi e' davanti al banco esattamente dove stava.
-    const seen = [...used, ...weak];
+    const seen = [...cleared, ...weak];
     return {
       observed:
         seen.length > 0
@@ -127,9 +145,9 @@ export function valuate(
       reason:
         research === null
           ? 'La ricerca di mercato non e’ stata completata.'
-          : used.length === 0
-            ? 'Non abbiamo trovato vendite comparabili abbastanza affidabili per stimare un valore.'
-            : `Abbiamo trovato solo ${used.length} comparabile utilizzabile: troppo poco per una forbice onesta.`,
+          : seen.length === 0
+            ? 'Non abbiamo trovato annunci comparabili abbastanza affidabili per stimare un valore.'
+            : `Abbiamo trovato solo ${seen.length} annunci comparabili: troppo poco per una forbice onesta.`,
       discarded,
     };
   }
@@ -162,8 +180,7 @@ export function valuate(
   const observedDispersion = likely > 0 ? (high - low) / likely : 1;
   const dispersion = observedDispersion;
   const dispersionIsMeaningful = used.length >= valuationConfig.dispersionMeaningfulFrom;
-  const soldCount = used.filter((item) => item.comparable.kind === 'sold').length;
-  const soldShare = soldCount / used.length;
+  const identicalCount = used.filter((item) => item.comparable.matchLevel === 'exact_model').length;
   const strongCount = used.filter((item) => item.weight >= 0.7).length;
 
   const { effectiveSampleTargets } = valuationConfig;
@@ -173,10 +190,9 @@ export function valuate(
     identification.imageQuality === 'good' ? 1 : identification.imageQuality === 'mixed' ? 0.75 : 0.5;
 
   const rawConfidence = clamp01(
-    0.3 * clamp01(identification.confidence) +
-      0.25 * sampleScore +
-      0.2 * dispersionScore +
-      0.15 * soldShare +
+    0.35 * clamp01(identification.confidence) +
+      0.3 * sampleScore +
+      0.25 * dispersionScore +
       0.1 * imageQualityScore,
   );
 
@@ -191,41 +207,30 @@ export function valuate(
   );
 
   /**
-   * Senza nemmeno una vendita conclusa la confidenza non puo' superare
-   * "medium", mai "high": quel gradino resta riservato a chi ha visto un
-   * prezzo davvero pagato. Fino al 2026-09-09 il tetto era piu' basso e
-   * bloccava tutto su "low" a prescindere dal campione — ma un'identificazione
-   * sicura, decine di annunci concordi sullo stesso modello e una dispersione
-   * bassa sono un'evidenza reale anche senza una vendita confermata, e
-   * trattarli sempre come "poco affidabili" nascondeva quella differenza.
-   * Restano due incertezze sovrapposte — quanto valgono davvero quegli
-   * oggetti, e quanto si scende dal cartellino, che e' un coefficiente assunto
-   * e non misurato — motivo per cui il soffitto resta "medium" e non piu' su.
-   * Il tetto e' espresso rispetto alla soglia dell'etichetta, non con un
-   * numero scelto a mano che le finirebbe sopra al primo ritocco.
+   * Il secondo tetto dipende da *cosa* si sta confrontando: solo un campione
+   * di oggetti davvero identici puo' arrivare a "high". Vedi
+   * `comparableTierConfidenceCaps` in config.ts per il perche'.
    */
-  const noSoldDataCap = valuationConfig.confidenceLabelThresholds.high - 0.01;
-  let confidenceScore = soldCount === 0 ? Math.min(cappedBySample, noSoldDataCap) : cappedBySample;
-
-  // Comparabili di categoria e non di modello: la forbice e' un ordine di
-  // grandezza, e la confidenza deve dirlo senza mezzi termini.
-  if (onlyWeakEvidence) {
-    confidenceScore = Math.min(confidenceScore, valuationConfig.weakEvidenceConfidenceCap);
-  }
+  const tierCap = comparableTier === 'identical' ? 1 : valuationConfig.comparableTierConfidenceCaps[comparableTier];
+  const confidenceScore = Math.min(cappedBySample, tierCap);
 
   const reasons: string[] = [];
   reasons.push(
-    `${used.length} comparabili usati su ${evaluations.length} trovati, di cui ${soldCount} vendite confermate`,
+    comparableTier === 'identical'
+      ? `${used.length} annunci dello stesso modello su ${evaluations.length} trovati`
+      : `${used.length} comparabili usati su ${evaluations.length} trovati`,
   );
   if (strongCount > 0) reasons.push(`${strongCount} comparabili molto vicini all’oggetto`);
-  if (soldCount < used.length) {
-    // Lo sconto applicato ai prezzi richiesti e' un'assunzione dichiarata, non
-    // una misura: se resta implicito, la forbice sembra ricavata da vendite.
-    const percent = Math.round((1 - askingToSoldRatio) * 100);
+  if (comparableTier === 'similar') {
     reasons.push(
-      soldCount === 0
-        ? `Nessuna vendita confermata: la stima parte dai prezzi richiesti, scontati del ${percent}% perche' un annuncio non e' una vendita`
-        : `${used.length - soldCount} prezzi richiesti scontati del ${percent}%: un annuncio non e' una vendita`,
+      identicalCount > 0
+        ? `Solo ${identicalCount} annunci dello stesso modello: la forbice include anche oggetti simili`
+        : 'Nessun annuncio dello stesso modello: la forbice include oggetti simili (stessa marca o famiglia)',
+    );
+  }
+  if (comparableTier === 'weak') {
+    reasons.push(
+      'Nessun comparabile davvero vicino: la forbice esce da annunci della stessa categoria, non dello stesso modello',
     );
   }
   if (dispersion > 0.6) reasons.push('Prezzi molto dispersi: il mercato non e’ stabile');
@@ -234,11 +239,6 @@ export function valuate(
   }
   if (!dispersionIsMeaningful) reasons.push('Troppo pochi dati per giudicare la stabilita’ dei prezzi');
   if (identification.confidence < 0.6) reasons.push('Identificazione dell’oggetto incerta');
-  if (onlyWeakEvidence) {
-    reasons.push(
-      'Nessun comparabile davvero vicino: la forbice esce da annunci della stessa categoria, non dello stesso modello',
-    );
-  }
 
   return {
     available: true,
@@ -251,7 +251,8 @@ export function valuate(
     used,
     discarded,
     strongCount,
-    soldCount,
+    identicalCount,
+    comparableTier,
     dispersion,
     reasons,
   };

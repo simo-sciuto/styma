@@ -26,7 +26,7 @@ import {
  * di tre settimane fa: nasconderlo sarebbe far sembrare fresco un dato riusato.
  */
 function describeMarketSource(source: MarketSource): string {
-  if (!source.cached) return 'Ricerca fatta adesso, su vendite e annunci reali.';
+  if (!source.cached) return 'Ricerca fatta adesso, su annunci reali.';
   if (source.ageDays === 0) return 'Ricerca riusata, fatta oggi per lo stesso modello.';
   if (source.ageDays === 1) return 'Ricerca riusata, fatta ieri per lo stesso modello.';
   return `Ricerca riusata, fatta ${source.ageDays} giorni fa per lo stesso modello.`;
