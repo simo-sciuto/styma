@@ -4,7 +4,13 @@ import { useState } from 'react';
 
 import { Button, Card, Pill } from '@/components/ui';
 import { formatEur } from '@/lib/format';
-import type { ListingCopy } from '@/schemas/listing';
+import {
+  LISTING_MARKETPLACES,
+  MARKETPLACE_LABELS,
+  TITLE_LIMITS,
+  type ListingCopy,
+  type ListingMarketplace,
+} from '@/schemas/listing';
 
 type SuggestedPrice = {
   amount: number;
@@ -18,9 +24,10 @@ type Props = { itemId: string };
 type Stage = 'idle' | 'loading' | 'error' | 'done';
 
 /**
- * Vinted non ha un'API per pubblicare: qualunque cosa promettesse "annuncio
- * pubblicato" mentirebbe. Questo prepara il testo e il prezzo, pronti da
- * copiare — l'ultimo passo, incollarlo su Vinted, resta a chi vende.
+ * Nessuno di questi marketplace ha un'API pubblica per pubblicare al posto
+ * tuo: qualunque cosa promettesse "annuncio pubblicato" mentirebbe. Questo
+ * prepara testo e prezzo su misura per ciascuno, pronti da copiare —
+ * l'ultimo passo, incollarlo, resta a chi vende.
  */
 export function GenerateListing({ itemId }: Props) {
   const [stage, setStage] = useState<Stage>('idle');
@@ -28,6 +35,7 @@ export function GenerateListing({ itemId }: Props) {
   const [price, setPrice] = useState<SuggestedPrice>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [marketplace, setMarketplace] = useState<ListingMarketplace>('vinted');
 
   async function generate() {
     setStage('loading');
@@ -68,7 +76,7 @@ export function GenerateListing({ itemId }: Props) {
     return (
       <div className="space-y-2">
         <Button variant="ghost" className="w-full" onClick={() => void generate()}>
-          Scrivi l’annuncio per Vinted
+          Scrivi l’annuncio
         </Button>
         {error ? <p className="text-sm text-danger">{error}</p> : null}
       </div>
@@ -85,7 +93,10 @@ export function GenerateListing({ itemId }: Props) {
 
   if (!listing) return null;
 
-  const fullText = [listing.title, '', listing.description, '', listing.keywords.join(' · ')].join('\n');
+  const title = listing.titles[marketplace];
+  const limit = TITLE_LIMITS[marketplace];
+  const overLimit = title.length > limit;
+  const fullText = [title, '', listing.description, '', listing.keywords.join(' · ')].join('\n');
 
   return (
     <Card className="space-y-4">
@@ -106,18 +117,42 @@ export function GenerateListing({ itemId }: Props) {
         </p>
       )}
 
+      {/* Il titolo cambia per marketplace, la descrizione no: sotto c'e' lo
+          stesso oggetto, e i fatti su un oggetto non cambiano col sito. */}
+      <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+        {LISTING_MARKETPLACES.map((option) => (
+          <button
+            key={option}
+            type="button"
+            onClick={() => setMarketplace(option)}
+            aria-pressed={option === marketplace}
+            className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
+              option === marketplace
+                ? 'bg-tile-teal text-tile-cream'
+                : 'border border-line text-muted hover:text-foreground'
+            }`}
+          >
+            {MARKETPLACE_LABELS[option]}
+          </button>
+        ))}
+      </div>
+
       <div>
         <div className="flex items-baseline justify-between gap-3">
-          <p className="text-sm text-muted">Titolo</p>
+          <p className="text-sm text-muted">Titolo per {MARKETPLACE_LABELS[marketplace]}</p>
           <button
             type="button"
-            onClick={() => void copy('title', listing.title)}
+            onClick={() => void copy('title', title)}
             className="text-xs text-muted underline decoration-line underline-offset-4 hover:text-foreground"
           >
             {copied === 'title' ? 'Copiato' : 'Copia'}
           </button>
         </div>
-        <p className="mt-1 font-medium">{listing.title}</p>
+        <p className="mt-1 font-medium">{title}</p>
+        <p className={`mt-1 font-mono text-xs ${overLimit ? 'text-danger' : 'text-muted'}`}>
+          {title.length}/{limit} caratteri
+          {overLimit ? ' · accorcialo prima di incollarlo' : null}
+        </p>
       </div>
 
       <div>
@@ -136,7 +171,16 @@ export function GenerateListing({ itemId }: Props) {
 
       {listing.keywords.length > 0 ? (
         <div>
-          <p className="text-sm text-muted">Parole chiave</p>
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="text-sm text-muted">Parole chiave</p>
+            <button
+              type="button"
+              onClick={() => void copy('keywords', listing.keywords.join(', '))}
+              className="text-xs text-muted underline decoration-line underline-offset-4 hover:text-foreground"
+            >
+              {copied === 'keywords' ? 'Copiate' : 'Copia'}
+            </button>
+          </div>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {listing.keywords.map((keyword) => (
               <Pill key={keyword}>{keyword}</Pill>
@@ -146,7 +190,7 @@ export function GenerateListing({ itemId }: Props) {
       ) : null}
 
       <Button variant="ghost" className="w-full" onClick={() => void copy('all', fullText)}>
-        {copied === 'all' ? 'Copiato tutto' : 'Copia tutto'}
+        {copied === 'all' ? 'Copiato tutto' : `Copia tutto per ${MARKETPLACE_LABELS[marketplace]}`}
       </Button>
     </Card>
   );

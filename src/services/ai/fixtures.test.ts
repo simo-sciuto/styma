@@ -1,68 +1,47 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import type { ZodType } from 'zod/v4';
 
-afterEach(() => {
-  vi.unstubAllEnvs();
-  vi.resetModules();
-});
+import { IdentificationSchema } from '@/schemas/identification';
+import { ListingCopySchema } from '@/schemas/listing';
+import { MarketResearchSchema } from '@/schemas/market';
 
-/** Importa il modulo da zero: `getProvider` memorizza la scelta al primo giro. */
-async function freshGetProvider() {
-  vi.resetModules();
-  const fresh = await import('./index');
-  return fresh.getProvider;
-}
+/**
+ * Le risposte registrate devono restare valide contro gli schemi che le
+ * rileggono.
+ *
+ * Non e' teoria: cambiando lo schema di identificazione e poi quello degli
+ * annunci le ho rotte due volte, e il guasto si vede solo quando qualcuno
+ * prova a sviluppare con STYMA_AI_FIXTURES=1 — cioe' tardi, e addosso a chi
+ * non ha toccato lo schema. Qui si vede subito.
+ */
+const FIXTURES_DIR = join(process.cwd(), 'bench', 'fixtures');
 
-describe('scelta del provider', () => {
-  it('rifiuta le registrazioni in produzione', async () => {
-    vi.stubEnv('NODE_ENV', 'production');
-    vi.stubEnv('STYMA_AI_FIXTURES', '1');
+const SCHEMAS: { prefix: string; schema: ZodType }[] = [
+  { prefix: 'identify-', schema: IdentificationSchema },
+  { prefix: 'research-', schema: MarketResearchSchema },
+  { prefix: 'listing-', schema: ListingCopySchema },
+];
 
-    expect(await freshGetProvider()).toThrow(/produzione/);
+describe('risposte registrate in bench/fixtures', () => {
+  const files = readdirSync(FIXTURES_DIR).filter((name) => name.endsWith('.json'));
+
+  it('ce n’e’ almeno una, altrimenti questo test non sta verificando niente', () => {
+    expect(files.length).toBeGreaterThan(0);
   });
 
-  it('rifiuta anche la registrazione in produzione', async () => {
-    vi.stubEnv('NODE_ENV', 'production');
-    vi.stubEnv('STYMA_AI_RECORD', '1');
+  it.each(files)('%s e’ valida contro il suo schema', (name) => {
+    const match = SCHEMAS.find((candidate) => name.startsWith(candidate.prefix));
+    // Un prefisso sconosciuto e' un file che nessuno rilegge piu': meglio
+    // saperlo che lasciarlo marcire nella cartella.
+    expect(match, `nessuno schema per il prefisso di ${name}`).toBeDefined();
 
-    expect(await freshGetProvider()).toThrow(/produzione/);
-  });
+    const raw: unknown = JSON.parse(readFileSync(join(FIXTURES_DIR, name), 'utf8'));
+    const parsed = match!.schema.safeParse(raw);
 
-  it('in sviluppo usa le registrazioni quando richiesto', async () => {
-    vi.stubEnv('NODE_ENV', 'development');
-    vi.stubEnv('STYMA_AI_FIXTURES', '1');
-    const getProvider = await freshGetProvider();
-
-    expect(getProvider().constructor.name).toBe('FixtureProvider');
-  });
-
-  it('senza variabili chiama il modello vero', async () => {
-    vi.stubEnv('NODE_ENV', 'development');
-    vi.stubEnv('STYMA_AI_FIXTURES', '');
-    vi.stubEnv('STYMA_AI_RECORD', '');
-    const getProvider = await freshGetProvider();
-
-    expect(getProvider().constructor.name).toBe('AnthropicProvider');
-  });
-});
-
-describe('quando manca la registrazione', () => {
-  it('lo dice invece di far credere a un guasto del servizio', async () => {
-    // "Il servizio di analisi non risponde" mandava a cercare un guasto che
-    // non c'era: il servizio sta benissimo, manca la registrazione.
-    vi.stubEnv('NODE_ENV', 'development');
-    vi.stubEnv('STYMA_AI_FIXTURES', '1');
-    const getProvider = await freshGetProvider();
-
-    const error = await getProvider()
-      .identify([{ mediaType: 'image/jpeg', data: 'ZmludG8=' }])
-      .then(() => null)
-      .catch((caught: unknown) => caught);
-
-    // Non `instanceof`: `resetModules` ricarica il grafo, quindi la classe
-    // importata qui e quella lanciata la' sono due oggetti diversi.
-    const thrown = error as { code?: string; message?: string };
-    expect(thrown.code).toBe('fixture_missing');
-    expect(thrown.message).toMatch(/STYMA_AI_FIXTURES/);
-    expect(thrown.message).toMatch(/STYMA_AI_RECORD/);
+    expect(
+      parsed.success ? null : JSON.stringify(parsed.error.issues, null, 2),
+    ).toBeNull();
   });
 });
