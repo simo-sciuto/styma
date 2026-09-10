@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import { Button, Card, Field, PageHeader } from '@/components/ui';
+import { Button, Card, PageHeader } from '@/components/ui';
 import { readAnalysisEvents } from '@/lib/analysis-stream';
+import { assessFlip } from '@/services/valuation/flip-score';
 import type { PreparedImage } from '@/lib/images';
 import type { AnalysisResult } from '@/schemas/analysis';
 import type { Identification } from '@/schemas/identification';
@@ -70,6 +71,23 @@ export function AnalyzeFlow() {
 
   const busy = stage === 'identifying' || stage === 'researching';
 
+  /**
+   * Il verdetto al prezzo digitato, ricalcolato qui invece che sul server.
+   * `assessFlip` e' la stessa funzione pura che gira in `/api/valuate`, e
+   * lavora solo su dati gia' arrivati: rifare la chiamata a ogni tasto
+   * costerebbe secondi di attesa per un conto che dura microsecondi. Il
+   * risultato ricalcolato e' anche quello che finisce in inventario, cosi'
+   * si salva esattamente il giudizio che si e' visto.
+   */
+  const liveResult = useMemo(() => {
+    if (!result) return null;
+    const price = parsePurchasePrice(purchasePrice);
+    return {
+      ...result,
+      flip: assessFlip(result.identification, result.market, result.valuation, price),
+    };
+  }, [result, purchasePrice]);
+
   async function analyze() {
     setError(null);
     setResult(null);
@@ -94,14 +112,14 @@ export function AnalyzeFlow() {
       setIdentification(identified);
       setStage('researching');
 
-      const parsedPrice = parsePurchasePrice(purchasePrice);
-
       const valuateResponse = await fetch('/api/valuate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           identification: identified,
-          purchasePrice: parsedPrice,
+          // Il verdetto a un prezzo si calcola dopo, sul client, mentre
+          // l'utente digita: qui servono solo stima e soglie.
+          purchasePrice: null,
         }),
       });
       if (!valuateResponse.ok) {
@@ -163,15 +181,17 @@ export function AnalyzeFlow() {
     setStage('idle');
   }
 
-  if (stage === 'done' && result) {
+  if (stage === 'done' && liveResult) {
     return (
       <>
         <ResultView
-          result={result}
+          result={liveResult}
           images={images}
+          purchasePrice={purchasePrice}
+          onPurchasePriceChange={setPurchasePrice}
           saveSlot={
             <SaveToInventory
-              result={result}
+              result={liveResult}
               purchasePrice={parsePurchasePrice(purchasePrice)}
               images={images}
             />
@@ -192,28 +212,6 @@ export function AnalyzeFlow() {
       />
 
       <PhotoPicker images={images} onChange={setImages} disabled={busy} />
-
-      <Card>
-        <Field
-          label="Prezzo richiesto (facoltativo)"
-          hint="Se lo indichi, ti diciamo se a quel prezzo conviene comprarlo."
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-muted">€</span>
-            <input
-              type="number"
-              inputMode="decimal"
-              min={0}
-              step={1}
-              value={purchasePrice}
-              disabled={busy}
-              onChange={(event) => setPurchasePrice(event.target.value)}
-              placeholder="25"
-              className="w-full rounded-lg border border-line bg-background px-3 py-2 text-base outline-none focus:border-accent"
-            />
-          </div>
-        </Field>
-      </Card>
 
       {error ? (
         <Card className="border-danger/40 bg-danger-soft">

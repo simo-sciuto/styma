@@ -64,15 +64,42 @@ function ComparableRow({ item }: { item: WeightedComparable }) {
 export function ResultView({
   result,
   images = [],
+  purchasePrice = '',
+  onPurchasePriceChange,
   saveSlot,
 }: {
   result: AnalysisResult;
   images?: PreparedImage[];
+  /** Testo grezzo del campo prezzo: lo stato vive nel chiamante, che deve
+   *  passare lo stesso numero anche al salvataggio in inventario. */
+  purchasePrice?: string;
+  onPurchasePriceChange?: (value: string) => void;
   saveSlot?: ReactNode;
 }) {
   const { identification, market, marketSource, valuation, flip, warnings } = result;
   const decision = flip?.atPrice ?? null;
   const cover = images[0] ?? null;
+
+  /**
+   * Quante alternative ha chi compra, e a che prezzi. Non e' la domanda e
+   * non e' il tempo di vendita: quelli richiederebbero le vendite concluse,
+   * che nessuna fonte gratuita ci da' (vedi AGENTS.md). Questa e' l'unica
+   * misura di mercato che possiamo fare davvero — le inserzioni dello stesso
+   * modello aperte adesso — e va chiamata col suo nome.
+   *
+   * Sotto le due inserzioni non e' concorrenza, e' un caso isolato.
+   */
+  const identicalUsed = valuation.available
+    ? valuation.used.filter((item) => item.comparable.matchLevel === 'exact_model')
+    : [];
+  const competition =
+    identicalUsed.length >= 2
+      ? {
+          count: identicalUsed.length,
+          low: Math.min(...identicalUsed.map((item) => item.priceEur)),
+          high: Math.max(...identicalUsed.map((item) => item.priceEur)),
+        }
+      : null;
 
   return (
     <div className="mt-6 space-y-4">
@@ -180,8 +207,47 @@ export function ResultView({
         </Card>
       )}
 
+      {competition ? (
+        <Card>
+          <p className="font-mono text-xs uppercase tracking-[0.16em] text-muted">Concorrenza</p>
+          <p className="mt-2 text-sm">
+            <strong>{competition.count} inserzioni</strong> dello stesso modello sono in vendita
+            adesso, da {formatEur(competition.low)} a {formatEur(competition.high)}.
+          </p>
+          <p className="mt-2 text-xs text-muted">
+            E’ quante alternative ha chi compra, non quanto ci mette a vendersi: per dire i tempi
+            servirebbero le vendite concluse, e non esiste una fonte gratuita che ce le dia.
+          </p>
+        </Card>
+      ) : null}
+
       {flip ? (
         <Card>
+          {/*
+            Il prezzo si chiede qui, non prima dell'analisi: davanti a un
+            banco la domanda nasce solo dopo aver visto quanto vale. Il
+            verdetto si ricalcola mentre digiti — assessFlip e' puro, non
+            serve tornare al server per un conto che dura microsecondi.
+          */}
+          <label className="block">
+            <span className="text-sm font-medium">Quanto te lo chiedono?</span>
+            <span className="mt-2 flex items-center gap-2 rounded-2xl border border-line bg-background px-4 py-2.5 focus-within:border-accent">
+              <span className="text-xl text-muted">€</span>
+              <input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step={1}
+                value={purchasePrice}
+                onChange={(event) => onPurchasePriceChange?.(event.target.value)}
+                placeholder="25"
+                aria-label="Prezzo richiesto dal venditore"
+                className="w-full bg-transparent text-2xl font-semibold tracking-tight outline-none"
+              />
+            </span>
+          </label>
+
+          <div className="mt-4">
           {decision ? (
             decision.recommendation === 'BUY' ? (
               // Il verdetto che conta di piu' si vede prima di leggerlo: stesso
@@ -225,9 +291,10 @@ export function ResultView({
             )
           ) : (
             <p className="text-sm text-muted">
-              Indica il prezzo richiesto per avere una raccomandazione secca.
+              Scrivi il prezzo del banco e il verdetto compare qui.
             </p>
           )}
+          </div>
 
           <div className="mt-4 rounded-2xl border border-line p-4 text-sm">
             <p className="font-medium">Fino a quanto conviene pagarlo</p>
