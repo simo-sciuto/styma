@@ -41,8 +41,11 @@ export function Pill({
 export function Button({
   className = '',
   variant = 'primary',
+  pending = false,
+  disabled = false,
+  children,
   ...props
-}: ComponentProps<'button'> & { variant?: 'primary' | 'ghost' }) {
+}: ComponentProps<'button'> & { variant?: 'primary' | 'ghost'; pending?: boolean }) {
   // Il pulsante primario porta il teal dei tile decorativi, non il nero su
   // crema di prima: un colore vero, non un'ombra del testo.
   const variants = {
@@ -53,9 +56,69 @@ export function Button({
 
   return (
     <button
-      className={`inline-flex items-center justify-center rounded-full px-6 py-3.5 text-base font-medium transition ${variants[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-base font-medium transition ${variants[variant]} ${className}`}
+      aria-busy={pending || undefined}
+      // Mentre lavora non si puo' ripremere: due salvataggi dello stesso
+      // esito sono un modo silenzioso di scrivere due volte.
+      disabled={pending || disabled}
       {...props}
-    />
+    >
+      {/*
+        Il punto che pulsa mentre il bottone lavora, con l'etichetta che resta
+        quella dell'azione. L'animazione parte con 120 ms di ritardo: un'azione
+        che dura un battito non produce un lampo.
+
+        `invisible` e non `hidden`, e non e' un dettaglio: sono due utility di
+        display nella stessa cascata, e fra `inline-block` e `hidden` vince
+        quella che nel CSS generato viene dopo — non quella scritta per ultima
+        qui. Col primo tentativo il punto restava acceso su ogni bottone, anche
+        fermo, e se n'e' accorta una schermata, non il compilatore. Con la
+        visibilita' il conflitto non esiste, e in piu' lo spazio resta
+        occupato: un punto che compare non deve spostare l'etichetta sotto il
+        dito.
+      */}
+      <span
+        aria-hidden
+        className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-current ${
+          pending ? 'pending-dot visible' : 'invisible'
+        }`}
+      />
+      {children}
+    </button>
+  );
+}
+
+/**
+ * L'azione secondaria: un testo sottolineato, non un bottone pieno.
+ *
+ * Esiste per dare anche a queste lo stesso punto in attesa dei bottoni
+ * veri. Prima ognuna si arrangiava cambiando la parola — «Archivio…»,
+ * «Annullo…», «Rimetto…» — cioe' tre invenzioni diverse per lo stesso
+ * momento, e il testo che cambia sotto il dito sposta quello che viene dopo.
+ */
+export function TextButton({
+  className = '',
+  pending = false,
+  disabled = false,
+  children,
+  ...props
+}: ComponentProps<'button'> & { pending?: boolean }) {
+  return (
+    <button
+      type="button"
+      aria-busy={pending || undefined}
+      disabled={pending || disabled}
+      className={`inline-flex items-center gap-1.5 text-sm text-muted underline decoration-line underline-offset-4 disabled:opacity-60 ${className}`}
+      {...props}
+    >
+      <span
+        aria-hidden
+        className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-current ${
+          pending ? 'pending-dot visible' : 'invisible'
+        }`}
+      />
+      {children}
+    </button>
   );
 }
 

@@ -148,10 +148,11 @@ export function AccountPanel() {
 
         <Button
           className="mt-4 w-full"
-          disabled={busy || email.trim() === '' || password === ''}
+          pending={busy}
+          disabled={email.trim() === '' || password === ''}
           onClick={() => void (linking ? linkAccount() : signIn())}
         >
-          {busy ? 'Un momento…' : linking ? 'Collega l’email' : 'Entra'}
+          {linking ? 'Collega l’email' : 'Entra'}
         </Button>
 
         {linking ? (

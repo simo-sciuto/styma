@@ -11,16 +11,11 @@ import type { Identification } from '@/schemas/identification';
 import { ArchiveToggle } from '@/features/inventory/ArchiveToggle';
 import { AutoSave } from '@/features/inventory/AutoSave';
 import { usePersistAskingPrice } from '@/features/inventory/useAskingPrice';
+import { AnalysisProgress, type Passo } from './AnalysisProgress';
 import { PhotoPicker } from './PhotoPicker';
 import { ResultView } from './ResultView';
 
 type Stage = 'idle' | 'identifying' | 'researching' | 'done';
-
-/** Ogni messaggio corrisponde a una fase reale del backend, non a un timer. */
-const STAGE_MESSAGES: Record<Exclude<Stage, 'idle' | 'done'>, string> = {
-  identifying: 'Leggo l’oggetto e i suoi marchi…',
-  researching: 'Cerco annunci comparabili e stimo il valore…',
-};
 
 /**
  * Una corsia di ricerca vista da chi aspetta. Lo stato arriva dal server
@@ -32,13 +27,6 @@ type LaneProgress = {
   status: 'running' | 'done' | 'failed';
   comparables: number;
 };
-
-function laneDetail(lane: LaneProgress): string {
-  if (lane.status === 'running') return 'in corso…';
-  if (lane.status === 'failed') return 'non riuscita';
-  if (lane.comparables === 0) return 'niente di credibile';
-  return lane.comparables === 1 ? '1 comparabile' : `${lane.comparables} comparabili`;
-}
 
 function parsePurchasePrice(raw: string): number | null {
   if (raw.trim() === '') return null;
@@ -108,6 +96,43 @@ export function AnalyzeFlow() {
       flip: assessFlip(result.identification, result.market, result.valuation, price),
     };
   }, [result, purchasePrice]);
+
+  /**
+   * I tre passi, ricavati da cio' che e' successo davvero.
+   *
+   * Nessuno si accende per un timer: il primo chiude quando arriva
+   * l'identificazione, il secondo quando una fonte di mercato risponde
+   * (eBay o la cache), il terzo quando il risultato e' in mano. Se un giorno
+   * la pipeline cambia, questi passi vanno cambiati con lei — altrimenti
+   * raccontano un lavoro che non stiamo facendo.
+   */
+  const mercatoRisposto = structuredSource !== null || reusedResearch !== null;
+  const passi: Passo[] = [
+    {
+      titolo: 'Riconosco l’oggetto',
+      durante: 'Leggo forma, materiali, marchi e punzoni.',
+      esito: identification ? identification.name : null,
+      stato: identification ? 'fatto' : 'corso',
+    },
+    {
+      titolo: 'Cerco sul mercato',
+      durante: 'Annunci dello stesso modello su cinque mercati eBay.',
+      esito: reusedResearch
+        ? `Ricerca gia' fatta ${reusedResearch.ageDays === 0 ? 'oggi' : `${reusedResearch.ageDays} giorni fa`}: riuso ${reusedResearch.comparables} comparabili.`
+        : structuredSource
+          ? structuredSource.comparables > 0
+            ? `${structuredSource.comparables} inserzioni trovate.`
+            : 'Nessuna inserzione: cerco altrove.'
+          : null,
+      stato: mercatoRisposto ? 'fatto' : identification ? 'corso' : 'attesa',
+    },
+    {
+      titolo: 'Faccio i conti',
+      durante: 'Peso i comparabili, tolgo quelli fuori scala, calcolo la fascia.',
+      esito: null,
+      stato: mercatoRisposto ? 'corso' : 'attesa',
+    },
+  ];
 
   async function analyze() {
     setError(null);
@@ -233,9 +258,17 @@ export function AnalyzeFlow() {
   return (
     <div className="mt-6 space-y-5">
       <PageHeader
-        title="Fotografa l’oggetto"
-        subtitle="Da 4 a 8 foto danno il risultato migliore. Se l’oggetto e’ evidente, ne bastano meno."
+        title={busy ? 'Ci penso io' : 'Fotografa l’oggetto'}
+        subtitle={
+          busy
+            ? 'Puoi mettere via il telefono: ci vuole da mezzo minuto a un paio.'
+            : 'Da 4 a 8 foto danno il risultato migliore. Se l’oggetto e’ evidente, ne bastano meno.'
+        }
       />
+
+      {/* Durante l'attesa il lavoro in corso viene prima delle foto: sono
+          gia' scelte, e quello che si vuole guardare e' cosa sta succedendo. */}
+      {busy ? <AnalysisProgress passi={passi} corsie={lanes} /> : null}
 
       <PhotoPicker images={images} onChange={setImages} disabled={busy} />
 
@@ -245,64 +278,7 @@ export function AnalyzeFlow() {
         </Card>
       ) : null}
 
-      {busy ? (
-        <Card>
-          <p className="text-sm" style={{ animation: 'styma-pulse 1.6s ease-in-out infinite' }}>
-            {STAGE_MESSAGES[stage]}
-          </p>
-          {identification ? (
-            <p className="mt-3 text-sm text-muted">
-              Riconosciuto: <strong className="text-foreground">{identification.name}</strong>
-            </p>
-          ) : null}
-
-          {reusedResearch ? (
-            <p className="mt-4 text-sm">
-              Questo modello e’ gia’ stato cercato{' '}
-              {reusedResearch.ageDays === 0 ? 'oggi' : `${reusedResearch.ageDays} giorni fa`}:
-              riusiamo quei {reusedResearch.comparables} comparabili invece di ripetere la ricerca.
-            </p>
-          ) : null}
-
-          {structuredSource ? (
-            <p className="mt-4 text-sm">
-              {structuredSource.comparables > 0
-                ? `${structuredSource.label}: ${structuredSource.comparables} inserzioni trovate.`
-                : `${structuredSource.label}: nessuna inserzione, cerco altrove.`}
-            </p>
-          ) : null}
-
-          {lanes.length > 0 ? (
-            <ul className="mt-4 space-y-1.5">
-              {lanes.map((lane) => (
-                <li key={lane.id} className="flex items-baseline justify-between gap-3 text-sm">
-                  <span
-                    className={lane.status === 'running' ? 'text-muted' : 'text-foreground'}
-                    style={
-                      lane.status === 'running'
-                        ? { animation: 'styma-pulse 1.6s ease-in-out infinite' }
-                        : undefined
-                    }
-                  >
-                    {lane.status === 'done' ? '✓' : lane.status === 'failed' ? '×' : '·'} {lane.label}
-                  </span>
-                  <span
-                    className={`shrink-0 text-xs ${
-                      lane.status === 'failed' ? 'text-danger' : 'text-muted'
-                    }`}
-                  >
-                    {laneDetail(lane)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-
-          <p className="mt-4 text-xs text-muted">
-            Le ricerche girano in parallelo su mercati diversi: consultiamo annunci reali, non stime.
-          </p>
-        </Card>
-      ) : (
+      {busy ? null : (
         <Button className="w-full" disabled={images.length === 0} onClick={() => void analyze()}>
           Analizza
         </Button>

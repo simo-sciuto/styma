@@ -2,7 +2,7 @@
 
 import { useState, useTransition, type ReactNode } from 'react';
 
-import { Button, Card } from '@/components/ui';
+import { Button, Card, TextButton } from '@/components/ui';
 import { formatEur } from '@/lib/format';
 import type { OutcomeInput } from '@/schemas/outcome';
 import type { Outcome } from '@/services/inventory/outcome';
@@ -181,7 +181,8 @@ export function OutcomeTracker({ item, outcome }: { item: ItemRow; outcome: Outc
 
         <div className="mt-5 grid gap-2 sm:grid-cols-2">
           <Button
-            disabled={pending || (needsPrice && !amountValid)}
+            pending={pending}
+            disabled={needsPrice && !amountValid}
             onClick={() => {
               const marketplace = where;
               if (form === 'bought') submit({ type: 'bought', price: amount, date, location: where });
@@ -189,7 +190,7 @@ export function OutcomeTracker({ item, outcome }: { item: ItemRow; outcome: Outc
               else submit({ type: 'listed', date, marketplace });
             }}
           >
-            {pending ? 'Salvo…' : 'Registra'}
+            Registra
           </Button>
           <Button variant="ghost" disabled={pending} onClick={() => setForm(null)}>
             Annulla
@@ -216,15 +217,11 @@ export function OutcomeTracker({ item, outcome }: { item: ItemRow; outcome: Outc
         </p>
         {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
-          <Button disabled={pending} onClick={() => open('bought')}>
+          <Button pending={pending} onClick={() => open('bought')}>
             L’ho comprato
           </Button>
-          <Button
-            variant="ghost"
-            disabled={pending}
-            onClick={() => submit({ type: 'passed' })}
-          >
-            {pending ? 'Salvo…' : 'Ho lasciato perdere'}
+          <Button variant="ghost" pending={pending} onClick={() => submit({ type: 'passed' })}>
+            Ho lasciato perdere
           </Button>
         </div>
       </Card>
@@ -242,14 +239,9 @@ export function OutcomeTracker({ item, outcome }: { item: ItemRow; outcome: Outc
           </p>
         ) : null}
         {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() => submit({ type: 'reopen' })}
-          className="mt-3 text-sm text-muted underline decoration-line underline-offset-4"
-        >
-          {pending ? 'Annullo…' : 'Non e’ andata cosi’'}
-        </button>
+        <TextButton pending={pending} onClick={() => submit({ type: 'reopen' })}>
+          Non e’ andata cosi’
+        </TextButton>
       </Card>
     );
   }
@@ -280,16 +272,16 @@ export function OutcomeTracker({ item, outcome }: { item: ItemRow; outcome: Outc
         {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
 
         <div className="mt-5 grid gap-2 sm:grid-cols-2">
-          <Button disabled={pending} onClick={() => open('sold')}>
+          <Button pending={pending} onClick={() => open('sold')}>
             L’ho venduto
           </Button>
           {!outcome.listed ? (
-            <Button variant="ghost" disabled={pending} onClick={() => open('listed')}>
+            <Button variant="ghost" pending={pending} onClick={() => open('listed')}>
               L’ho messo in vendita
             </Button>
           ) : (
-            <Button variant="ghost" disabled={pending} onClick={() => submit({ type: 'reopen' })}>
-              {pending ? 'Annullo…' : 'Ricomincia da capo'}
+            <Button variant="ghost" pending={pending} onClick={() => submit({ type: 'reopen' })}>
+              Ricomincia da capo
             </Button>
           )}
         </div>
@@ -358,14 +350,9 @@ export function OutcomeTracker({ item, outcome }: { item: ItemRow; outcome: Outc
       ) : null}
 
       {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
-      <button
-        type="button"
-        disabled={pending}
-        onClick={() => submit({ type: 'reopen' })}
-        className="mt-3 text-sm text-muted underline decoration-line underline-offset-4"
-      >
-        {pending ? 'Annullo…' : 'Correggi'}
-      </button>
+      <TextButton pending={pending} onClick={() => submit({ type: 'reopen' })}>
+        Correggi
+      </TextButton>
     </Card>
   );
 }

@@ -259,7 +259,21 @@ sono ancora aperte.
   registrato. La forma giusta e' confrontare col valore gia' scritto (`useAskingPrice.ts`): un
   effetto idempotente si puo' rimontare quante volte si vuole.
 - **Le attese lunghe si raccontano mentre accadono.** `/api/valuate` risponde in SSE e riporta ogni
-  corsia quando finisce davvero. Nessuna barra di avanzamento che si muove da sola.
+  corsia quando finisce davvero. Nessuna barra di avanzamento che si muove da sola: dove non
+  sappiamo quanto manca, la barra e' indeterminata e va avanti e indietro, che e' piu' onesto di una
+  che si ferma al novanta per cento.
+- **L'attesa ha una lingua sola**, non una per punto: scheletro a forma del contenuto per le pagine
+  (`components/Skeleton.tsx` + `loading.tsx`), punto che pulsa per le attese brevi (`pending` su
+  `Button` e `TextButton`), blocco a passi per l'analisi (`AnalysisProgress`). I passi si accendono
+  sugli eventi veri dello stream, non su un timer: se la pipeline cambia vanno cambiati con lei.
+  Ogni indicatore parte con 120 ms di ritardo — un'azione che dura un battito non deve produrre un
+  lampo — e occupa spazio anche da spento, perche' un puntino che appare non deve spostare
+  l'etichetta sotto il dito.
+- **Due utility di display sullo stesso elemento non si combinano.** `inline-block hidden` non
+  nasconde niente: vince quella che nel CSS generato di Tailwind viene dopo, non quella scritta per
+  ultima nella classe. Il punto d'attesa e' rimasto acceso su ogni bottone finche' una schermata non
+  l'ha mostrato — typecheck, lint e test non hanno niente da dire. Per accendere e spegnere si usa
+  la visibilita' (`visible`/`invisible`), che non litiga con niente.
 - Interfaccia in italiano, identificatori in inglese.
 
 ## Comandi

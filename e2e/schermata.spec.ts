@@ -22,6 +22,38 @@ test('@istantanea la home', async ({ page }) => {
   }
 });
 
+test('@istantanea l’attesa dell’analisi', async ({ page }) => {
+  await page.goto('/analizza');
+  await page.locator('input[type="file"]').setInputFiles(
+    path.join(process.cwd(), 'bench', 'photos', 'olivetti-valentine.jpg'),
+  );
+  await page.getByRole('button', { name: 'Analizza', exact: true }).click();
+  // Appena parte: primo passo in corso, gli altri spenti.
+  await page.getByText('Ci sto lavorando').waitFor({ timeout: 30_000 });
+  await page.screenshot({ path: 'e2e/schermate/attesa-1.png' });
+  // A oggetto riconosciuto: primo passo spuntato, secondo in corso.
+  await page.getByText('Cerco sul mercato').waitFor();
+  await page.waitForTimeout(2_500);
+  await page.screenshot({ path: 'e2e/schermate/attesa-2.png' });
+});
+
+test('@istantanea gli scheletri', async ({ page }) => {
+  // Il throttling rallenta la risposta del server quanto basta a vedere il
+  // fallback che di solito passa in un lampo.
+  const sessione = await page.context().newCDPSession(page);
+  await sessione.send('Network.enable');
+  await sessione.send('Network.emulateNetworkConditions', {
+    offline: false,
+    latency: 1_200,
+    downloadThroughput: 200_000,
+    uploadThroughput: 200_000,
+  });
+
+  await page.goto('/inventario', { waitUntil: 'commit' });
+  await page.waitForTimeout(700);
+  await page.screenshot({ path: 'e2e/schermate/scheletro-inventario.png' });
+});
+
 test('@istantanea la pagina risultato', async ({ page }) => {
   await page.goto('/analizza');
   await page.locator('input[type="file"]').setInputFiles(

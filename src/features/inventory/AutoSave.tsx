@@ -103,8 +103,14 @@ export function AutoSave({
   }
 
   return (
-    <p className="pt-2 text-center text-xs text-muted">
-      {state === 'saving' ? 'Salvo in inventario…' : 'Salvato in inventario: resta a questo indirizzo.'}
+    <p className="flex items-center justify-center gap-1.5 pt-2 text-center text-xs text-muted">
+      <span
+        aria-hidden
+        className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-current ${
+          state === 'saving' ? 'pending-dot visible' : 'invisible'
+        }`}
+      />
+      {state === 'saving' ? 'Salvo in inventario' : 'Salvato in inventario: resta a questo indirizzo.'}
     </p>
   );
 }

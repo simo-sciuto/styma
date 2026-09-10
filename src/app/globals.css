@@ -209,3 +209,99 @@ body {
     opacity: 0.35;
   }
 }
+
+/* ────────────────────────────────────────────────────────────────────────
+   L'attesa
+   ────────────────────────────────────────────────────────────────────────
+   Una lingua sola per tutti i momenti in cui l'app sta lavorando, invece
+   di cinque soluzioni diverse: uno scheletro a forma del contenuto per le
+   pagine, una luce che passa per dire "sta arrivando", un punto che pulsa
+   per le attese brevi.
+
+   Nessuna di queste finge un avanzamento. La barra indeterminata va avanti
+   e indietro perche' non sappiamo quanto manca, e dirlo cosi' e' piu'
+   onesto di una barra che si riempie da sola fino al 90% e li' si ferma.
+*/
+
+/* Il blocco grigio a forma di quello che arrivera'. */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background-color: color-mix(in srgb, var(--muted) 14%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* La luce che passa: dice "sta caricando" senza muovere il layout. */
+  .skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--surface) 65%, transparent),
+      transparent
+    );
+    animation: styma-sweep 1.6s var(--ease-smooth) infinite;
+  }
+
+  .indeterminate::after {
+    animation: styma-slide 1.4s var(--ease-smooth) infinite;
+  }
+
+  /* Il punto delle attese brevi: compare solo se l'attesa dura davvero,
+     cosi' un salvataggio da 80 ms non produce un lampo. */
+  .pending-dot {
+    animation:
+      styma-fade-in 200ms ease 120ms both,
+      styma-pulse 1.1s ease-in-out 120ms infinite;
+  }
+}
+
+@keyframes styma-sweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/*
+ * La barra indeterminata: un segmento che attraversa la traccia. Non e' una
+ * percentuale e non deve sembrarlo — quando sappiamo davvero a che punto
+ * siamo (le corsie di ricerca) usiamo un segno che si spunta, non questa.
+ */
+.indeterminate {
+  position: relative;
+  overflow: hidden;
+}
+.indeterminate::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inline-size: 45%;
+  border-radius: inherit;
+  background-color: currentColor;
+  transform: translateX(-100%);
+}
+
+@keyframes styma-slide {
+  to {
+    transform: translateX(222%);
+  }
+}
+
+@keyframes styma-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Chi ha chiesto meno movimento vede lo stesso stato, fermo. */
+@media (prefers-reduced-motion: reduce) {
+  .indeterminate::after {
+    inline-size: 100%;
+    transform: none;
+    opacity: 0.35;
+  }
+}

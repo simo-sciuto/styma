@@ -41,6 +41,7 @@ G2 ████████████████████ test end-to-end 
 G3 ████████████████████ il prezzo massimo tornava incomprensibile  fatto
 G4 ████████████████████ accessori scambiati per l'oggetto  fatto
 G5 ████████████████████ home: un esempio vero al posto delle statistiche  fatto
+G6 ████████████████████ l'attesa diventa una lingua sola  fatto
 ```
 
 ---
@@ -409,6 +410,42 @@ E un passaggio sulle etichette opache, dalla stessa segnalazione:
 - «86 annunci usati» → «86 annunci nella stima». Voleva dire *usati per la
   stima* e si leggeva *annunci di roba usata*, che qui sono tutti.
 - «Se lo molli a 135 €» → «Se scendi a 135 €».
+
+### G6 — l'attesa, da cinque soluzioni a una (commit successivo)
+C'erano cinque modi diversi di dire «sto lavorando» e un buco grosso:
+`find src/app -name "loading.tsx"` non restituiva niente. `/inventario` e
+`/inventario/[id]` sono `force-dynamic` — interrogano Supabase e firmano gli
+URL delle foto a ogni richiesta — e fra il tocco e la pagina **non succedeva
+niente**. Su un telefono sembra che l'app si sia piantata.
+
+Tre pezzi, stessi token e stessa curva di movimento:
+- **Scheletri a forma del contenuto** (`components/Skeleton.tsx`, due
+  `loading.tsx`). Next li prefetcha, quindi la navigazione diventa immediata.
+  L'intestazione resta quella vera: non dipende dai dati, e disegnarla in
+  grigio farebbe sfarfallare una cosa che non cambia.
+- **Un punto che pulsa** per le attese brevi, su `Button` e sul nuovo
+  `TextButton`. Prima ogni punto si arrangiava cambiando la parola —
+  «Salvo…», «Archivio…», «Annullo…», «Rimetto…», «Un momento…» — cioe' cinque
+  invenzioni per lo stesso momento, e il testo che cambia sposta quello che
+  viene dopo. Ora l'etichetta resta l'azione. Ritardo di 120 ms: un'azione da
+  un battito non produce un lampo.
+- **Un blocco a passi per l'analisi** (`AnalysisProgress`), che dura fra i
+  trenta secondi e i due minuti ed era una frase che sfarfallava in opacita'.
+  I tre passi si accendono sugli eventi veri dello stream e ognuno, chiudendo,
+  lascia il suo risultato: il nome dell'oggetto, quante inserzioni ha dato
+  eBay. La barra del passo in corso e' indeterminata apposta.
+
+Piu' `useLinkStatus` nella barra di navigazione, per i casi in cui il
+prefetch non e' arrivato in tempo.
+
+**Due cose viste guardando, non ragionando.** La prima: il blocco dei passi
+finiva *sotto* la guida fotografica, quindi durante l'attesa si guardavano i
+consigli su cosa fotografare invece del lavoro in corso — ora la guida sparisce
+mentre l'analisi gira e i passi stanno in cima. La seconda: `inline-block
+hidden` non nasconde niente, perche' sono due utility di display nella stessa
+cascata e vince quella che nel CSS generato viene dopo. Il punto d'attesa e'
+rimasto acceso su ogni bottone finche' una schermata ingrandita non l'ha
+mostrato; typecheck, lint e 178 test non avevano niente da dire.
 
 ---
 

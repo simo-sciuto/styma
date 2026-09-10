@@ -1,7 +1,32 @@
 'use client';
 
-import Link from 'next/link';
+import Link, { useLinkStatus } from 'next/link';
 import { usePathname } from 'next/navigation';
+
+/**
+ * Il segno che il tocco e' arrivato.
+ *
+ * `useLinkStatus` va usato dentro un `<Link>` e dice se quella navigazione e'
+ * ancora in volo. Serve per i casi in cui il prefetch non e' arrivato in
+ * tempo: dove c'e' un `loading.tsx` la pagina cambia subito e questo punto
+ * non compare nemmeno, che e' il comportamento giusto.
+ *
+ * Occupa spazio anche da spento — `visibility`, non `display` — perche' un
+ * puntino che appare non deve spostare la voce di menu sotto il dito. E
+ * l'animazione parte con 120 ms di ritardo: una navigazione veloce non
+ * produce un lampo.
+ */
+function LinkPending() {
+  const { pending } = useLinkStatus();
+  return (
+    <span
+      aria-hidden
+      className={`ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-current align-middle ${
+        pending ? 'pending-dot visible' : 'invisible'
+      }`}
+    />
+  );
+}
 
 const LINKS = [
   { href: '/analizza', label: 'Analizza' },
@@ -44,6 +69,7 @@ export function Header() {
                 }`}
               >
                 {link.label}
+                <LinkPending />
               </Link>
             );
           })}
@@ -70,6 +96,7 @@ export function Header() {
               <circle cx="12" cy="8" r="3.2" />
               <path d="M5.5 19.5c1.4-3.2 4-4.8 6.5-4.8s5.1 1.6 6.5 4.8" />
             </svg>
+            <LinkPending />
           </Link>
         </div>
       </nav>

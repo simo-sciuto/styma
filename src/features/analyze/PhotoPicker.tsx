@@ -113,10 +113,11 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
         <Button
           type="button"
           className="mt-4"
-          disabled={disabled || full || busy}
+          pending={busy}
+          disabled={disabled || full}
           onClick={() => inputRef.current?.click()}
         >
-          {busy ? 'Preparo le foto…' : images.length === 0 ? 'Scatta o scegli le foto' : 'Aggiungi foto'}
+          {images.length === 0 ? 'Scatta o scegli le foto' : 'Aggiungi foto'}
         </Button>
 
         <p className="mt-3 text-sm text-muted">
@@ -189,7 +190,14 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
         </ul>
       ) : null}
 
-      <div className="mt-4 space-y-4 rounded-block border border-line bg-surface p-4">
+      {/* Mentre l'analisi gira, le foto sono gia' scelte: la guida su cosa
+          fotografare diventa il blocco piu' alto della pagina e copre il
+          lavoro in corso, che e' l'unica cosa che si vuole guardare. */}
+      <div
+        className={`mt-4 space-y-4 rounded-block border border-line bg-surface p-4 ${
+          disabled ? 'hidden' : ''
+        }`}
+      >
         <p className="text-sm font-medium">Cosa fotografare</p>
         {GUIDANCE.map((group) => (
           <div key={group.title}>

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 
-import { Card } from '@/components/ui';
+import { Card, TextButton } from '@/components/ui';
 import { setArchived } from './actions';
 
 /**
@@ -36,14 +36,9 @@ export function ArchiveToggle({ itemId, archived }: { itemId: string; archived: 
           Archiviato: non compare nella lista, ma resta nei dati e nei conteggi.
         </p>
         {error ? <p className="mt-2 text-sm text-danger">{error}</p> : null}
-        <button
-          type="button"
-          disabled={pending}
-          onClick={toggle}
-          className="mt-2 text-sm underline decoration-line underline-offset-4"
-        >
-          {pending ? 'Rimetto…' : 'Rimettilo in inventario'}
-        </button>
+        <TextButton className="mt-2 text-foreground" pending={pending} onClick={toggle}>
+          Rimettilo in inventario
+        </TextButton>
       </Card>
     );
   }
@@ -51,14 +46,9 @@ export function ArchiveToggle({ itemId, archived }: { itemId: string; archived: 
   return (
     <div>
       {error ? <p className="mb-2 text-sm text-danger">{error}</p> : null}
-      <button
-        type="button"
-        disabled={pending}
-        onClick={toggle}
-        className="text-sm text-muted underline decoration-line underline-offset-4"
-      >
-        {pending ? 'Archivio…' : 'Toglilo dalla lista'}
-      </button>
+      <TextButton pending={pending} onClick={toggle}>
+        Toglilo dalla lista
+      </TextButton>
     </div>
   );
 }
