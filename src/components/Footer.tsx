@@ -9,7 +9,7 @@ import Link from 'next/link';
  */
 export function Footer() {
   return (
-    <footer className="flex min-h-[70svh] flex-col justify-between overflow-hidden bg-tile-terracotta px-5 py-14 text-tile-ink sm:min-h-[85svh]">
+    <footer className="flex min-h-[70svh] flex-col justify-between overflow-hidden bg-tile-terracotta px-4 py-12 text-tile-ink sm:px-5 sm:py-14 sm:min-h-[85svh]">
       <div className="mx-auto w-full max-w-2xl">
         <p className="font-mono text-xs uppercase tracking-[0.2em]">STYMA</p>
         <p className="mt-6 max-w-lg text-balance text-[clamp(2rem,1.6rem+2.8vw,3.75rem)] font-semibold leading-[0.95] tracking-tighter">

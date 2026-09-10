@@ -96,7 +96,7 @@ export function PageHeader({
   const toneClass = tone === 'teal' ? 'bg-tile-teal text-tile-cream' : 'bg-tile-terracotta text-tile-ink';
 
   return (
-    <div className={`rounded-block px-6 py-8 sm:py-10 ${toneClass}`}>
+    <div className={`rounded-block px-5 py-7 sm:px-6 sm:py-10 ${toneClass}`}>
       <h1 className="text-[clamp(2rem,1.6rem+2vw,3rem)] font-semibold leading-[0.95] tracking-tighter text-balance">
         {title}
       </h1>

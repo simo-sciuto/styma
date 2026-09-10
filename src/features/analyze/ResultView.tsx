@@ -97,10 +97,10 @@ export function ResultView({
         non una Card neutra, cosi' la pagina di risultato non sembra
         un'altra app rispetto alla home.
       */}
-      <div className="rounded-block bg-tile-terracotta p-6 text-tile-ink">
+      <div className="rounded-block bg-tile-terracotta p-5 text-tile-ink sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-semibold leading-[0.95] tracking-tight">
+            <h1 className="text-[clamp(1.6rem,1.35rem+1.4vw,2.25rem)] font-semibold leading-[0.95] tracking-tight text-balance">
               {identification.name}
             </h1>
             <p className="mt-1 text-sm">
@@ -132,9 +132,9 @@ export function ResultView({
         // Il numero su cui si decide tutto prende la forma di un vero
         // cartellino del prezzo — l'unico rischio visivo della pagina,
         // speso qui e da nessun'altra parte.
-        <div className="price-tag rounded-block bg-accent-vivid p-6 text-accent-on-vivid">
+        <div className="price-tag rounded-block bg-accent-vivid p-5 text-accent-on-vivid sm:p-6">
           <p className="text-sm font-medium">Valore di rivendita stimato</p>
-          <p className="mt-1 text-4xl font-semibold tracking-tight sm:text-5xl">
+          <p className="mt-1 text-[clamp(2rem,1.6rem+2.4vw,3rem)] font-semibold leading-none tracking-tight">
             {formatRange(valuation.low, valuation.high)}
           </p>
           <p className="mt-2 text-sm">
@@ -182,7 +182,7 @@ export function ResultView({
               // Il verdetto che conta di piu' si vede prima di leggerlo: stesso
               // trattamento a blocco pieno del prezzo, non piu' una pillola fra
               // le altre.
-              <div className="rounded-block bg-accent-vivid p-5 text-accent-on-vivid">
+              <div className="rounded-block bg-accent-vivid p-5 text-accent-on-vivid sm:p-6">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
                     <p className="text-sm font-medium">

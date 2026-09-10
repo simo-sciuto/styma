@@ -73,7 +73,7 @@ export default function HomePage() {
         verde di --accent-vivid resta riservato al prezzo e al verdetto,
         non diventa anche lo sfondo della prima cosa che si vede.
       */}
-      <section className="relative flex min-h-[88svh] flex-col items-center justify-center overflow-hidden bg-tile-teal px-5 py-20 text-center text-tile-cream sm:min-h-[92svh]">
+      <section className="relative flex min-h-[76svh] flex-col items-center justify-center overflow-hidden bg-tile-teal px-5 py-14 text-center text-tile-cream sm:min-h-[88svh] sm:py-20">
         <h1 className="reveal max-w-3xl text-balance text-[clamp(2.75rem,2.1rem+5.5vw,6.75rem)] font-semibold leading-[0.92] tracking-tighter">
           Quanto vale,
           <br />
@@ -104,14 +104,16 @@ export default function HomePage() {
         </div>
       </section>
 
-      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-5 pb-16 pt-10">
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-16 pt-10 sm:px-5">
         <Reveal className="rounded-block bg-surface-warm p-6 sm:p-8">
           <p className="text-sm font-medium text-muted">Misurato, non tirato a indovinare.</p>
-          <div className="mt-5 grid grid-cols-3 gap-4">
+          <div className="mt-5 grid gap-4 sm:grid-cols-3">
             {NUMBERS.map((stat) => (
-              <div key={stat.label}>
-                <p className="text-3xl font-semibold tracking-tighter sm:text-4xl">{stat.value}</p>
-                <p className="mt-1.5 text-xs leading-snug text-muted">{stat.label}</p>
+              <div key={stat.label} className="flex items-baseline gap-3 sm:block">
+                <p className="shrink-0 text-3xl font-semibold tracking-tighter sm:text-4xl">
+                  {stat.value}
+                </p>
+                <p className="text-xs leading-snug text-muted sm:mt-1.5">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -123,7 +125,7 @@ export default function HomePage() {
               key={step.title}
               as="li"
               delay={index * 90}
-              className={`rounded-block p-6 ${step.tone}`}
+              className={`rounded-block p-5 sm:p-6 ${step.tone}`}
             >
               <div className="flex items-center justify-between">
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-black/10">

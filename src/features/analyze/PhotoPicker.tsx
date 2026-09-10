@@ -68,7 +68,7 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
-        className={`rounded-block border-2 border-dashed p-8 text-center transition ${
+        className={`rounded-block border-2 border-dashed p-6 text-center transition sm:p-8 ${
           dragging ? 'border-tile-teal bg-accent-soft' : 'border-line bg-surface'
         } ${disabled ? 'opacity-60' : ''}`}
       >
@@ -144,7 +144,7 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
                       onClick={() => move(index, -1)}
                       disabled={index === 0}
                       aria-label={`Sposta la foto ${index + 1} indietro`}
-                      className="rounded-full px-2.5 py-1.5 text-sm text-muted transition hover:bg-accent-soft hover:text-foreground disabled:opacity-30"
+                      className="rounded-full px-2 py-1.5 text-sm text-muted transition hover:bg-accent-soft hover:text-foreground disabled:opacity-30 sm:px-2.5"
                     >
                       ←
                     </button>
@@ -162,7 +162,7 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
                     type="button"
                     onClick={() => remove(image.id)}
                     aria-label={`Rimuovi la foto ${index + 1}`}
-                    className="rounded-full px-2.5 py-1.5 text-sm text-danger transition hover:bg-danger-soft"
+                    className="rounded-full px-2 py-1.5 text-xs text-danger transition hover:bg-danger-soft sm:px-2.5 sm:text-sm"
                   >
                     Rimuovi
                   </button>

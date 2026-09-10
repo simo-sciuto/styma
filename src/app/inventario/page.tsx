@@ -13,7 +13,7 @@ export default async function InventoryPage() {
   const result = await listInventory();
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-5 pb-20 pt-6">
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-20 pt-6 sm:px-5">
       <PageHeader
         title="Inventario"
         subtitle="Ogni oggetto con la valutazione che aveva il giorno in cui l’hai salvato."
