@@ -53,7 +53,7 @@ export function Authenticity({ authenticity }: { authenticity: AuthenticityData 
           <ul className="mt-1.5 space-y-1.5 text-sm">
             {concerns.map((concern) => (
               <li key={concern} className="leading-snug">
-                — {concern}
+                {concern}
               </li>
             ))}
           </ul>
@@ -68,7 +68,7 @@ export function Authenticity({ authenticity }: { authenticity: AuthenticityData 
           <ul className="mt-1.5 space-y-1.5 text-sm">
             {supports.map((support) => (
               <li key={support} className="leading-snug">
-                — {support}
+                {support}
               </li>
             ))}
           </ul>
@@ -83,7 +83,7 @@ export function Authenticity({ authenticity }: { authenticity: AuthenticityData 
           <ul className="mt-1.5 space-y-1.5 text-sm">
             {toVerify.map((check) => (
               <li key={check} className="leading-snug">
-                — {check}
+                {check}
               </li>
             ))}
           </ul>
@@ -91,8 +91,7 @@ export function Authenticity({ authenticity }: { authenticity: AuthenticityData 
       ) : null}
 
       <p className="mt-4 text-xs text-muted">
-        Nessuna di queste righe dice che il pezzo e’ autentico, e nemmeno che non lo e’: da una
-        fotografia non si stabilisce. Dice quanta evidenza si vede — e dove cercarne altra.
+        Da una foto non si stabilisce se e’ vero. Questa e’ l’evidenza, non un verdetto.
       </p>
     </Disclosure>
   );

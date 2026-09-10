@@ -20,15 +20,13 @@ const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
  */
 export function economicsAt(purchasePrice: number, expectedSalePrice: number): Economics {
   const marketplaceFees = expectedSalePrice * flipConfig.marketplaceFeeRate;
-  const shipping = flipConfig.defaultShippingCost;
-  const expectedProfit = expectedSalePrice - purchasePrice - marketplaceFees - shipping;
-  const totalCost = purchasePrice + marketplaceFees + shipping;
+  const expectedProfit = expectedSalePrice - purchasePrice - marketplaceFees;
+  const totalCost = purchasePrice + marketplaceFees;
 
   return {
     expectedSalePrice,
     purchasePrice,
     marketplaceFees: Math.round(marketplaceFees * 100) / 100,
-    shipping,
     expectedProfit: Math.round(expectedProfit * 100) / 100,
     roi: totalCost > 0 ? expectedProfit / totalCost : null,
   };
@@ -108,7 +106,6 @@ export function riskBufferRate(
  *
  *   valore atteso di vendita
  *   − commissioni
- *   − spedizione e imballo
  *   − cuscinetto di rischio
  *   = quanto ti resta in mano
  *
@@ -127,22 +124,19 @@ export function priceThresholds(
 ): PriceThresholds {
   const expectedSalePrice = valuation.likely;
   const fees = expectedSalePrice * flipConfig.marketplaceFeeRate;
-  const shipping = flipConfig.defaultShippingCost;
   const riskBuffer = expectedSalePrice * riskBufferRate(valuation, identification);
 
   /** Quanto resta in mano dopo la vendita: dentro ci stanno il prezzo che paghi e il tuo guadagno. */
-  const coversCosts = expectedSalePrice - fees - shipping - riskBuffer;
+  const coversCosts = expectedSalePrice - fees - riskBuffer;
 
   /*
    * Il guadagno si misura su quello che spendi, non sul prezzo di vendita.
    *
-   * Prima era una quota del venduto — 25% — e sembrava equivalente. Non lo
-   * era: la spedizione costa 9 € sia su un oggetto da 45 € sia su uno da 550,
-   * e si toglie prima. Cosi' la stessa configurazione pretendeva il 163% di
-   * ritorno su un oggetto da 45 € e il 95% su uno da 550. Su una fascia
-   * 30–70 € l'affare partiva sotto i 12 €, e chi leggeva vedeva due numeri
-   * che sembravano darsi torto a vicenda — perche' in un certo senso se lo
-   * davano.
+   * Prima era una quota del venduto (25%) e sembrava equivalente. Non lo era:
+   * i costi fissi si tolgono prima, quindi la stessa configurazione pretendeva
+   * il 163% di ritorno su un oggetto da 45 € e il 95% su uno da 550. Su una
+   * fascia 30-70 € l'affare partiva sotto i 12 €, e chi leggeva vedeva due
+   * numeri che sembravano darsi torto a vicenda.
    *
    * Diviso invece che sottratto, la richiesta e' la stessa a ogni livello di
    * prezzo: quello che resta deve coprire quanto paghi piu' il tuo guadagno.
@@ -159,11 +153,10 @@ export function priceThresholds(
     breakdown: {
       expectedSalePrice: round2(expectedSalePrice),
       fees: round2(fees),
-      shipping: round2(shipping),
       riskBuffer: round2(riskBuffer),
       // Quanto ti resta davvero pagando la soglia. Le righe continuano a
-      // tornare a mente: venduto − commissioni − spedizione − cuscinetto −
-      // guadagno = prezzo massimo.
+      // tornare a mente: venduto, meno commissioni, meno cuscinetto, meno
+      // guadagno, uguale prezzo massimo.
       targetProfit: soglia === null ? round2(coversCosts) : round2(coversCosts - soglia),
     },
   };
@@ -245,12 +238,6 @@ export function assessFlip(
   if (research?.demand === 'low') factors.push({ label: 'Domanda bassa', direction: 'negative' });
   if (research?.liquidity === 'fast') factors.push({ label: 'Si vende in fretta', direction: 'positive' });
   if (research?.liquidity === 'slow') factors.push({ label: 'Rivendita lenta', direction: 'negative' });
-  if (!marketObserved(research)) {
-    factors.push({
-      label: 'Domanda e tempi di vendita non osservati: il punteggio pesa solo margine e affidabilita’ della stima',
-      direction: 'negative',
-    });
-  }
   if (valuation.dispersion > 0.6) {
     factors.push({ label: 'Prezzi di mercato molto variabili', direction: 'negative' });
   }
@@ -260,13 +247,6 @@ export function assessFlip(
   if (valuation.confidence === 'low') {
     factors.push({ label: 'Stima poco affidabile', direction: 'negative' });
   }
-  factors.push({
-    label: `Commissioni e spedizione stimate: ${Math.round(
-      expectedSalePrice * flipConfig.marketplaceFeeRate + flipConfig.defaultShippingCost,
-    )} €`,
-    direction: 'negative',
-  });
-
   const atPrice =
     purchasePrice !== null && Number.isFinite(purchasePrice) && purchasePrice >= 0
       ? (() => {

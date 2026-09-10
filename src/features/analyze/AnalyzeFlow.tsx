@@ -314,11 +314,15 @@ export function AnalyzeFlow({ saved = null }: { saved?: SavedAnalysis | null }) 
         }
       />
 
-      {/* Durante l'attesa il lavoro in corso viene prima delle foto: sono
-          gia' scelte, e quello che si vuole guardare e' cosa sta succedendo. */}
-      {busy ? <AnalysisProgress passi={passi} corsie={lanes} /> : null}
-
-      <PhotoPicker images={images} onChange={setImages} disabled={busy} />
+      {/* Mentre l'analisi gira il selettore sparisce del tutto: le foto sono
+          gia' state scelte, e un modulo per caricarne altre in mezzo
+          all'attesa e' un invito a fare una cosa che adesso non si puo'
+          fare. Resta solo il lavoro in corso. */}
+      {busy ? (
+        <AnalysisProgress passi={passi} corsie={lanes} />
+      ) : (
+        <PhotoPicker images={images} onChange={setImages} />
+      )}
 
       {error ? (
         <Card className="border-danger/40 bg-danger-soft">

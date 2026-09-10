@@ -62,11 +62,9 @@ export function Deals({
       <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-accent">
         Lo trovi gia’ in vendita
       </p>
-      <p className="mt-2 text-sm leading-relaxed">
-        {deals.length === 1 ? 'Un’inserzione' : `${deals.length} inserzioni`} dello stesso modello{' '}
-        {deals.length === 1 ? 'sta' : 'stanno'} sotto il tuo prezzo massimo di{' '}
-        <strong>{formatEur(thresholds.buyUpTo ?? 0)}</strong>. Sono le stesse che hanno prodotto la
-        stima qui sopra: guardale prima di trattare.
+      <p className="mt-2 text-sm">
+        Lo stesso modello, in vendita adesso sotto il tuo massimo di{' '}
+        <strong>{formatEur(thresholds.buyUpTo ?? 0)}</strong>.
       </p>
 
       <ul className="mt-4 space-y-3">
@@ -129,9 +127,7 @@ export function Deals({
       </ul>
 
       <p className="mt-3 border-t-2 border-line pt-3 text-xs text-muted">
-        Sono prezzi fissi dello stesso modello, comprabili adesso — non aste, e non oggetti
-        somiglianti. Restano annunci: lo stato lo dichiara chi vende, e comprare per rivendere sulla
-        stessa piattaforma lascia un margine piu’ sottile che comprarlo al banco.
+        Guarda la foto prima di fidarti: il titolo non distingue l’oggetto da un suo pezzo.
       </p>
     </Card>
   );

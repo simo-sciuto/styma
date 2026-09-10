@@ -1,7 +1,7 @@
 import { PageHeader } from '@/components/ui';
 import { AccountPanel } from '@/features/auth/AccountPanel';
 
-export const metadata = { title: 'Account — STYMA' };
+export const metadata = { title: 'Account · STYMA' };
 
 export default function AccountPage() {
   return (

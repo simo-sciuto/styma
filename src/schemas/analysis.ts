@@ -67,7 +67,6 @@ export type Economics = {
   expectedSalePrice: number;
   purchasePrice: number;
   marketplaceFees: number;
-  shipping: number;
   expectedProfit: number;
   roi: number | null;
 };
@@ -87,7 +86,6 @@ export type PriceThresholds = {
   breakdown: {
     expectedSalePrice: number;
     fees: number;
-    shipping: number;
     riskBuffer: number;
     targetProfit: number;
   };

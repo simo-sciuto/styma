@@ -1,7 +1,7 @@
 import { AnalyzeFlow, type SavedAnalysis } from '@/features/analyze/AnalyzeFlow';
 import { getItemDetail } from '@/services/inventory/repository';
 
-export const metadata = { title: 'Analizza un oggetto — STYMA' };
+export const metadata = { title: 'Analizza un oggetto · STYMA' };
 
 /**
  * Un'analisi gia' fatta, riaperta dal suo indirizzo.

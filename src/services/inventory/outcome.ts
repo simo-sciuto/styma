@@ -32,7 +32,7 @@ export type SoldOutcome = {
    */
   grossMargin: number | null;
   /**
-   * Lo stesso margine meno commissioni e spedizione. Sono le medie di
+   * Lo stesso margine meno le commissioni. Sono le medie di
    * `flipConfig`, non le tariffe del tuo marketplace: resta una stima, e
    * l'interfaccia deve dirlo.
    */
@@ -114,9 +114,7 @@ export function describeOutcome(
       estimatedNet:
         grossMargin === null
           ? null
-          : grossMargin -
-            item.sale_price * flipConfig.marketplaceFeeRate -
-            flipConfig.defaultShippingCost,
+          : grossMargin - item.sale_price * flipConfig.marketplaceFeeRate,
       daysHeld: daysBetween(item.purchase_date, item.sale_date),
       daysOnMarket: daysBetween(item.listed_at, item.sale_date),
       vsEstimate: compareToRange(item.sale_price, valuation),

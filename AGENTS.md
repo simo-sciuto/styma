@@ -132,12 +132,30 @@ sono ancora aperte.
   `weak` (solo categoria, ultima spiaggia prima di "non lo so", tetto a "low"). Solo `identical`
   puo' arrivare a "high": e' l'unico caso in cui non resta un'incertezza sovrapposta fra "quanto
   vale l'oggetto" e "e' davvero lo stesso oggetto".
-- **Il guadagno si misura su quello che spendi, non sul prezzo di vendita.** Sembrano equivalenti e
-  non lo sono: la spedizione costa 9 € tanto su un oggetto da 45 € quanto su uno da 550, e si toglie
-  prima. Prendendo una quota del venduto (era il 25%), la stessa riga di configurazione pretendeva
-  un ritorno del 163% per dire «compralo» sotto i 50 € e del 95% sopra i 500 — e i mercatini stanno
-  tutti in fondo a quella scala. `dealRoi` e' sul capitale speso: la richiesta e' la stessa a ogni
-  livello di prezzo.
+- **Il guadagno si misura su quello che spendi, non sul prezzo di vendita.** Prendendo una quota
+  del venduto (era il 25%), la stessa riga di configurazione pretendeva un ritorno del 163% per
+  dire «compralo» sotto i 50 € e del 95% sopra i 500, e i mercatini stanno tutti in fondo a quella
+  scala. `dealRoi` e' sul capitale speso: la richiesta e' la stessa a ogni livello di prezzo.
+- **La spedizione non entra nei conti.** C'erano 9 € fissi di spedizione e imballo sottratti a ogni
+  stima, e su un oggetto da 15 € facevano il 60% del valore: bastavano a far sparire il prezzo
+  massimo di qualunque cosa costasse poco, cioe' quasi tutto quello che si trova a un mercatino.
+  Chi usa STYMA vende soprattutto di persona, e un costo che non paghi non puo' entrare in una
+  sottrazione ne' diventare un avviso. Restano solo le commissioni. Se un giorno serve rimetterla,
+  va rimessa come scelta di chi vende, non come costante.
+- **Le etichette dicono cosa fanno, e basta.** Sotto ogni sezione c'era un paragrafo che spiegava
+  perche' quella sezione esiste: veri, scritti bene, e lunghi il doppio del contenuto che
+  commentavano. Chi legge sta in piedi davanti a un banco. Poche parole dirette, e niente trattini
+  lunghi in nessun testo visibile: in una riga stretta su un telefono un inciso fra trattini si
+  legge come una frase spezzata.
+- **Il primo numero della pagina e' quanto vale.** Il blocco della decisione si apriva chiedendo
+  «quanto costa», cioe' chiedendo un dato prima di dare una risposta. Ma la domanda con cui uno
+  arriva qui e' «quanto vale», e la risposta ce l'abbiamo prima che digiti qualsiasi cosa: la
+  fascia sta in cima, il campo del prezzo e il verdetto vengono dopo.
+- **Un fattore che c'e' su ogni oggetto non e' un fattore.** Fra i motivi del punteggio comparivano
+  sempre «domanda e tempi di vendita non osservati» e «commissioni stimate: N €»: veri entrambi, e
+  presenti su ogni singola analisi. Un elenco che comincia con due righe uguali per tutti insegna a
+  saltarlo. La ridistribuzione dei pesi resta, e resta testata: e' l'aritmetica a doverne tenere
+  conto, non un'etichetta.
 - **I numeri della home escono dal motore, non da un elenco scritto a mano.** C'era un blocco di
   cifre sul funzionamento — quanti mercati eBay, quanto costa un'analisi, quanti livelli di
   comparabili — e una era diventata falsa da sola: «0,006 € per analisi» era il costo con

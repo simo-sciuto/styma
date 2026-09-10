@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import type { AnalysisResult, Valuation } from '@/schemas/analysis';
-import { flipConfig } from '@/services/valuation/config';
 import { collectRisks } from './risks';
 import type { Identification } from '@/schemas/identification';
 import { anIdentification } from '@/schemas/testing';
@@ -111,17 +110,12 @@ describe('rischi raccolti', () => {
     expect(ids(result({}, { used: valuation.used.slice(0, 3) }))).not.toContain('sample-tiny');
   });
 
-  it('la spedizione diventa un rischio quando si mangia l’oggetto', () => {
-    // Su un oggetto da 15 € i 9 € di spedizione sono il 60%: non e' un
-    // dettaglio contabile, e' la ragione per cui l'affare non e' un affare.
-    const piccolo = result({}, { likely: 15 });
-    expect(ids(piccolo)).toContain('shipping-critical');
-
-    const medio = result({}, { likely: flipConfig.defaultShippingCost / 0.35 });
-    expect(ids(medio)).toContain('shipping-heavy');
-
-    const grande = result({}, { likely: 300 });
-    expect(ids(grande).some((id) => id.startsWith('shipping'))).toBe(false);
+  it('la spedizione non e’ piu’ un rischio, perche’ non e’ piu’ un costo', () => {
+    // Il conto non toglie piu' spedizione e imballo: chi usa STYMA vende
+    // soprattutto di persona, e un costo che non paghi non puo' diventare
+    // un avviso. Su un oggetto da 15 €, dove prima scattava per primo, ora
+    // non deve restare niente che ne parli.
+    expect(ids(result({}, { likely: 15 })).some((id) => id.startsWith('shipping'))).toBe(false);
   });
 
   it('«nessun difetto trovato» non e’ «nessun difetto»', () => {

@@ -25,16 +25,6 @@ const VERDICT_TONE: Record<string, string> = {
   PASS: 'bg-verdict-pass text-tile-ink',
 };
 
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <div>
-      <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">{label}</p>
-      <p className="mt-0.5 text-2xl font-semibold tracking-tight">{value}</p>
-      {hint ? <p className="text-xs text-muted">{hint}</p> : null}
-    </div>
-  );
-}
-
 /**
  * La domanda del prodotto, in un blocco solo.
  *
@@ -64,13 +54,33 @@ export function DecisionBlock({
   const { breakdown } = thresholds;
   const asking = decision?.purchasePrice ?? null;
   const restaInMano = thresholds.maybeUpTo;
+  const usati = valuation.used.length;
+  const annunci =
+    usati === 1 ? 'Da 1 annuncio dello stesso modello.' : `Da ${usati} annunci dello stesso modello.`;
 
   return (
     /* Livello 1: l'unico blocco della pagina con bordo spesso e ombra piena.
        E' la risposta, e deve staccarsi da tutto il resto anche visto di
        sfuggita, prima ancora di essere letto. */
     <section className="rounded-block border-[3px] border-line bg-surface p-5 shadow-pop sm:p-6">
-      <label className="block">
+      {/*
+        La stima viene prima di tutto, e prima anche del campo del prezzo.
+        Era la seconda cosa: si apriva chiedendo «quanto costa», cioe'
+        chiedendo un dato prima di aver dato una risposta. Ma la domanda con
+        cui uno arriva qui e' «quanto vale», e la risposta ce l'abbiamo gia'
+        prima che digiti qualsiasi cosa.
+      */}
+      <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
+        Quanto vale
+      </p>
+      <p className="mt-1 text-[clamp(2rem,1.6rem+2.2vw,3.25rem)] font-semibold leading-none tracking-tighter">
+        {formatRange(valuation.low, valuation.high)}
+      </p>
+      <p className="mt-1.5 text-sm text-muted">
+        Di solito si vende a {formatEur(valuation.likely)}. {annunci}
+      </p>
+
+      <label className="mt-5 block border-t-2 border-line pt-5">
         {/* "Quanto te lo chiedono" era gergo da mercatino: chiarissimo per
             chi ci sta dentro, opaco per tutti gli altri. "Quanto costa" e' la
             domanda che fai al venditore a voce, con le stesse parole. */}
@@ -110,39 +120,30 @@ export function DecisionBlock({
         </p>
       )}
 
-      <div className="mt-5 grid grid-cols-2 gap-4">
-        {/* "Vale" era la parola sbagliata: sembrava quanto vale in mano tua,
-            mentre e' quanto lo paga chi lo comprera' da te. */}
-        <Stat
-          label="Lo rivendi a"
-          value={formatRange(valuation.low, valuation.high)}
-          hint={`di solito ${formatEur(valuation.likely)}`}
-        />
-        <Stat
-          label="Paga fino a"
-          value={thresholds.buyUpTo !== null ? formatEur(thresholds.buyUpTo) : '—'}
-          hint={thresholds.buyUpTo === null ? 'a nessun prezzo ci guadagni' : 'per farci un affare'}
-        />
-      </div>
-
-      <div className="mt-4">
-        <PriceZones thresholds={thresholds} askingPrice={asking} />
+      <div className="mt-5">
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
+            Paga fino a
+          </p>
+          <p className="text-2xl font-semibold tracking-tight">
+            {thresholds.buyUpTo !== null ? formatEur(thresholds.buyUpTo) : 'n.d.'}
+          </p>
+        </div>
+        <div className="mt-2">
+          <PriceZones thresholds={thresholds} askingPrice={asking} />
+        </div>
       </div>
 
       {/*
-        La riga che tiene insieme i due numeri resta, e resta aperta: senza,
-        la pagina mostra una fascia larga e un prezzo massimo basso e lascia a
-        chi legge il compito di indovinare il perche'. Il conto vero e' subito
-        sotto, in un blocco suo — qui c'era anche una seconda copia, chiusa in
-        un accordion, che diceva le stesse cose in colonna.
+        Il ponte fra i due numeri. «Vale 185-305 €» e «paga fino a 135 €»
+        letti vicini sembrano darsi torto, e la domanda «perche' non posso
+        pagarlo 200?» ha una risposta precisa che deve stare aperta.
       */}
       {restaInMano !== null ? (
         <p className="mt-4 border-t-2 border-line pt-4 text-sm leading-relaxed">
-          Sembrano due numeri lontani, e c’e’ un motivo: di{' '}
-          {formatEur(breakdown.expectedSalePrice)} che incassi vendendolo, in mano te ne restano{' '}
-          <strong>{formatEur(restaInMano)}</strong> — il resto se ne va in commissioni, spedizione e
-          in quello che teniamo da parte perche’ la stima puo’ sbagliare. Dentro quei{' '}
-          {formatEur(restaInMano)} ci stanno sia quanto paghi sia quanto ci guadagni.
+          Perche’ non di piu’: dei {formatEur(breakdown.expectedSalePrice)} che incassi, dopo
+          commissioni e margine di sicurezza ti restano {formatEur(restaInMano)}. Dentro ci sta
+          quanto paghi <em>e</em> quanto ci guadagni.
         </p>
       ) : null}
     </section>

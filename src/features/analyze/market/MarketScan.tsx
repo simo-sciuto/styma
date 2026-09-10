@@ -23,10 +23,10 @@ const STRONGEST = 4;
  * di tre settimane fa: nasconderlo sarebbe far sembrare fresco un dato riusato.
  */
 function describeSource(source: MarketSource): string {
-  if (!source.cached) return 'Ricerca fatta adesso.';
-  if (source.ageDays === 0) return 'Ricerca riusata, fatta oggi per lo stesso modello.';
-  if (source.ageDays === 1) return 'Ricerca riusata, fatta ieri per lo stesso modello.';
-  return `Ricerca riusata, fatta ${source.ageDays} giorni fa per lo stesso modello.`;
+  if (!source.cached) return 'di adesso';
+  if (source.ageDays === 0) return 'ricerca di oggi';
+  if (source.ageDays === 1) return 'ricerca di ieri';
+  return `ricerca di ${source.ageDays} giorni fa`;
 }
 
 /**
@@ -146,7 +146,6 @@ export function MarketScan({
   const used = [...valuation.used].sort((a, b) => b.weight - a.weight);
   const strongest = used.slice(0, STRONGEST);
   const rest = used.slice(STRONGEST);
-  const { discarded } = valuation;
 
   // Sono tutti prezzi richiesti finche' non esiste una fonte di venduti: dirlo
   // una volta in testa e' piu' onesto che ripetere "Richiesto" su ogni riga,
@@ -196,52 +195,44 @@ export function MarketScan({
           Sul mercato
         </p>
         <p className="text-xs text-muted">
-          {used.length === 1 ? '1 annuncio nella stima' : `${used.length} annunci nella stima`}
-          {marketSource ? ` · ${describeSource(marketSource)}` : ''}
+          {used.length} {used.length === 1 ? 'annuncio' : 'annunci'}
+          {marketSource ? `, ${describeSource(marketSource)}` : ''}
+          {allAsking ? ' · prezzi richiesti, non venduti' : ''}
         </p>
       </div>
-
-      {allAsking ? (
-        <p className="mt-2 text-xs text-warn">
-          Sono tutti prezzi <strong>richiesti</strong>, non vendite concluse: dicono a quanto
-          qualcuno spera di vendere, non a quanto qualcuno ha comprato.
-        </p>
-      ) : null}
 
       {/*
         Le vendite concluse non entrano nella stima e non ci entreranno presto:
         le uniche fonti che le restituiscono sono scraper. Quello che si puo'
-        fare senza mentire e' portarci chi sta davanti al banco — la sua
+        fare senza mentire e' portarci chi sta davanti al banco: la sua
         ricerca, sul suo browser, sul sito di eBay.
       */}
       {soldSearch ? (
-        <p className="mt-2 text-xs text-muted">
+        <p className="mt-2 text-xs">
           <a
             href={soldSearch}
             target="_blank"
             rel="noreferrer noopener"
-            className="font-medium text-foreground underline decoration-line underline-offset-4"
+            className="font-medium underline decoration-line underline-offset-4"
           >
             Guarda i venduti su eBay
           </a>{' '}
-          — apre la ricerca sul sito, dove i prezzi sono quelli davvero pagati. Serve essere
-          loggati su eBay: da luglio 2026 li mostra solo a chi ha un account.
+          <span className="text-muted">(serve l’account)</span>
         </p>
       ) : null}
 
       {highestBid !== null ? (
         <p className="mt-3 text-sm">
           Su {bids.length === 1 ? 'un’asta aperta' : `${bids.length} aste aperte`} qualcuno ha gia’
-          offerto fino a <strong>{formatEur(highestBid)}</strong>. Non entra nella stima — l’asta
-          non e’ finita — ma e’ l’unica cifra qui dentro che qualcuno ha davvero impegnato.
+          offerto fino a <strong>{formatEur(highestBid)}</strong>. Non entra nella stima, perche’
+          l’asta non e’ finita: e’ un pavimento, non un prezzo.
         </p>
       ) : null}
 
       {competition ? (
         <p className="mt-3 text-sm">
-          <strong>{competition.count} inserzioni</strong> dello stesso modello sono aperte adesso,
-          da {formatEur(competition.low)} a {formatEur(competition.high)}. E’ quanta scelta ha chi
-          compra.
+          <strong>{competition.count} inserzioni</strong> dello stesso modello aperte adesso, da{' '}
+          {formatEur(competition.low)} a {formatEur(competition.high)}: e’ la tua concorrenza.
         </p>
       ) : null}
 
@@ -280,29 +271,13 @@ export function MarketScan({
       {valuation.reasons.length > 0 ? (
         <div className="mt-4 border-t-2 border-line pt-3">
           <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
-            Come siamo arrivati alla fascia
+Come nasce la stima
           </p>
           <ul className="mt-2 space-y-1 text-sm text-muted">
             {valuation.reasons.map((reason) => (
-              <li key={reason}>— {reason}</li>
+              <li key={reason}>{reason}</li>
             ))}
           </ul>
-        </div>
-      ) : null}
-
-      {/* Cosa e' stato buttato e perche'. E' la meta' meno vistosa della
-          prova, e l'unica che dimostra che qualcuno ha guardato. */}
-      {discarded.length > 0 ? (
-        <div className="mt-3">
-          <Disclosure summary={`${discarded.length} scartati, e perche’`}>
-            <ul className="space-y-2 text-sm text-muted">
-              {discarded.map(({ comparable, reason }) => (
-                <li key={`${comparable.url}-${comparable.price}`}>
-                  <span className="text-foreground">{comparable.title}</span> — {reason}
-                </li>
-              ))}
-            </ul>
-          </Disclosure>
         </div>
       ) : null}
 
@@ -310,17 +285,12 @@ export function MarketScan({
         <p className="mt-4 border-t-2 border-line pt-3 text-sm text-muted">
           Domanda {DEMAND_LABELS[market.demand]} · {LIQUIDITY_LABELS[market.liquidity]}
         </p>
-      ) : (
-        <p className="mt-4 border-t-2 border-line pt-3 text-xs text-muted">
-          Domanda e tempi di vendita non osservati: servirebbero le vendite concluse, e non esiste
-          una fonte gratuita che ce le dia.
-        </p>
-      )}
+      ) : null}
 
       {market !== null && market.notes.length > 0 ? (
         <ul className="mt-2 space-y-1 text-xs text-muted">
           {market.notes.map((note) => (
-            <li key={note}>— {note}</li>
+            <li key={note}>{note}</li>
           ))}
         </ul>
       ) : null}

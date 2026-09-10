@@ -35,10 +35,9 @@ const GUIDANCE = [
 type Props = {
   images: PreparedImage[];
   onChange: (images: PreparedImage[]) => void;
-  disabled?: boolean;
 };
 
-export function PhotoPicker({ images, onChange, disabled = false }: Props) {
+export function PhotoPicker({ images, onChange }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
@@ -69,7 +68,6 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
   function onDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
     setDragging(false);
-    if (disabled) return;
     if (event.dataTransfer.files.length > 0) void addFiles(event.dataTransfer.files);
   }
 
@@ -80,13 +78,13 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
       <div
         onDragOver={(event) => {
           event.preventDefault();
-          if (!disabled) setDragging(true);
+          setDragging(true);
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
         className={`rounded-block border-[3px] border-dashed p-6 text-center transition sm:p-8 ${
           dragging ? 'border-tile-teal bg-accent-soft' : 'border-line bg-surface'
-        } ${disabled ? 'opacity-60' : ''}`}
+        }`}
       >
         <input
           ref={inputRef}
@@ -114,7 +112,7 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
           type="button"
           className="mt-4"
           pending={busy}
-          disabled={disabled || full}
+          disabled={full}
           onClick={() => inputRef.current?.click()}
         >
           {images.length === 0 ? 'Scatta o scegli le foto' : 'Aggiungi foto'}
@@ -153,8 +151,7 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
                   {index + 1}
                 </span>
               </div>
-              {!disabled ? (
-                <div className="flex items-center justify-between gap-1 border-t-2 border-line px-1.5 py-1">
+              <div className="flex items-center justify-between gap-1 border-t-2 border-line px-1.5 py-1">
                   <div className="flex">
                     <button
                       type="button"
@@ -183,21 +180,13 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
                   >
                     Rimuovi
                   </button>
-                </div>
-              ) : null}
+              </div>
             </li>
           ))}
         </ul>
       ) : null}
 
-      {/* Mentre l'analisi gira, le foto sono gia' scelte: la guida su cosa
-          fotografare diventa il blocco piu' alto della pagina e copre il
-          lavoro in corso, che e' l'unica cosa che si vuole guardare. */}
-      <div
-        className={`mt-4 space-y-4 rounded-block border-2 border-line bg-surface p-4 ${
-          disabled ? 'hidden' : ''
-        }`}
-      >
+      <div className="mt-4 space-y-4 rounded-block border-2 border-line bg-surface p-4">
         <p className="text-sm font-medium">Cosa fotografare</p>
         {GUIDANCE.map((group) => (
           <div key={group.title}>

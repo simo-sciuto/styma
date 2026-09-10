@@ -73,7 +73,7 @@ describe('com’e’ andata', () => {
     if (outcome.kind !== 'sold') throw new Error('doveva essere venduto');
     expect(outcome.grossMargin).toBe(65);
     expect(outcome.estimatedNet).toBeCloseTo(
-      65 - 90 * flipConfig.marketplaceFeeRate - flipConfig.defaultShippingCost,
+      65 - 90 * flipConfig.marketplaceFeeRate,
       10,
     );
     expect(outcome.daysHeld).toBe(30);

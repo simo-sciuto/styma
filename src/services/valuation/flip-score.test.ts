@@ -139,9 +139,9 @@ describe('prezzo massimo, riga per riga', () => {
     const thresholds = priceThresholds(available(), identification);
     const b = thresholds.breakdown;
 
-    const copertura = b.expectedSalePrice - b.fees - b.shipping - b.riskBuffer;
+    const copertura = b.expectedSalePrice - b.fees - b.riskBuffer;
     expect(thresholds.maybeUpTo).toBe(Math.floor(copertura));
-    // venduto − commissioni − spedizione − cuscinetto − guadagno = massimo
+    // venduto, meno commissioni, meno cuscinetto, meno guadagno, uguale massimo
     expect(thresholds.buyUpTo).toBe(Math.round(copertura - b.targetProfit));
   });
 
@@ -194,15 +194,28 @@ describe('prezzo massimo, riga per riga', () => {
     expect(fragile.breakdown.riskBuffer).toBeGreaterThan(solida.breakdown.riskBuffer);
   });
 
-  it('su un oggetto che non copre nemmeno la spedizione non inventa una soglia', () => {
+  it('su un oggetto da pochi euro la soglia e’ piccola ma esiste', () => {
+    // Prima qui usciva «non lo so», e la ragione erano i 9 € di spedizione
+    // che su una stima da 11 € non lasciavano niente. Tolta la spedizione dal
+    // conto, un oggetto da pochi euro torna ad avere un prezzo massimo vero:
+    // basso, ma un numero, ed e' la risposta giusta per chi compra al banco e
+    // rivende di persona.
     const magro = available(
       research({ comparables: [10, 11, 12, 13].map((price, i) => comparable({ price, url: `https://x.test/${i}` })) }),
     );
     const thresholds = priceThresholds(magro, identification);
 
-    // Con 9 € di spedizione su una stima da ~11 €, non esiste un prezzo di
-    // acquisto che regga: dirlo e' la risposta giusta, non un numero minimo.
-    expect(thresholds.buyUpTo).toBeNull();
+    expect(thresholds.buyUpTo).toBeGreaterThan(0);
+    expect(thresholds.buyUpTo!).toBeLessThan(thresholds.maybeUpTo!);
+  });
+
+  it('sotto l’euro non inventa un prezzo', () => {
+    // Un numero sotto l'euro non e' un prezzo: e' un modo elegante di dire di
+    // no, e dirlo apertamente e' meglio.
+    const minuscolo = available(
+      research({ comparables: [1, 1, 1, 1].map((price, i) => comparable({ price, url: `https://y.test/${i}` })) }),
+    );
+    expect(priceThresholds(minuscolo, identification).buyUpTo).toBeNull();
   });
 });
 
@@ -238,9 +251,15 @@ describe('il verdetto e’ la fascia, non una seconda lettura del punteggio', ()
     }
   });
 
-  it('dichiara fra i fattori che domanda e tempi non sono stati osservati', () => {
-    const assessment = assessFlip(identification, research(), available(), 10);
-    const labels = assessment!.factors.map((factor) => factor.label);
-    expect(labels.some((label) => label.includes('non osservati'))).toBe(true);
+  it('non elenca fra i fattori cose che valgono per ogni oggetto', () => {
+    // «Domanda e tempi non osservati» e «commissioni stimate: 21 €» comparivano
+    // su ogni singola analisi: un fattore che c'e' sempre non distingue questa
+    // occasione da nessun'altra, ed e' esattamente cio' che il punteggio deve
+    // fare. La ridistribuzione dei pesi resta, ed e' testata sopra.
+    const labels = assessFlip(identification, research(), available(), 10)!.factors.map(
+      (factor) => factor.label,
+    );
+    expect(labels.some((label) => label.includes('non osservati'))).toBe(false);
+    expect(labels.some((label) => label.includes('Commissioni'))).toBe(false);
   });
 });

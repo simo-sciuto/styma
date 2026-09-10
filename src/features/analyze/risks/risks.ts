@@ -1,5 +1,4 @@
 import type { AnalysisResult } from '@/schemas/analysis';
-import { flipConfig } from '@/services/valuation/config';
 
 export type RiskSeverity = 'high' | 'medium';
 
@@ -12,9 +11,6 @@ export type Risk = {
   detail: string;
 };
 
-/** Oltre questa quota la spedizione non e' un costo, e' il problema. */
-const SHIPPING_HEAVY = 0.3;
-const SHIPPING_CRITICAL = 0.45;
 
 /** Sotto questi il campione non e' un campione. */
 const TINY_SAMPLE = 2;
@@ -130,24 +126,6 @@ export function collectRisks(result: AnalysisResult): Risk[] {
       );
     }
 
-    // La spedizione non e' un dettaglio su un oggetto piccolo: e' la
-    // ragione per cui certi affari non sono affari.
-    const shippingShare = flipConfig.defaultShippingCost / valuation.likely;
-    if (shippingShare > SHIPPING_CRITICAL) {
-      add(
-        'shipping-critical',
-        'high',
-        'La spedizione si mangia l’oggetto',
-        `Spedire costa circa ${Math.round(shippingShare * 100)}% del valore stimato: conviene solo se lo vendi di persona.`,
-      );
-    } else if (shippingShare > SHIPPING_HEAVY) {
-      add(
-        'shipping-heavy',
-        'medium',
-        'La spedizione pesa parecchio',
-        `Circa ${Math.round(shippingShare * 100)}% del valore stimato se ne va in spedizione e imballo.`,
-      );
-    }
   }
 
   // — Quanto e' solido l'oggetto

@@ -57,12 +57,7 @@ export function ObjectEvidence({ identification }: { identification: Identificat
       {confidenceReasons.length > 0 ? (
         <ul className="space-y-1.5 text-sm">
           {confidenceReasons.map((reason) => (
-            <li key={reason} className="flex gap-2">
-              <span aria-hidden className="text-muted">
-                —
-              </span>
-              <span>{reason}</span>
-            </li>
+            <li key={reason}>{reason}</li>
           ))}
         </ul>
       ) : (
@@ -115,7 +110,7 @@ export function ObjectEvidence({ identification }: { identification: Identificat
           <p className="text-xs font-medium text-warn">Difetti visti nelle foto</p>
           <ul className="mt-1.5 space-y-1 text-sm">
             {conditionNotes.map((note) => (
-              <li key={note}>— {note}</li>
+              <li key={note}>{note}</li>
             ))}
           </ul>
         </div>
@@ -131,7 +126,7 @@ export function ObjectEvidence({ identification }: { identification: Identificat
           <p className="text-sm font-medium">Una foto in piu’ aiuterebbe</p>
           <ul className="mt-1.5 space-y-1 text-sm text-muted">
             {missingShots.map((shot) => (
-              <li key={shot}>— {shot}</li>
+              <li key={shot}>{shot}</li>
             ))}
           </ul>
         </div>

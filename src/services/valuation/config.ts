@@ -131,8 +131,6 @@ export const valuationConfig = {
 export const flipConfig = {
   /** Commissioni marketplace medie (Vinted/eBay/Subito): quota sul venduto. */
   marketplaceFeeRate: 0.1,
-  /** Costo medio di spedizione e imballo a carico del venditore. */
-  defaultShippingCost: 9,
 
   /** ROI e profitto a cui il punteggio economico satura. */
   targetRoi: 1.0,

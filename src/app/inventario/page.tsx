@@ -58,17 +58,17 @@ function InventorySummaryBlock({ summary }: { summary: InventorySummary }) {
         <Stat label="Oggetti" value={String(items)} />
         <Stat
           label="Valore stimato"
-          value={estimatedValueEur !== null ? formatEur(estimatedValueEur) : '—'}
+          value={estimatedValueEur !== null ? formatEur(estimatedValueEur) : 'n.d.'}
           hint={valued < items ? `su ${valued} di ${items} stimati` : undefined}
         />
         <Stat
           label="Speso"
-          value={spentEur !== null ? formatEur(spentEur) : '—'}
+          value={spentEur !== null ? formatEur(spentEur) : 'n.d.'}
           hint={bought < items ? `su ${bought} comprati davvero` : undefined}
         />
         <Stat
           label="Margine atteso"
-          value={potentialMarginEur !== null ? formatEur(potentialMarginEur) : '—'}
+          value={potentialMarginEur !== null ? formatEur(potentialMarginEur) : 'n.d.'}
           hint={
             withBoth > 0
               ? `su ${withBoth} ${withBoth === 1 ? 'oggetto' : 'oggetti'} ancora in mano, al netto di commissioni e spedizione`
@@ -85,7 +85,7 @@ function InventorySummaryBlock({ summary }: { summary: InventorySummary }) {
         <div className="mt-5 grid grid-cols-2 gap-4 border-t-2 border-line pt-5">
           <Stat
             label="Guadagnato davvero"
-            value={realizedMarginEur !== null ? formatEur(realizedMarginEur) : '—'}
+            value={realizedMarginEur !== null ? formatEur(realizedMarginEur) : 'n.d.'}
             hint={
               soldWithBoth > 0
                 ? `su ${soldWithBoth} ${soldWithBoth === 1 ? 'vendita' : 'vendite'} di cui sai anche quanto avevi pagato`
@@ -95,7 +95,7 @@ function InventorySummaryBlock({ summary }: { summary: InventorySummary }) {
           <Stat
             label="Stime centrate"
             value={
-              checkedAgainstEstimate > 0 ? `${insideEstimate}/${checkedAgainstEstimate}` : '—'
+              checkedAgainstEstimate > 0 ? `${insideEstimate}/${checkedAgainstEstimate}` : 'n.d.'
             }
             hint={
               checkedAgainstEstimate > 0
@@ -109,7 +109,7 @@ function InventorySummaryBlock({ summary }: { summary: InventorySummary }) {
   );
 }
 
-export const metadata = { title: 'Inventario — STYMA' };
+export const metadata = { title: 'Inventario · STYMA' };
 export const dynamic = 'force-dynamic';
 
 export default async function InventoryPage({ searchParams }: PageProps<'/inventario'>) {

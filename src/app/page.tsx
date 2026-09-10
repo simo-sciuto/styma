@@ -203,7 +203,7 @@ export default function HomePage() {
                 Paga fino a
               </p>
               <p className="mt-0.5 text-2xl font-semibold tracking-tight">
-                {ESEMPIO_SOGLIE.buyUpTo !== null ? formatEur(ESEMPIO_SOGLIE.buyUpTo) : '—'}
+                {ESEMPIO_SOGLIE.buyUpTo !== null ? formatEur(ESEMPIO_SOGLIE.buyUpTo) : 'n.d.'}
               </p>
             </div>
           </div>

@@ -82,7 +82,7 @@ export function LegacyItemDetail({
           // deve leggersi identico ovunque compaia.
           <Reveal className="price-tag rounded-block bg-accent-vivid p-5 text-accent-on-vivid sm:p-6">
             <p className="text-sm font-medium">
-              Valutazione del {formatDate(valuation.created_at) ?? '—'}
+              Valutazione del {formatDate(valuation.created_at) ?? 'n.d.'}
             </p>
             <p className="mt-1 text-[clamp(2rem,1.6rem+2.4vw,3rem)] font-semibold leading-none tracking-tight">
               {formatRange(valuation.low_value, valuation.high_value)}
@@ -138,7 +138,7 @@ export function LegacyItemDetail({
                   <div className="rounded-block border-2 border-line bg-accent-soft p-3 sm:p-4">
                     <p className="text-xs font-medium text-accent">Affare fino a</p>
                     <p className="mt-1 text-2xl font-semibold tracking-tight text-accent sm:text-3xl">
-                      {thresholds.buyUpTo !== null ? formatEur(thresholds.buyUpTo) : '—'}
+                      {thresholds.buyUpTo !== null ? formatEur(thresholds.buyUpTo) : 'n.d.'}
                     </p>
                     {thresholds.buyUpTo === null ? (
                       <p className="mt-1 text-xs text-accent">
@@ -149,7 +149,7 @@ export function LegacyItemDetail({
                   <div className="rounded-block border-2 border-line bg-warn-soft p-3 sm:p-4">
                     <p className="text-xs font-medium text-warn">Ci potevi pensare fino a</p>
                     <p className="mt-1 text-2xl font-semibold tracking-tight text-warn sm:text-3xl">
-                      {thresholds.maybeUpTo !== null ? formatEur(thresholds.maybeUpTo) : '—'}
+                      {thresholds.maybeUpTo !== null ? formatEur(thresholds.maybeUpTo) : 'n.d.'}
                     </p>
                     {thresholds.maybeUpTo === null ? (
                       <p className="mt-1 text-xs text-warn">
@@ -187,7 +187,7 @@ export function LegacyItemDetail({
                   </p>
                   <ul className="mt-2 space-y-1 text-sm text-muted">
                     {reasons.map((reason) => (
-                      <li key={reason}>— {reason}</li>
+                      <li key={reason}>{reason}</li>
                     ))}
                   </ul>
                 </div>
@@ -210,7 +210,7 @@ export function LegacyItemDetail({
                   <p className="text-xs font-medium text-warn">Da tenere presente</p>
                   <ul className="mt-1.5 space-y-1 text-sm">
                     {warnings.map((warning) => (
-                      <li key={warning}>— {warning}</li>
+                      <li key={warning}>{warning}</li>
                     ))}
                   </ul>
                 </div>
@@ -263,7 +263,7 @@ export function LegacyItemDetail({
             <ul className="space-y-2 text-muted">
               {discarded.map((comparable) => (
                 <li key={comparable.id}>
-                  <span className="text-foreground">{comparable.title}</span> —{' '}
+                  <span className="text-foreground">{comparable.title}</span>{': '}
                   {comparable.discard_reason}
                 </li>
               ))}

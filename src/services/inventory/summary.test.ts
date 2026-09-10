@@ -41,7 +41,7 @@ describe('totali del magazzino', () => {
     expect(summary.withBoth).toBe(1);
 
     const atteso = Math.round(
-      100 - 10 - 100 * flipConfig.marketplaceFeeRate - flipConfig.defaultShippingCost,
+      100 - 10 - 100 * flipConfig.marketplaceFeeRate,
     );
     expect(summary.potentialMarginEur).toBe(atteso);
   });
@@ -81,7 +81,7 @@ describe('quello che e’ successo davvero', () => {
     expect(summary.potentialMarginEur).toBeNull();
     expect(summary.soldWithBoth).toBe(1);
     expect(summary.realizedMarginEur).toBe(
-      Math.round(90 - 20 - 90 * flipConfig.marketplaceFeeRate - flipConfig.defaultShippingCost),
+      Math.round(90 - 20 - 90 * flipConfig.marketplaceFeeRate),
     );
   });
 

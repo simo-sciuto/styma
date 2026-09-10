@@ -19,7 +19,7 @@ export type InventorySummary = {
    */
   withBoth: number;
   /**
-   * Margine atteso su quegli oggetti, al netto di commissioni e spedizione.
+   * Margine atteso su quegli oggetti, al netto delle commissioni.
    * Sommare tutte le stime e sottrarre tutte le spese darebbe un numero
    * costruito su due popolazioni diverse — piu' grande, e senza senso.
    */
@@ -48,7 +48,7 @@ export type InventorySummary = {
  * I totali del magazzino, da dati gia' caricati per la lista: nessuna query
  * in piu'.
  *
- * Commissioni e spedizione escono da `flipConfig`, gli stessi numeri con cui
+ * Le commissioni escono da `flipConfig`, gli stessi numeri con cui
  * si calcola il verdetto di ogni singolo oggetto: se il margine qui uscisse
  * da un'altra aritmetica, due schermate dello stesso prodotto direbbero due
  * cose diverse sullo stesso oggetto.
@@ -94,7 +94,7 @@ export function summarizeInventory(
     if (likely !== null && paid !== null && !isSold) {
       withBoth += 1;
       potentialMarginEur +=
-        likely - paid - likely * flipConfig.marketplaceFeeRate - flipConfig.defaultShippingCost;
+        likely - paid - likely * flipConfig.marketplaceFeeRate;
     }
 
     if (isSold) {
@@ -102,10 +102,7 @@ export function summarizeInventory(
       if (item.sale_price !== null && paid !== null) {
         soldWithBoth += 1;
         realizedMarginEur +=
-          item.sale_price -
-          paid -
-          item.sale_price * flipConfig.marketplaceFeeRate -
-          flipConfig.defaultShippingCost;
+          item.sale_price - paid - item.sale_price * flipConfig.marketplaceFeeRate;
       }
       if (
         item.sale_price !== null &&

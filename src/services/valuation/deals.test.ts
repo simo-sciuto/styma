@@ -54,7 +54,6 @@ const soglie: PriceThresholds = {
   breakdown: {
     expectedSalePrice: 120,
     fees: 15.6,
-    shipping: 9,
     riskBuffer: 12,
     targetProfit: 25,
   },

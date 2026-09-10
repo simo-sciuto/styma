@@ -36,8 +36,7 @@ export function RiskList({ result }: { result: AnalysisResult }) {
           Cosa puo’ andare storto
         </p>
         <p className="mt-2 text-sm text-muted">
-          Niente di rilevante da segnalare: identificazione solida, campione adeguato, stato
-          leggibile. Resta quello che nessuna foto puo’ dirti — controlla di persona.
+          Niente da segnalare. Resta quello che una foto non vede: controlla di persona.
         </p>
       </Card>
     );
