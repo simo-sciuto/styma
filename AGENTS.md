@@ -199,6 +199,17 @@ sono ancora aperte.
   solo `currentBidPrice`. Lo schema lo pretendeva, quindi `safeParse` falliva e l'inserzione
   spariva senza una riga di log — le aste non sono mai entrate nel campione, mentre il commento nel
   codice diceva il contrario. Uno schema severo su un campo facoltativo non protegge: nasconde.
+- **Un accessorio porta marca e modello nel titolo, quindi entra dalla porta principale.** «Cinghie
+  per custodia Olivetti Valentine — Set da 2» a 55 € era il comparabile *piu' pesante* nella stima
+  di una macchina da 240 €: `inferMatchLevel` legge il titolo e lo classifica `exact_model`, che e'
+  il livello col peso massimo e senza filtri sopra, e lo scarto dei prezzi fuori scala non lo
+  prende perche' 55 su 240 non e' cinque volte sotto il mediano. `looksLikeAccessory` guarda **dove**
+  sta la parola, non se c'e': la marca segna il confine fra cosa si vende e cosa viene insieme.
+  Un elenco applicato ovunque — la prima versione — scartava trenta inserzioni su cento e la
+  maggioranza erano l'oggetto vero («Typewriter **with Case**», «**manual** camera»). Ogni parola
+  di quell'elenco e' stata tolta o tenuta guardando `bench/accessories.mjs` su inserzioni vere,
+  mai a ragionamento: fra i due errori possibili, togliere comparabili buoni e' il peggiore,
+  perche' alza la stima e ti fa pagare di piu'.
 - **`similar_category` non e' un livello di somiglianza qualunque: e' il caso in cui non c'e'
   nessuna prova.** Senza marca ne' modello da confermare, un errore di corrispondenza di eBay (una
   ricerca di "borsa" che risponde con un trolley) entrerebbe come comparabile valido quanto uno
@@ -247,11 +258,13 @@ npm run typecheck  # tsc --noEmit
 npm run lint       # eslint
 npm test           # vitest (valutazione, fusione delle corsie, lettura dello stream)
 npm run e2e        # playwright: il giro completo in un browser vero (~30s)
+npm run schermate  # istantanee della pagina risultato su schermo da telefono
 
 node bench/research-bench.mjs [foto.jpg]   # cronometra e conta i costi di un'analisi contro `npm run dev`
 node bench/why-no-value.mjs foto.jpg ...   # segue l'imbuto quando non esce una stima
 node bench/compare-models.mjs foto.jpg ... # confronta i modelli sull'identificazione (si paga)
 node bench/auction-bids.mjs "query" ...     # quanto valgono le offerte d'asta contro i prezzi fissi
+node bench/accessories.mjs                 # quanti comparabili sono accessori, e cosa toglie il filtro
 ```
 
 ## Configurazione

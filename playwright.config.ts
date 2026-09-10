@@ -15,10 +15,10 @@ import { defineConfig } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e',
-  // Le istantanee non sono un test: non asseriscono niente, scrivono immagini
-  // e costano venti secondi. Si lanciano a mano quando si tocca la pagina:
-  //   npx playwright test e2e/schermata.spec.ts
-  testIgnore: ['**/schermata.spec.ts'],
+  // Le istantanee (@istantanea) non sono un test: non asseriscono niente,
+  // scrivono immagini e costano venti secondi. Restano fuori da `npm run e2e`
+  // e si lanciano con `npm run schermate` — il filtro sta negli script, non
+  // qui, altrimenti non ci sarebbe modo di lanciarle nemmeno a mano.
   // Il flusso scrive su un database condiviso: in parallelo si darebbero
   // fastidio a vicenda per guadagnare pochi secondi.
   workers: 1,

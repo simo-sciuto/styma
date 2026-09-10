@@ -9,8 +9,9 @@
     "lint": "eslint",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "e2e": "playwright test",
-    "e2e:record": "STYMA_AI_RECORD=1 playwright test"
+    "e2e": "playwright test --grep-invert @istantanea",
+    "e2e:record": "STYMA_AI_RECORD=1 playwright test --grep-invert @istantanea",
+    "schermate": "playwright test --grep @istantanea"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",

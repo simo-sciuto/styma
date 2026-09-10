@@ -177,6 +177,117 @@ export function isRelevantTitle(title: string, query: string): boolean {
   return queryTokens.some((token) => haystack.includes(token));
 }
 
+/**
+ * Parole che nominano un accessorio, un ricambio o un pezzo di carta.
+ *
+ * Volutamente prive delle ambigue, e l'elenco e' stato tagliato *dopo* una
+ * misura, non prima: "manuale" e "manual" sono fuori perche' una macchina da
+ * scrivere e' manuale e una Nikon FM2 e' una "manual camera", e includerle
+ * scartava proprio gli oggetti. Fuori anche "solo"/"only": "solo corpo" e'
+ * una reflex senza obiettivo, cioe' un ottimo comparabile.
+ *
+ * `bench/accessories.mjs` rifa' la misura su inserzioni vere.
+ */
+const ACCESSORI = new Set([
+  'cinghia', 'cinghie', 'tracolla', 'strap', 'straps', 'riemen', 'kofferriemen',
+  'sangle', 'correa',
+  'custodia', 'fodero', 'astuccio', 'housse', 'etui', 'funda', 'laniere', 'lanieres',
+  'cover', 'copertura', 'copertina',
+  'ricambio', 'ricambi', 'ersatz', 'ersatzteil', 'ersatzteile', 'repuesto', 'spare',
+  'gommini', 'gommino', 'tappini', 'tappino', 'spalla', 'spalle',
+  'farbband', 'nastro', 'nastri', 'ribbon', 'ruban',
+  'adesivo', 'adesivi', 'sticker', 'aufkleber', 'pegatina',
+  'catalogo', 'catalogue', 'brochure', 'depliant', 'prospekt', 'werbung', 'advert',
+  'targhetta', 'etichetta', 'label',
+  'caricabatterie', 'charger', 'alimentatore', 'netzteil', 'cargador',
+  'cavo', 'cable', 'kabel', 'adattatore', 'adapter', 'adaptador',
+  'paraluce', 'hood', 'copriobiettivo', 'tappo', 'deckel', 'bouchon', 'tapa',
+  'filtro', 'filtri', 'filter', 'filtre',
+  'treppiede', 'tripod', 'stativ', 'staffa', 'halterung', 'tischhalterung',
+  'morsetto', 'abrazadera', 'bracket', 'pinza',
+]);
+
+/**
+ * Parole che rendono l'accessorio qualcosa di *incluso* invece che il
+ * soggetto: "con correa", "mit Riemen", "with case". La parola resta la
+ * stessa, il senso si ribalta — e senza questo controllo il filtro scartava
+ * una Canon con la cinghia e una Nikon "mit Riemen", cioe' due comparabili
+ * ottimi, perche' il titolo cominciava con una nota fra parentesi.
+ *
+ * Non ci sono "per", "fur", "pour", "para", "for": quelle dicono il contrario.
+ * «Cinghie **per** custodia Olivetti Valentine» vende cinghie.
+ */
+const INCLUSO = new Set([
+  'con', 'mit', 'with', 'avec', 'w', 'incl', 'inklusive', 'including', 'compreso',
+  'completo', 'complete', 'komplett', 'e', 'and', 'und', 'et', 'y', 'plus', 'mas',
+]);
+
+/** Un insieme di N pezzi non e' mai l'oggetto: e' un lotto di ricambi. */
+const SET_DI_N = /\b(set (da|di|of) \d|\d ?er-set|lot(to)? (de|di) \d|paio di|pair of|\d ?x |\d (pezzi|pcs|stuck))/i;
+
+/**
+ * Se l'inserzione vende un accessorio invece dell'oggetto.
+ *
+ * `inferMatchLevel` legge marca e modello nel titolo, e un ricambio li porta
+ * entrambi: «Cinghie per custodia Olivetti Valentine - Set da 2» a 55 €
+ * entrava come *stesso modello*, col peso pieno, nella stima di una macchina
+ * da scrivere da 240 €. Lo scarto dei prezzi fuori scala non lo prendeva:
+ * 55 su 240 non e' cinque volte sotto il mediano.
+ *
+ * La parola da sola non basta, e provarlo e' costato una misura: "Typewriter
+ * with Case" e "Case Straps" contengono entrambe "case", e un elenco applicato
+ * ovunque scartava trenta inserzioni su cento di cui la maggioranza erano
+ * l'oggetto vero.
+ *
+ * Quello che distingue e' **dove** sta la parola. Un titolo nomina per primo
+ * quello che vende, e la marca segna il confine: prima di «Olivetti» c'e' il
+ * soggetto, dopo c'e' cosa viene insieme. «Cinghie per custodia Olivetti
+ * Valentine» vende cinghie; «Olivetti Valentine con custodia» vende la
+ * macchina.
+ *
+ * Due eccezioni, entrambe trovate misurando e non ragionando:
+ * — il lotto. «Case Straps - Set of 2» nomina l'accessorio dopo la marca, ma
+ *   un insieme di due non e' mai l'oggetto.
+ * — la preposizione. «[Top neuwertig mit Riemen] Nikon FM2» mette l'accessorio
+ *   prima della marca dentro una nota fra parentesi, e senza guardare la
+ *   parola che lo precede il filtro buttava via una FM2 in ottimo stato.
+ *
+ * Misurato su cinque oggetti e cinque mercati: toglie 13 inserzioni su 100
+ * sulla Valentine — tutti accessori veri — 2 sul Tolomeo, zero su Canon AE-1,
+ * Nikon FM2 e Seiko 5. Una variante che guardava anche il prezzo prendeva
+ * qualche ricambio in piu' ma buttava una FM2 funzionante venduta «with strap»
+ * a 82 €: togliere comparabili veri e' l'errore peggiore, perche' gonfia la
+ * stima e ti fa pagare di piu'.
+ */
+export function looksLikeAccessory(
+  title: string,
+  context: { objectType: string | null; brand: string | null; model: string | null },
+): boolean {
+  const parole = normalize(title).split(' ').filter(Boolean);
+  // Se la parola descrive l'oggetto stesso non e' un accessorio: una custodia
+  // e' un accessorio per una macchina da scrivere, ed e' l'oggetto se stai
+  // valutando una custodia.
+  const proprie = new Set(normalize(context.objectType ?? '').split(' ').filter(Boolean));
+  const candidate = parole.filter((parola) => ACCESSORI.has(parola) && !proprie.has(parola));
+  if (candidate.length === 0) return false;
+
+  const identita = new Set(
+    normalize(`${context.brand ?? ''} ${context.model ?? ''}`)
+      .split(' ')
+      .filter(Boolean),
+  );
+  const doveInizia = parole.findIndex((parola) => identita.has(parola));
+  // Senza marca ne' modello nel titolo non c'e' un confine: si ripiega sulle
+  // prime due parole, che restano la posizione del soggetto.
+  const limite = doveInizia >= 0 ? doveInizia : 2;
+
+  const soggetto = parole
+    .slice(0, limite)
+    .some((parola, indice) => candidate.includes(parola) && !INCLUSO.has(parole[indice - 1] ?? ''));
+
+  return soggetto || SET_DI_N.test(title);
+}
+
 function toCurrency(raw: string): Currency | null {
   return (CURRENCIES as readonly string[]).includes(raw) ? (raw as Currency) : null;
 }
@@ -259,6 +370,11 @@ export function toComparable(raw: unknown, context: ComparableContext): Comparab
   if (currency === null) return null;
 
   const matchLevel = inferMatchLevel(item.title, context.brand, context.model);
+
+  // Prima di ogni altro controllo, e a tutti i livelli: un accessorio porta
+  // marca e modello nel titolo, quindi passa da `exact_model` — che e' il
+  // livello con il peso piu' alto e nessun filtro sopra.
+  if (looksLikeAccessory(item.title, context)) return null;
 
   // A exact_model e same_family il modello e' nel titolo: e' la prova migliore
   // che esista, e nessun controllo sul tipo la migliora.

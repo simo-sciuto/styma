@@ -6,12 +6,12 @@ import { test } from '@playwright/test';
  * su uno schermo da telefono. Le decisioni su cosa tagliare e come scrivere si
  * prendono guardando, non immaginando.
  *
- *   npx playwright test e2e/schermata.spec.ts
- *   → e2e/schermate/risultato.png
+ *   npm run schermate
+ *   → e2e/schermate/risultato.png (intera) e schermo-0..4.png (a schermate)
  */
 test.use({ viewport: { width: 390, height: 844 } });
 
-test('istantanea della pagina risultato', async ({ page }) => {
+test('@istantanea la pagina risultato', async ({ page }) => {
   await page.goto('/analizza');
   await page.locator('input[type="file"]').setInputFiles(
     path.join(process.cwd(), 'bench', 'photos', 'olivetti-valentine.jpg'),

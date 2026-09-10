@@ -39,6 +39,7 @@ F3 ████████████████████ URL del risultat
 G1 ████████████████████ aste: il segnale che buttavamo  fatto
 G2 ████████████████████ test end-to-end in un browser vero  fatto
 G3 ████████████████████ il prezzo massimo tornava incomprensibile  fatto
+G4 ████████████████████ accessori scambiati per l'oggetto  fatto
 ```
 
 ---
@@ -346,6 +347,45 @@ valutazione»):
 - `e2e/schermata.spec.ts`: uno strumento per guardare la pagina su uno schermo
   da telefono invece di immaginarla. Non gira con `npm run e2e`.
 
+### G4 — «Cinghie per custodia» non e' una macchina da scrivere (commit successivo)
+Visto in una schermata mentre si sistemavano i copy: il comparabile **piu'
+pesante** di una Olivetti Valentine da 240 € era un paio di cinghie da 55 €,
+classificato *stesso modello* con peso 0,85.
+
+`inferMatchLevel` legge marca e modello nel titolo, e un ricambio li porta
+entrambi: entra da `exact_model`, il livello col peso massimo e senza filtri
+sopra. Lo scarto dei prezzi fuori scala non lo prende — 55 su 240 non e'
+cinque volte sotto il mediano.
+
+**La prima versione del filtro era sbagliata, e la misura l'ha detto subito:**
+un elenco di parole applicato ovunque nel titolo scartava 30 inserzioni su
+100 sulla Valentine, di cui la maggioranza erano l'oggetto vero — «Typewriter
+**with Case**», «macchina da scrivere **manuale**», «Nikon FM2N **Manual**
+Camera». Toglieva piu' comparabili buoni che accessori.
+
+Quello che distingue non e' la parola ma **dove** sta, e la marca segna il
+confine: prima di «Olivetti» c'e' cosa si vende, dopo c'e' cosa viene
+insieme. Due eccezioni, trovate misurando e non ragionando:
+- il **lotto**: «Case Straps — Set of 2» nomina l'accessorio dopo la marca, ma
+  un insieme di due non e' mai l'oggetto;
+- la **preposizione**: «[Top neuwertig **mit Riemen**] Nikon FM2» mette
+  l'accessorio prima della marca dentro una nota fra parentesi, e senza
+  guardare la parola che lo precede il filtro buttava via una FM2 in ottimo
+  stato.
+
+Misurato su cinque oggetti e cinque mercati: **13 scarti su 100 sulla
+Valentine — tutti accessori veri — 2 sul Tolomeo, zero su Canon AE-1, Nikon
+FM2 e Seiko 5.** Una variante che guardava anche il prezzo prendeva qualche
+ricambio in piu' ma buttava una FM2 funzionante venduta «with strap» a 82 €:
+scartata, perche' togliere comparabili veri alza la stima e fa pagare di piu'.
+
+Effetto sulla stima della Valentine, pipeline vera: **135–300 € (probabile
+240) → 185–310 € (probabile 265)**. Il minimo sale di cinquanta euro perche'
+non lo tirano piu' giu' i nastri e le cinghie.
+
+`bench/accessories.mjs` rifa' la misura. Ogni parola dell'elenco e' stata
+tenuta o tolta guardando quel comando su inserzioni reali.
+
 ---
 
 ## Prossimo — da scegliere
@@ -390,15 +430,15 @@ Multi-oggetto · Scout · allerte · analytics personali · escalation a esperto
 
 ## Migliorie note, non ancora fatte
 
-- **Gli accessori entrano fra i comparabili come se fossero l'oggetto.** Su
-  una Olivetti Valentine il comparabile piu' pesante era «Cinghie per custodia
-  Olivetti Valentine - Set da 2» a 55 €, classificato *stesso modello* con
-  peso 0,85. `inferMatchLevel` legge marca e modello nel titolo e non puo'
-  sapere che si tratta di un ricambio; il commento nel codice lo dice gia' e
-  si affida allo scarto dei prezzi fuori scala, che pero' prende solo quelli a
-  piu' di 5× dal mediano. Serve un filtro sulle parole degli accessori
-  (cinghia, custodia, manuale, ricambi, per parti…), misurato su quanti
-  comparabili veri toglie prima di accenderlo.
+- **Restano i ricambi intitolati come l'oggetto.** «Macchina da scrivere
+  Olivetti Valentine barretta barra anteriore» a 90 € vende una barretta, ma
+  comincia col nome dell'oggetto: la regola di posizione non puo' prenderlo, e
+  nemmeno dovrebbe provarci a costo di falsi positivi. Serve un segnale
+  diverso — forse la distanza dal mediano *insieme* alla parola, misurata
+  meglio di come l'ho misurata io.
+- **Il peso dei comparabili e' quasi sempre lo stesso** (0,85 su tutti gli
+  annunci di uno stesso oggetto): mostrarlo accanto a ogni riga suggerisce una
+  discriminazione che non c'e'. O si differenzia davvero, o si toglie.
 
 - **`confidenceReasons` non ha polarita'.** Sono stringhe: non sappiamo quali
   sostengono l'attribuzione e quali la indeboliscono, quindi si mostrano

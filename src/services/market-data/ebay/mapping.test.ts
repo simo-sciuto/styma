@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   inferMatchLevel,
   isRelevantTitle,
+  looksLikeAccessory,
   mentionsObjectType,
   readBidding,
   toComparable,
@@ -221,5 +222,88 @@ describe('aste in corso', () => {
     const bidding = readBidding(asta({ itemEndDate: undefined }), ORA)!;
     expect(bidding.hoursLeft).toBeNull();
     expect(toComparable(asta({ itemEndDate: undefined }), canon())!.kind).toBe('bid');
+  });
+});
+
+describe('accessori scambiati per l’oggetto', () => {
+  /** Il contesto di una Olivetti Valentine: marca, modello, tipo di oggetto. */
+  const val = { objectType: 'macchina da scrivere', brand: 'Olivetti', model: 'Valentine' };
+  const reflex = { objectType: 'reflex 35mm', brand: 'Nikon', model: 'FM2' };
+
+  it('un ricambio nominato prima della marca non e’ un comparabile', () => {
+    // Il caso da cui e' nato tutto: 55 € di cinghie entravano come "stesso
+    // modello", col peso pieno, nella stima di una macchina da 240 €.
+    expect(looksLikeAccessory('Cinghie per custodia Olivetti Valentine - Set da 2', val)).toBe(true);
+    expect(looksLikeAccessory('NOS Ricambio 2 x GOMMINI OLIVETTI VALENTINE', val)).toBe(true);
+    expect(looksLikeAccessory('Farbband schwarz rot fuer Olivetti Valentine', val)).toBe(true);
+    expect(looksLikeAccessory('MEDIUM Transparent Dust Cover for Olivetti Valentine', val)).toBe(true);
+  });
+
+  it('la stessa parola dopo la marca dice cosa c’e’ insieme all’oggetto', () => {
+    // "with Case" e "Case Straps" contengono entrambe "case": e' la posizione
+    // a distinguerle, non la parola. Un elenco applicato ovunque scartava
+    // trenta inserzioni su cento, per lo piu' oggetti veri.
+    expect(looksLikeAccessory('Olivetti Valentine Typewriter with Case', val)).toBe(false);
+    expect(looksLikeAccessory('OLIVETTI VALENTINE Schreibmaschine mit Koffer', val)).toBe(false);
+    expect(looksLikeAccessory('Macchina da scrivere Olivetti Valentine rossa', val)).toBe(false);
+  });
+
+  it('una preposizione prima dell’accessorio lo rende un incluso, non il soggetto', () => {
+    // Trovati misurando: due comparabili ottimi buttati via perche' il titolo
+    // cominciava con una nota fra parentesi.
+    expect(looksLikeAccessory('getestet Top neuwertig mit Riemen Nikon neue FM2', reflex)).toBe(false);
+    expect(
+      looksLikeAccessory('COMO NUEVO con correa Canon AE-1 35mm camara', {
+        objectType: 'reflex 35mm',
+        brand: 'Canon',
+        model: 'AE-1',
+      }),
+    ).toBe(false);
+  });
+
+  it('ma un lotto di N pezzi non e’ mai l’oggetto, dovunque stia la parola', () => {
+    expect(looksLikeAccessory('Olivetti Valentine Case Straps - Set of 2', val)).toBe(true);
+    expect(looksLikeAccessory('Olivetti Valentine Kofferriemen 2er-Set', val)).toBe(true);
+    expect(looksLikeAccessory('Lanieres pour etui Olivetti Valentine - Lot de 2', val)).toBe(true);
+  });
+
+  it('non tocca le parole ambigue che descrivono l’oggetto', () => {
+    // Una macchina da scrivere e' manuale, una Nikon FM2 e' una "manual
+    // camera", "solo corpo" e' una reflex senza obiettivo: tre modi di
+    // buttare via i comparabili migliori.
+    expect(looksLikeAccessory('Macchina da scrivere Olivetti Valentine manuale', val)).toBe(false);
+    expect(looksLikeAccessory('Mint Nikon FM2N 35mm Film SLR Manual Camera', reflex)).toBe(false);
+    expect(
+      looksLikeAccessory('CANON AE-1 Nera - Solo Corpo, Funzionante', {
+        objectType: 'reflex 35mm',
+        brand: 'Canon',
+        model: 'AE-1',
+      }),
+    ).toBe(false);
+    expect(looksLikeAccessory('Nikon FM2 SLR Film Camera Body Working w strap', reflex)).toBe(false);
+  });
+
+  it('se l’oggetto e’ l’accessorio, la parola non lo scarta', () => {
+    // Stai valutando una custodia: "Custodia Nikon originale" e' l'oggetto.
+    expect(
+      looksLikeAccessory('Custodia Nikon originale in pelle', {
+        objectType: 'custodia',
+        brand: 'Nikon',
+        model: null,
+      }),
+    ).toBe(false);
+    expect(
+      looksLikeAccessory('Treppiede Manfrotto in alluminio', {
+        objectType: 'treppiede',
+        brand: 'Manfrotto',
+        model: null,
+      }),
+    ).toBe(false);
+  });
+
+  it('l’inserzione scartata non diventa un comparabile', () => {
+    expect(
+      toComparable(item({ title: 'Cinghie per custodia Canon AE-1 - Set da 2' }), canon()),
+    ).toBeNull();
   });
 });
