@@ -9,6 +9,7 @@ import { Card, Disclosure, Pill } from '@/components/ui';
 import { DecisionBlock } from './decision/DecisionBlock';
 import { ObjectEvidence } from './identity/ObjectEvidence';
 import { MarketScan } from './market/MarketScan';
+import { RiskList } from './risks/RiskList';
 import {
   formatEur,
 } from '@/lib/format';
@@ -28,7 +29,7 @@ export function ResultView({
   onPurchasePriceChange?: (value: string) => void;
   saveSlot?: ReactNode;
 }) {
-  const { identification, market, marketSource, valuation, flip, warnings } = result;
+  const { identification, market, marketSource, valuation, flip } = result;
   const decision = flip?.atPrice ?? null;
   const cover = images[0] ?? null;
 
@@ -194,17 +195,7 @@ export function ResultView({
         <MarketScan valuation={valuation} market={market} marketSource={marketSource} />
       ) : null}
 
-      {warnings.length > 0 ? (
-        <Card className="border-warn/40 bg-warn-soft">
-          <p className="text-sm font-medium text-warn">Da tenere presente</p>
-          <ul className="mt-2 space-y-1 text-sm">
-            {warnings.map((warning) => (
-              <li key={warning}>— {warning}</li>
-            ))}
-          </ul>
-        </Card>
-      ) : null}
-
+      <RiskList result={result} />
 
       {identification.history ? (
         <Disclosure summary="Cos’e’, in breve">

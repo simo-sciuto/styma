@@ -18,14 +18,14 @@ falso — gia' successo una volta.
 
 ## Dove siamo
 
-**Fase E — P0, il motore decisionale.** 4 passi su 6 completati.
+**Fase E — P0, il motore decisionale.** 5 passi su 6 completati.
 
 ```
 E1 ████████████████████ blocco decisione            fatto
 E2 ████████████████████ prove dell'identificazione  fatto
 E3 ████████████████████ mercato come prova          fatto
-E4 ░░░░░░░░░░░░░░░░░░░░ rischi in una sezione sola   prossimo
-E5 ░░░░░░░░░░░░░░░░░░░░ economia del flip
+E4 ████████████████████ rischi in una sezione sola   fatto
+E5 ░░░░░░░░░░░░░░░░░░░░ economia del flip            prossimo
 E6 ░░░░░░░░░░░░░░░░░░░░ prima di comprare + guida foto
 ```
 
@@ -84,14 +84,28 @@ E6 ░░░░░░░░░░░░░░░░░░░░ prima di comprar
   dopo la storia.
 - `ResultView` da 337 a 218 righe — da 471 all'inizio della fase.
 
+### E4 — rischi in una sezione sola (commit successivo)
+- `collectRisks` raccoglie i segnali che prima erano sparsi in cinque posti:
+  confidenza dell'identificazione, qualita' delle foto, livello dei
+  comparabili, dimensione del campione, dispersione, stato di conservazione,
+  avvisi della pipeline.
+- Due segnali nuovi che nessuna sezione dava: **la spedizione che si mangia
+  l'oggetto** (9 € su una stima da 15 € sono il 60%) e **«nessun difetto
+  trovato» non e' «nessun difetto»** quando mancano ancora delle foto.
+- Non ripete cio' che e' vero sempre: i prezzi richiesti restano dichiarati
+  nella sezione mercato. Un avviso che c'e' sempre insegna a saltare l'elenco.
+- Un elenco vuoto e' una risposta e si dice, distinguendo «nessun rischio
+  rilevato» da «nessun rischio».
+- Funzione pura, 10 test. `ResultView` a 209 righe.
+
 ---
 
 ## Prossimo
 
-### E4 — rischi in una sezione sola
-Oggi i segnali di rischio sono sparsi fra `warnings`, i motivi di scarto, i
-tetti di confidenza e i fattori negativi del punteggio. Raccoglierli in un
-posto solo, come chiede il punto 22 del brief. Nessun contratto da cambiare.
+### E5 — economia del flip
+Compri a / vendi a / costi / profitto / ROI come blocco leggibile invece che
+come tabella a quattro celle in fondo alla card del punteggio. I numeri ci
+sono gia' tutti in `decision.economics`.
 
 ---
 
