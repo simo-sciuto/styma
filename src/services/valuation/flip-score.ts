@@ -3,6 +3,7 @@ import type { MarketResearch } from '@/schemas/market';
 import type {
   Economics,
   FlipAssessment,
+  PriceThresholds,
   Recommendation,
   ScoreFactor,
   Valuation,
@@ -27,6 +28,41 @@ function economicsAt(purchasePrice: number, expectedSalePrice: number): Economic
   };
 }
 
+/**
+ * Se domanda e liquidita' sono state osservate davvero.
+ *
+ * Con la ricerca agentica spenta la risposta e' sempre no: eBay restituisce
+ * inserzioni e prezzi, non domanda. Il campo esiste ma vale "unknown".
+ */
+function marketObserved(research: MarketResearch | null): boolean {
+  if (research === null) return false;
+  return research.demand !== 'unknown' || research.liquidity !== 'unknown';
+}
+
+/**
+ * I pesi effettivi del punteggio.
+ *
+ * Quando il mercato non e' stato osservato, il peso della liquidita' non
+ * diventa mezzo punto regalato a tutti: si ridistribuisce fra profitto e
+ * confidenza nella stessa proporzione che avevano gia'. Il punteggio torna
+ * cosi' a usare tutto l'intervallo 0-100 invece di schiacciarsi fra 12 e 87.
+ */
+export function effectiveWeights(research: MarketResearch | null): {
+  profit: number;
+  confidence: number;
+  liquidity: number;
+} {
+  const { profit, confidence, liquidity } = flipConfig.scoreWeights;
+  if (marketObserved(research)) return { profit, confidence, liquidity };
+
+  const remaining = profit + confidence;
+  return {
+    profit: profit + (liquidity * profit) / remaining,
+    confidence: confidence + (liquidity * confidence) / remaining,
+    liquidity: 0,
+  };
+}
+
 function marketScore(research: MarketResearch | null): number {
   const demand = flipConfig.demandScores[research?.demand ?? 'unknown'];
   const liquidity = flipConfig.liquidityScores[research?.liquidity ?? 'unknown'];
@@ -40,9 +76,84 @@ function penaltyPoints(valuation: Extract<Valuation, { available: true }>, ident
   return points;
 }
 
-function recommendationFor(score: number): Recommendation {
-  if (score >= flipConfig.recommendationThresholds.buy) return 'BUY';
-  if (score >= flipConfig.recommendationThresholds.maybe) return 'MAYBE';
+/**
+ * Quanto del valore atteso si tiene indietro perche' la stima potrebbe
+ * sbagliare. E' l'unica riga della sottrazione che dipende da quanto siamo
+ * sicuri: una stima fragile non alza il rischio di chi compra, gli abbassa il
+ * prezzo massimo.
+ */
+export function riskBufferRate(
+  valuation: Extract<Valuation, { available: true }>,
+  identification: Identification,
+): number {
+  const { riskBuffer } = flipConfig;
+
+  let rate = riskBuffer.base;
+  rate += riskBuffer.byConfidence[valuation.confidence];
+  rate += riskBuffer.maxDispersion * clamp01(valuation.dispersion);
+  if (identification.condition === 'poor') rate += riskBuffer.byCondition.poor;
+  else if (identification.condition === 'fair') rate += riskBuffer.byCondition.fair;
+
+  return Math.min(rate, riskBuffer.cap);
+}
+
+/**
+ * Il prezzo massimo di acquisto, come sottrazione leggibile riga per riga.
+ *
+ *   valore atteso di vendita
+ *   − commissioni
+ *   − spedizione e imballo
+ *   − cuscinetto di rischio
+ *   − margine obiettivo
+ *   = fin dove e' un affare
+ *
+ * Senza il margine obiettivo si ottiene la seconda soglia: fin dove i conti
+ * tornano ma senza guadagno vero — la fascia in cui vale la pena trattare.
+ *
+ * Prima nasceva cercando per bisezione il prezzo a cui il punteggio toccava
+ * settanta. Era coerente ma non si poteva mostrare: nessuno puo' verificare
+ * una bisezione su un punteggio composito, e un prezzo massimo che non si
+ * puo' controllare e' un numero da prendere per fede.
+ */
+export function priceThresholds(
+  valuation: Extract<Valuation, { available: true }>,
+  identification: Identification,
+): PriceThresholds {
+  const expectedSalePrice = valuation.likely;
+  const fees = expectedSalePrice * flipConfig.marketplaceFeeRate;
+  const shipping = flipConfig.defaultShippingCost;
+  const riskBuffer = expectedSalePrice * riskBufferRate(valuation, identification);
+  const targetProfit = expectedSalePrice * flipConfig.targetMarginRate;
+
+  const coversCosts = expectedSalePrice - fees - shipping - riskBuffer;
+  const hitsTarget = coversCosts - targetProfit;
+
+  // Sotto l'euro non e' un prezzo: e' un modo elegante di dire di no.
+  const round2 = (value: number) => Math.round(value * 100) / 100;
+
+  return {
+    buyUpTo: hitsTarget >= 1 ? Math.floor(hitsTarget) : null,
+    maybeUpTo: coversCosts >= 1 ? Math.floor(coversCosts) : null,
+    breakdown: {
+      expectedSalePrice: round2(expectedSalePrice),
+      fees: round2(fees),
+      shipping: round2(shipping),
+      riskBuffer: round2(riskBuffer),
+      targetProfit: round2(targetProfit),
+    },
+  };
+}
+
+/**
+ * Il verdetto e' la fascia in cui cade il prezzo richiesto, non una seconda
+ * lettura del punteggio. Sono due domande diverse — «quanto dovrei pagarlo»
+ * e «quanto e' buona questa occasione» — e finche' il verdetto usciva dal
+ * punteggio potevano contraddirsi in faccia all'utente: COMPRALO scritto
+ * sopra un prezzo piu' alto del massimo consigliato due righe sotto.
+ */
+export function recommendationAt(price: number, thresholds: PriceThresholds): Recommendation {
+  if (thresholds.buyUpTo !== null && price <= thresholds.buyUpTo) return 'BUY';
+  if (thresholds.maybeUpTo !== null && price <= thresholds.maybeUpTo) return 'MAYBE';
   return 'PASS';
 }
 
@@ -62,6 +173,8 @@ export function assessFlip(
   const confidenceScore = valuation.confidenceScore;
   const liquidityScore = marketScore(research);
   const penalties = penaltyPoints(valuation, identification);
+  const weights = effectiveWeights(research);
+  const thresholds = priceThresholds(valuation, identification);
 
   const scoreAt = (price: number): { score: number; economics: Economics } => {
     const economics = economicsAt(price, expectedSalePrice);
@@ -75,25 +188,12 @@ export function assessFlip(
 
     const raw =
       100 *
-        (flipConfig.scoreWeights.profit * profitScore +
-          flipConfig.scoreWeights.confidence * confidenceScore +
-          flipConfig.scoreWeights.liquidity * liquidityScore) -
+        (weights.profit * profitScore +
+          weights.confidence * confidenceScore +
+          weights.liquidity * liquidityScore) -
       penalties;
 
     return { score: Math.round(Math.min(100, Math.max(0, raw))), economics };
-  };
-
-  /** Il punteggio decresce col prezzo di acquisto: cerchiamo la soglia per bisezione. */
-  const maxPriceFor = (target: number): number | null => {
-    if (scoreAt(0).score < target) return null;
-    let lo = 0;
-    let hi = expectedSalePrice;
-    for (let i = 0; i < 24; i += 1) {
-      const mid = (lo + hi) / 2;
-      if (scoreAt(mid).score >= target) lo = mid;
-      else hi = mid;
-    }
-    return Math.floor(lo);
   };
 
   const factors: ScoreFactor[] = [];
@@ -120,6 +220,12 @@ export function assessFlip(
   if (research?.demand === 'low') factors.push({ label: 'Domanda bassa', direction: 'negative' });
   if (research?.liquidity === 'fast') factors.push({ label: 'Si vende in fretta', direction: 'positive' });
   if (research?.liquidity === 'slow') factors.push({ label: 'Rivendita lenta', direction: 'negative' });
+  if (!marketObserved(research)) {
+    factors.push({
+      label: 'Domanda e tempi di vendita non osservati: il punteggio pesa solo margine e affidabilita’ della stima',
+      direction: 'negative',
+    });
+  }
   if (valuation.dispersion > 0.6) {
     factors.push({ label: 'Prezzi di mercato molto variabili', direction: 'negative' });
   }
@@ -140,16 +246,14 @@ export function assessFlip(
     purchasePrice !== null && Number.isFinite(purchasePrice) && purchasePrice >= 0
       ? (() => {
           const { score, economics } = scoreAt(purchasePrice);
-          return { purchasePrice, score, recommendation: recommendationFor(score), economics };
+          return {
+            purchasePrice,
+            score,
+            recommendation: recommendationAt(purchasePrice, thresholds),
+            economics,
+          };
         })()
       : null;
 
-  return {
-    atPrice,
-    thresholds: {
-      buyUpTo: maxPriceFor(flipConfig.recommendationThresholds.buy),
-      maybeUpTo: maxPriceFor(flipConfig.recommendationThresholds.maybe),
-    },
-    factors,
-  };
+  return { atPrice, thresholds, factors };
 }

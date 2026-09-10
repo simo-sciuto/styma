@@ -93,6 +93,26 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
   `weak` (solo categoria, ultima spiaggia prima di "non lo so", tetto a "low"). Solo `identical`
   puo' arrivare a "high": e' l'unico caso in cui non resta un'incertezza sovrapposta fra "quanto
   vale l'oggetto" e "e' davvero lo stesso oggetto".
+- **Il prezzo massimo di acquisto e' una sottrazione, non una bisezione.** Nasceva cercando il
+  prezzo a cui il flip score toccava settanta: coerente, ma impossibile da verificare per chi lo
+  legge, e qui il numero *e'* il prodotto. Ora e' `valore atteso − commissioni − spedizione −
+  cuscinetto di rischio − margine obiettivo`, in `priceThresholds`, e ogni riga viaggia nel
+  risultato (`thresholds.breakdown`) per poter essere mostrata. Il cuscinetto e' la sola riga che
+  dipende dalla confidenza: una stima fragile abbassa il prezzo massimo invece di scaricare il
+  rischio su chi compra.
+- **Il verdetto e' la fascia in cui cade il prezzo, non una seconda lettura del punteggio.**
+  Finche' usciva dal flip score poteva contraddire il prezzo massimo stampato due righe sotto —
+  COMPRALO sopra una cifra superiore al massimo consigliato. `recommendationAt` legge le soglie,
+  e un test percorre tutti i prezzi da 0 a 120 per verificare che le due cose non divergano mai.
+  Il punteggio resta, e risponde a un'altra domanda: non «quanto pagarlo» ma «quanto e' buona
+  questa occasione».
+- **Un peso su un dato che non abbiamo non e' neutro, e' un regalo.** La liquidita' pesava un
+  quarto del punteggio ma vale sempre `unknown` (0,5) senza ricerca agentica: dodici punti e mezzo
+  identici per ogni oggetto, che schiacciavano tutti i punteggi fra 12 e 87 e diluivano i due
+  fattori che discriminano. Ora `effectiveWeights` lo ridistribuisce fra margine e confidenza,
+  nella proporzione che avevano gia', e lo restituisce alla liquidita' appena domanda o liquidita'
+  vengono osservate davvero — cosi' accendere la ricerca agentica funzionerebbe senza altre
+  modifiche. Il fatto che non siano osservate compare fra i fattori del punteggio.
 - **La ricerca agentica e' spenta per scelta** (`research.agenticFallback`). Misurato: ~0,96 $ per
   tre corsie contro i 4 centesimi di un'analisi che si ferma a eBay. Accenderla e' una decisione
   economica, da prendere con un numero davanti — non un default.

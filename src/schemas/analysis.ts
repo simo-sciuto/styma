@@ -72,6 +72,27 @@ export type Economics = {
   roi: number | null;
 };
 
+/**
+ * Fin dove conviene pagare, e la sottrazione da cui esce.
+ *
+ * `breakdown` non e' un dettaglio diagnostico: e' la ragione per cui il
+ * prezzo massimo si puo' mostrare. Un numero che nessuno puo' verificare e'
+ * un numero da prendere per fede, e qui il numero *e'* il prodotto.
+ */
+export type PriceThresholds = {
+  /** Fin dove e' un affare: coperti i costi e raggiunto il margine obiettivo. */
+  buyUpTo: number | null;
+  /** Fin dove i conti tornano senza guadagno vero: la fascia in cui trattare. */
+  maybeUpTo: number | null;
+  breakdown: {
+    expectedSalePrice: number;
+    fees: number;
+    shipping: number;
+    riskBuffer: number;
+    targetProfit: number;
+  };
+};
+
 export type FlipAssessment = {
   /** Presente solo se l'utente ha indicato un prezzo di acquisto. */
   atPrice: {
@@ -80,11 +101,7 @@ export type FlipAssessment = {
     recommendation: Recommendation;
     economics: Economics;
   } | null;
-  /** Prezzo massimo di acquisto per restare in BUY / MAYBE. */
-  thresholds: {
-    buyUpTo: number | null;
-    maybeUpTo: number | null;
-  };
+  thresholds: PriceThresholds;
   factors: ScoreFactor[];
 };
 

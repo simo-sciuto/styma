@@ -138,18 +138,54 @@ export const flipConfig = {
   targetRoi: 1.0,
   targetProfitEur: 60,
 
-  /** Pesi delle tre componenti del punteggio. Devono sommare a 1. */
+  /**
+   * Pesi delle tre componenti del punteggio. Devono sommare a 1.
+   *
+   * Il peso della liquidita' vale solo quando domanda e liquidita' sono state
+   * davvero osservate. Non lo sono quasi mai: si vedono solo con la ricerca
+   * agentica, spenta per costo, e senza quella valgono sempre "unknown", cioe'
+   * 0,5 fisso per ogni oggetto. Lasciarlo pesare comunque significava regalare
+   * dodici punti e mezzo a chiunque e schiacciare tutti i punteggi fra 12 e 87,
+   * diluendo i due fattori che discriminano davvero. Quando il mercato non e'
+   * stato osservato quel peso si ridistribuisce, in proporzione a quello che
+   * profitto e confidenza gia' pesavano. Vedi `effectiveWeights` in
+   * `flip-score.ts`.
+   */
   scoreWeights: {
     profit: 0.5,
     confidence: 0.25,
     liquidity: 0.25,
   },
 
-  /** Soglie di raccomandazione sul punteggio 0-100. */
-  recommendationThresholds: {
-    buy: 70,
-    maybe: 45,
+  /**
+   * Il cuscinetto di rischio: la quota del valore atteso che si tiene indietro
+   * perche' la stima potrebbe sbagliare.
+   *
+   * E' la sola parte del prezzo massimo che dipende da quanto siamo sicuri.
+   * Chi compra a quel prezzo non deve star scommettendo sulla nostra
+   * confidenza: piu' la stima e' fragile, piu' si tiene indietro.
+   */
+  riskBuffer: {
+    /** Tenuto da parte anche nel caso migliore: il mercato si muove comunque. */
+    base: 0.05,
+    /** Quanto si aggiunge quando la stima non e' solida. */
+    byConfidence: { high: 0, medium: 0.08, low: 0.18 },
+    /** Prezzi molto dispersi fra loro: aggiunta a dispersione piena. */
+    maxDispersion: 0.1,
+    /** Uno stato problematico si paga in rivendita, non solo in trattativa. */
+    byCondition: { poor: 0.12, fair: 0.06 },
+    /** Oltre questo il cuscinetto mangerebbe la stima intera. */
+    cap: 0.4,
   },
+
+  /**
+   * Margine obiettivo, in quota sul valore atteso di vendita.
+   *
+   * In quota e non in euro: un obiettivo fisso renderebbe impossibile
+   * qualunque oggetto sotto quella cifra, e i mercatini sono fatti quasi tutti
+   * di oggetti sotto quella cifra.
+   */
+  targetMarginRate: 0.25,
 
   demandScores: { high: 1, medium: 0.65, low: 0.3, unknown: 0.5 },
   liquidityScores: { fast: 1, average: 0.65, slow: 0.3, unknown: 0.5 },
