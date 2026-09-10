@@ -46,6 +46,25 @@ function rejectOutliers(
 }
 
 /**
+ * Quando l'unica cosa che si e' vista sono aste ancora aperte.
+ *
+ * Non fanno una stima — un'offerta a meta' corsa non e' un prezzo di vendita —
+ * ma sono la cosa piu' concreta che ci fosse: qualcuno ha impegnato quei
+ * soldi. Rispondere "non abbiamo trovato niente" avendo visto dodici persone
+ * fare offerte sarebbe un "non lo so" secco, che qui non si dice mai.
+ */
+function describeOnlyBids(
+  discarded: { comparable: Comparable; reason: string }[],
+): string | null {
+  const bids = discarded.filter((entry) => entry.comparable.kind === 'bid');
+  if (bids.length === 0) return null;
+
+  const highest = Math.max(...bids.map((entry) => entry.comparable.price));
+  const quante = bids.length === 1 ? 'una sola asta aperta' : `solo ${bids.length} aste aperte`;
+  return `Abbiamo trovato ${quante}, con offerte fino a ${Math.round(highest)} €. Dicono quanto qualcuno ha gia’ impegnato, non a quanto si vende: guardale tu prima di decidere.`;
+}
+
+/**
  * Trasforma i comparabili in una fascia di mercato.
  * Il modello linguistico non entra mai in questo calcolo: qui si lavora
  * solo sui dati raccolti e sui pesi configurati.
@@ -146,7 +165,11 @@ export function valuate(identification: Identification, research: MarketResearch
         research === null
           ? 'La ricerca di mercato non e’ stata completata.'
           : seen.length === 0
-            ? 'Non abbiamo trovato annunci comparabili abbastanza affidabili per stimare un valore.'
+            ? // Le aste aperte non entrano nel campione, ma erano sotto gli
+              // occhi di chi ha cercato: tacerle qui vorrebbe dire rispondere
+              // "non c'e' niente" avendo visto dodici persone fare offerte.
+              (describeOnlyBids(discarded) ??
+              'Non abbiamo trovato annunci comparabili abbastanza affidabili per stimare un valore.')
             : `Abbiamo trovato solo ${seen.length} annunci comparabili: troppo poco per una stima onesta.`,
       discarded,
     };

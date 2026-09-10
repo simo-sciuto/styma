@@ -38,12 +38,19 @@ const MATCH_RANK: Record<Comparable['matchLevel'], number> = {
 
 /**
  * Fra due versioni della stessa pagina si tiene quella che dice di piu':
- * una vendita conclusa batte un prezzo richiesto, una data batte l'assenza
- * di data. Non si mediano: sono la stessa pagina letta due volte, non due dati.
+ * una vendita conclusa batte un'offerta su un'asta aperta, che batte un
+ * prezzo richiesto; una data batte l'assenza di data. Non si mediano: sono la
+ * stessa pagina letta due volte, non due dati.
+ *
+ * L'offerta sta in mezzo e non in fondo perche' e' un'informazione in piu',
+ * non una di meno: sapere che su quella pagina qualcuno ha gia' offerto
+ * cambia come va letta, anche se il numero non entra nel campione.
  */
+const KIND_RANK: Record<Comparable['kind'], number> = { sold: 8, bid: 4, asking: 0 };
+
 function informationScore(comparable: Comparable): number {
   return (
-    (comparable.kind === 'sold' ? 8 : 0) +
+    KIND_RANK[comparable.kind] +
     (comparable.soldAt ? 4 : 0) +
     MATCH_RANK[comparable.matchLevel] * 0.1 +
     (comparable.condition === 'unknown' ? 0 : 2)

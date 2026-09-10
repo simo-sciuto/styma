@@ -37,6 +37,17 @@ export const CONDITION_LABELS: Record<string, string> = {
   unknown: 'Non valutabile',
 };
 
+/**
+ * Che cosa e' il numero. Tre parole diverse perche' sono tre cose diverse:
+ * una vendita conclusa, quanto chiede un venditore, e quanto qualcuno ha gia'
+ * offerto su un'asta che non e' finita.
+ */
+export const PRICE_KIND_LABELS: Record<string, string> = {
+  sold: 'Venduto',
+  asking: 'Richiesto',
+  bid: 'Offerta in corso',
+};
+
 export const MATCH_LABELS: Record<string, string> = {
   exact_model: 'Stesso modello',
   same_family: 'Stessa famiglia',

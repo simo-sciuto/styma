@@ -179,7 +179,12 @@ export function ResultView({
       ) : null}
 
       {valuation.available ? (
-        <MarketScan valuation={valuation} market={market} marketSource={marketSource} />
+        <MarketScan
+          valuation={valuation}
+          market={market}
+          marketSource={marketSource}
+          identification={identification}
+        />
       ) : null}
 
       <RiskList result={result} />

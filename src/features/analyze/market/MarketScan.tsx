@@ -1,8 +1,17 @@
 'use client';
 
 import type { MarketSource, Valuation, WeightedComparable } from '@/schemas/analysis';
+import type { Identification } from '@/schemas/identification';
 import type { MarketResearch } from '@/schemas/market';
-import { DEMAND_LABELS, LIQUIDITY_LABELS, MATCH_LABELS, formatDate, formatEur } from '@/lib/format';
+import { ebaySoldSearchUrl } from '@/services/market-data/ebay/queries';
+import {
+  DEMAND_LABELS,
+  LIQUIDITY_LABELS,
+  MATCH_LABELS,
+  PRICE_KIND_LABELS,
+  formatDate,
+  formatEur,
+} from '@/lib/format';
 import { Card, Disclosure, Pill } from '@/components/ui';
 
 /** Quante inserzioni mostrare aperte. Le altre restano, ma piegate. */
@@ -49,8 +58,8 @@ function ComparableRow({ item, showKind }: { item: WeightedComparable; showKind:
             sembrerebbe una media di cose messe sullo stesso piano. */}
         <span className="font-mono text-xs text-muted">peso {item.weight.toFixed(2)}</span>
         {showKind ? (
-          <Pill tone={comparable.kind === 'sold' ? 'accent' : 'neutral'}>
-            {comparable.kind === 'sold' ? 'Venduto' : 'Richiesto'}
+          <Pill tone={comparable.kind === 'sold' ? 'accent' : comparable.kind === 'bid' ? 'warn' : 'neutral'}>
+            {PRICE_KIND_LABELS[comparable.kind]}
           </Pill>
         ) : null}
         {date ? <span className="text-xs text-muted">{date}</span> : null}
@@ -74,11 +83,24 @@ export function MarketScan({
   valuation,
   market,
   marketSource,
+  identification,
 }: {
   valuation: Extract<Valuation, { available: true }>;
   market: MarketResearch | null;
   marketSource: MarketSource | null;
+  identification: Identification;
 }) {
+  const soldSearch = ebaySoldSearchUrl(identification);
+
+  /*
+   * Il pavimento: fin dove qualcuno si e' gia' spinto davvero.
+   *
+   * Le aste aperte non entrano nella stima — l'offerta di adesso non e' un
+   * prezzo di vendita — ma sono l'unica cosa in questa pagina per cui
+   * qualcuno ha tirato fuori dei soldi, e vale piu' di trenta prezzi sperati.
+   */
+  const bids = valuation.discarded.filter((entry) => entry.comparable.kind === 'bid');
+  const highestBid = bids.length > 0 ? Math.max(...bids.map((e) => e.comparable.price)) : null;
   const used = [...valuation.used].sort((a, b) => b.weight - a.weight);
   const strongest = used.slice(0, STRONGEST);
   const rest = used.slice(STRONGEST);
@@ -118,6 +140,35 @@ export function MarketScan({
         <p className="mt-2 text-xs text-warn">
           Sono tutti prezzi <strong>richiesti</strong>, non vendite concluse: dicono a quanto
           qualcuno spera di vendere, non a quanto qualcuno ha comprato.
+        </p>
+      ) : null}
+
+      {/*
+        Le vendite concluse non entrano nella stima e non ci entreranno presto:
+        le uniche fonti che le restituiscono sono scraper. Quello che si puo'
+        fare senza mentire e' portarci chi sta davanti al banco — la sua
+        ricerca, sul suo browser, sul sito di eBay.
+      */}
+      {soldSearch ? (
+        <p className="mt-2 text-xs text-muted">
+          <a
+            href={soldSearch}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="font-medium text-foreground underline decoration-line underline-offset-4"
+          >
+            Guarda i venduti su eBay
+          </a>{' '}
+          — apre la ricerca sul sito, dove i prezzi sono quelli davvero pagati. Serve essere
+          loggati su eBay: da luglio 2026 li mostra solo a chi ha un account.
+        </p>
+      ) : null}
+
+      {highestBid !== null ? (
+        <p className="mt-3 text-sm">
+          Su {bids.length === 1 ? 'un’asta aperta' : `${bids.length} aste aperte`} qualcuno ha gia’
+          offerto fino a <strong>{formatEur(highestBid)}</strong>. Non entra nella stima — l’asta
+          non e’ finita — ma e’ l’unica cifra qui dentro che qualcuno ha davvero impegnato.
         </p>
       ) : null}
 

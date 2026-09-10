@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { inferMatchLevel, isRelevantTitle, mentionsObjectType, toComparable } from './mapping';
+import {
+  inferMatchLevel,
+  isRelevantTitle,
+  mentionsObjectType,
+  readBidding,
+  toComparable,
+} from './mapping';
 
 const item = (overrides: Record<string, unknown> = {}) => ({
   title: 'Canon AE-1 fotocamera 35mm con obiettivo 50mm',
@@ -164,5 +170,56 @@ describe('da inserzione eBay a comparabile', () => {
     // una prova migliore del testo libero: il filtro non deve toglierla.
     const comparable = toComparable(item(), canon({ query: 'tutt’altra cosa' }));
     expect(comparable).not.toBeNull();
+  });
+});
+
+describe('aste in corso', () => {
+  const asta = (overrides: Record<string, unknown> = {}) =>
+    item({
+      buyingOptions: ['AUCTION'],
+      bidCount: 14,
+      currentBidPrice: { value: '98.29', currency: 'EUR' },
+      itemEndDate: '2026-09-10T20:00:00Z',
+      ...overrides,
+    });
+
+  const ORA = Date.parse('2026-09-10T15:00:00Z');
+
+  it('un’asta con offerte non e’ un prezzo richiesto', () => {
+    const comparable = toComparable(asta(), canon())!;
+    expect(comparable.kind).toBe('bid');
+    // Il prezzo e' l'offerta corrente, non `price`: su alcune inserzioni
+    // quello resta la base d'asta.
+    expect(comparable.price).toBe(98.29);
+  });
+
+  it('un’asta senza offerte resta un prezzo richiesto', () => {
+    // La base d'asta e' quanto chiede il venditore, esattamente come un
+    // prezzo fisso: e' la prima offerta a cambiarne la natura.
+    const comparable = toComparable(asta({ bidCount: 0, currentBidPrice: undefined }), canon())!;
+    expect(comparable.kind).toBe('asking');
+    expect(comparable.price).toBe(149.9);
+  });
+
+  it('un prezzo fisso resta un prezzo richiesto anche con un bidCount sporco', () => {
+    const comparable = toComparable(item({ bidCount: 3 }), canon())!;
+    expect(comparable.kind).toBe('asking');
+  });
+
+  it('racconta quante offerte e quanto manca', () => {
+    const bidding = readBidding(asta(), ORA)!;
+    expect(bidding.bids).toBe(14);
+    expect(bidding.hoursLeft).toBeCloseTo(5, 5);
+
+    const comparable = toComparable(asta(), canon())!;
+    expect(comparable.notes).toContain('14 offerte');
+  });
+
+  it('un’asta senza data di fine resta un’asta', () => {
+    // Meglio un'offerta senza scadenza nota che un'offerta scambiata per un
+    // prezzo richiesto: la seconda entrerebbe nel campione.
+    const bidding = readBidding(asta({ itemEndDate: undefined }), ORA)!;
+    expect(bidding.hoursLeft).toBeNull();
+    expect(toComparable(asta({ itemEndDate: undefined }), canon())!.kind).toBe('bid');
   });
 });

@@ -35,6 +35,34 @@ export function evaluateComparable(comparable: Comparable, objectCondition: Cond
     return { kept: false, comparable, reason: 'Prezzo non valido' };
   }
 
+  /*
+   * Un'asta aperta e' un pavimento, non un prezzo.
+   *
+   * Finiva nel campione come un prezzo richiesto qualunque, e trascinava la
+   * stima verso il basso: misurate su 446 aste reali con offerte, distribuite
+   * su otto oggetti e cinque mercati, le offerte in corso stanno fra il 12% e
+   * il 71% della mediana dei prezzi fissi dello stesso oggetto. Filtrando i
+   * titoli per togliere accessori e ricambi il quadro non cambia, e la
+   * distanza non si chiude nemmeno nelle ultime due ore prima della chiusura.
+   *
+   * Non c'e' quindi un fattore di correzione da applicare: applicarne uno
+   * sarebbe lo sconto sintetico che abbiamo gia' escluso per le vendite
+   * concluse, con la stessa aria di precisione e lo stesso niente sotto.
+   *
+   * Quello che l'offerta dice per certo e' che almeno una persona ha impegnato
+   * quella cifra. E' un pavimento — lo stesso trattamento che riceve
+   * `lowest_price` di Discogs — e si mostra come tale invece di entrare in
+   * una media a cui non appartiene.
+   */
+  if (comparable.kind === 'bid') {
+    return {
+      kept: false,
+      comparable,
+      reason:
+        'Asta ancora aperta: l’offerta di adesso dice quanto qualcuno ha gia’ impegnato, non a quanto si vende',
+    };
+  }
+
   const rate = valuationConfig.fxToEur[comparable.currency];
   const priceEur = Math.round(comparable.price * rate * 100) / 100;
 

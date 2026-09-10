@@ -5,6 +5,7 @@ import {
   DEMAND_LABELS,
   LIQUIDITY_LABELS,
   MATCH_LABELS,
+  PRICE_KIND_LABELS,
   RECOMMENDATION_STYLES_ON_VIVID,
   formatDate,
   formatEur,
@@ -243,8 +244,8 @@ export function LegacyItemDetail({
                     </span>
                   </div>
                   <div className="mt-1 flex flex-wrap gap-1.5">
-                    <Pill tone={comparable.kind === 'sold' ? 'accent' : 'neutral'}>
-                      {comparable.kind === 'sold' ? 'Venduto' : 'Richiesto'}
+                    <Pill tone={comparable.kind === 'sold' ? 'accent' : comparable.kind === 'bid' ? 'warn' : 'neutral'}>
+                      {PRICE_KIND_LABELS[comparable.kind] ?? comparable.kind}
                     </Pill>
                     {comparable.match_level ? (
                       <Pill>{MATCH_LABELS[comparable.match_level] ?? comparable.match_level}</Pill>

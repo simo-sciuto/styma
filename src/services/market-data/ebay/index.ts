@@ -1,8 +1,10 @@
 import type { Identification } from '@/schemas/identification';
 import type { Comparable } from '@/schemas/market';
-import { coreModel } from '@/lib/model-name';
 import { EbayError, ebayHost, getApplicationToken, getEbayConfig } from './client';
 import { EbaySearchResponseSchema, toComparable } from './mapping';
+import { buildQueries } from './queries';
+
+export { buildQueries, buildQuery, ebaySoldSearchUrl } from './queries';
 
 /**
  * Mercati interrogati, in ordine di rilevanza per un rivenditore italiano.
@@ -21,55 +23,13 @@ const ENOUGH_FROM_ONE_QUERY = 8;
 const MAX_QUERIES = 3;
 
 /**
- * Le query da provare, in ordine di precisione.
- *
- * Marca e modello sono i due campi su cui i titoli eBay sono affidabili, ma
- * meta' degli oggetti di un mercatino non ha ne' l'una ne' l'altro: un vaso
- * senza punzone, una lampada anonima. Per quelli l'identificazione produce
- * gia' `searchQueries`, scritte apposta per cercare comparabili — usarne una
- * sola, o ripiegarci solo quando marca e modello mancano entrambi, buttava via
- * l'unico appiglio disponibile.
- *
- * Provarne piu' di una non costa niente: eBay non si paga a chiamata.
+ * Quante aste con offerte tenere. Non entrano nella stima — sono un pavimento,
+ * non un prezzo — quindi ne bastano poche, le piu' alte: servono a dire fin
+ * dove qualcuno si e' gia' spinto, non a fare una media. Tenerle tutte
+ * significherebbe novanta righe scartate in pagina e novanta righe nel
+ * database per ogni analisi.
  */
-export function buildQueries(identification: Identification): string[] {
-  const queries: string[] = [];
-  const brand = identification.brand?.trim();
-  // Senza tagliare la coda, "Canon AE-1 con FD 50mm f/1.8" trova una
-  // inserzione su undicimila: la ricerca cerca la frase, non l'oggetto.
-  const model = identification.model === null ? null : coreModel(identification.model);
-
-  if (brand && model) {
-    // "Morenita Morenita Express" cercava la marca due volte: se il modello la
-    // contiene gia', ripeterla restringe senza aggiungere nulla.
-    const modelHasBrand = model.toLowerCase().includes(brand.toLowerCase());
-    queries.push(modelHasBrand ? model : `${brand} ${model}`);
-  } else if (model) {
-    queries.push(model);
-  } else if (brand) {
-    // La sola marca e' troppo larga per essere una query, e la categoria
-    // merceologica non la restringe: "Fred Perry abbigliamento" restituisce
-    // polo, maglioni e cappotti, i cui prezzi non c'entrano niente fra loro.
-    // Il tipo di oggetto — la parola che il venditore mette nel titolo — e'
-    // l'unica cosa che separa una polo da un maglione della stessa marca.
-    queries.push(`${brand} ${identification.objectType || identification.category}`.trim());
-  }
-
-  queries.push(...identification.searchQueries.map((query) => query.trim()));
-
-  const seen = new Set<string>();
-  return queries.filter((query) => {
-    const key = query.toLowerCase();
-    if (query.length < 3 || seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-/** Compatibilita': la prima query e' quella piu' precisa. */
-export function buildQuery(identification: Identification): string | null {
-  return buildQueries(identification)[0] ?? null;
-}
+const AUCTIONS_KEPT = 5;
 
 async function searchMarketplace(
   host: string,
@@ -77,13 +37,12 @@ async function searchMarketplace(
   marketplace: string,
   query: string,
   identification: Identification,
+  buyingOptions = 'FIXED_PRICE|AUCTION',
 ): Promise<Comparable[]> {
   const url = new URL(`${host}/buy/browse/v1/item_summary/search`);
   url.searchParams.set('q', query);
   url.searchParams.set('limit', String(LIMIT_PER_MARKETPLACE));
-  // Aste e prezzo fisso insieme: escludere le aste toglierebbe proprio i
-  // prezzi che si avvicinano di piu' a una vendita reale.
-  url.searchParams.set('filter', 'buyingOptions:{FIXED_PRICE|AUCTION}');
+  url.searchParams.set('filter', `buyingOptions:{${buyingOptions}}`);
 
   const response = await fetch(url, {
     headers: {
@@ -109,6 +68,42 @@ async function searchMarketplace(
       }),
     )
     .filter((comparable): comparable is Comparable => comparable !== null);
+}
+
+/**
+ * Un giro dedicato alle aste, perche' la ricerca normale non le mostra.
+ *
+ * Misurato su "canon ae-1", cinque mercati: chiedendo prezzo fisso e aste
+ * insieme tornano 24 aste su 250 risultati, di cui 12 con offerte; chiedendo
+ * solo aste ne tornano 213, di cui 91 con offerte. La rilevanza di eBay mette
+ * il prezzo fisso davanti, e il nostro limite per mercato taglia via quasi
+ * tutto il resto: il segnale c'era e non lo vedevamo.
+ *
+ * Serve a una cosa sola, ed e' il motivo per cui ne bastano cinque: dire fin
+ * dove qualcuno si e' gia' spinto davvero. Nella stima non entrano — un'offerta
+ * a meta' corsa non e' un prezzo di vendita, vedi `valuation/comparables.ts`.
+ */
+async function searchAuctions(
+  host: string,
+  token: string,
+  query: string,
+  identification: Identification,
+): Promise<Comparable[]> {
+  const settled = await Promise.allSettled(
+    MARKETPLACES.map((marketplace) =>
+      searchMarketplace(host, token, marketplace, query, identification, 'AUCTION'),
+    ),
+  );
+
+  const bids = settled
+    .flatMap((outcome) => (outcome.status === 'fulfilled' ? outcome.value : []))
+    .filter((comparable) => comparable.kind === 'bid')
+    .sort((a, b) => b.price - a.price);
+
+  if (bids.length > 0) {
+    console.info(`[ebay] ${bids.length} aste con offerte, tengo le ${AUCTIONS_KEPT} piu' alte`);
+  }
+  return bids.slice(0, AUCTIONS_KEPT);
 }
 
 export type EbayOutcome = {
@@ -170,6 +165,8 @@ export async function searchEbay(identification: Identification): Promise<EbayOu
   if (used.length > 1) {
     console.info(`[ebay] ${used.length} query provate: ${used.map((q) => `"${q}"`).join(', ')}`);
   }
+
+  comparables.push(...(await searchAuctions(host, token, queries[0]!, identification)));
 
   return { comparables, marketplaces: [...marketplaces], queries: used };
 }

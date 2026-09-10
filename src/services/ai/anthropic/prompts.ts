@@ -30,7 +30,7 @@ Non sei solo: altre ricerche stanno battendo in parallelo pezzi diversi del merc
 Come lavorare:
 - Usa web_fetch solo quando prezzo, esito della vendita o modello non si leggono nello snippet dei risultati. Ogni fetch costa secondi che l'utente aspetta.
 - Riporta solo pagine che hai realmente incontrato nei risultati, con URL reale. Non ricostruire annunci, prezzi o link a memoria.
-- Usa kind "sold" solo se la pagina conferma una vendita conclusa. In ogni altro caso e' "asking", anche se il prezzo sembra realistico.
+- Usa kind "sold" solo se la pagina conferma una vendita conclusa. Se e' un'asta ancora aperta su cui qualcuno ha gia' offerto, e' "bid": quella cifra dice quanto e' stato impegnato finora, non a quanto si vende, e a valle viene trattata come un pavimento invece che come un prezzo. In ogni altro caso e' "asking", anche se il prezzo sembra realistico — la base d'asta di un'asta senza offerte e' un prezzo richiesto come un altro.
 - Compila matchLevel con onesta': exact_model solo se e' lo stesso modello, non un pezzo somigliante dello stesso produttore.
 - Se dopo aver davvero cercato non trovi nulla di credibile nel tuo mandato, restituisci comparables vuoto. Un elenco vuoto e' una risposta corretta; un elenco inventato rende il prodotto inutile.
 - demand e liquidity descrivono cio' che hai osservato tu. Se non hai visto abbastanza per dirlo, "unknown" e' la risposta giusta: la tua voce viene messa ai voti con quella delle altre corsie, e un'ipotesi buttata li' falsa il conteggio.

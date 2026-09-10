@@ -13,13 +13,31 @@ import { coreModel } from '@/lib/model-name';
 export const EbayItemSummarySchema = z.object({
   title: z.string(),
   itemWebUrl: z.string(),
-  price: z.object({
-    value: z.string(),
-    currency: z.string(),
-  }),
+  /**
+   * Assente sulla maggior parte delle aste: misurato su eBay IT, 18 inserzioni
+   * all'asta su 20 non hanno `price`, solo `currentBidPrice`. Lo schema lo
+   * pretendeva, quindi `safeParse` falliva e l'inserzione spariva senza una
+   * riga di log: le aste non entravano nel campione — ne' bene ne' male — da
+   * sempre, mentre il commento nel codice diceva il contrario.
+   */
+  price: z
+    .object({
+      value: z.string(),
+      currency: z.string(),
+    })
+    .optional(),
   condition: z.string().optional(),
   conditionId: z.string().optional(),
   itemEndDate: z.string().optional(),
+  /**
+   * Presenti solo sulle inserzioni all'asta, e solo se la chiamata le chiede
+   * col filtro `buyingOptions`. Erano gia' nella risposta e non li leggevamo:
+   * l'offerta corrente entrava come `price`, indistinguibile da un prezzo
+   * fisso.
+   */
+  buyingOptions: z.array(z.string()).optional(),
+  bidCount: z.number().optional(),
+  currentBidPrice: z.object({ value: z.string(), currency: z.string() }).optional(),
 });
 
 export const EbaySearchResponseSchema = z.object({
@@ -163,13 +181,55 @@ function toCurrency(raw: string): Currency | null {
   return (CURRENCIES as readonly string[]).includes(raw) ? (raw as Currency) : null;
 }
 
+type Bidding = {
+  bids: number;
+  price: { value: string; currency: string };
+  /** Ore alla chiusura, null se eBay non ha dato una data leggibile. */
+  hoursLeft: number | null;
+};
+
+/**
+ * Se questa inserzione e' un'asta su cui qualcuno ha gia' offerto.
+ *
+ * Un'asta senza offerte non conta: la base d'asta e' quanto chiede il
+ * venditore, esattamente come un prezzo fisso. E' la prima offerta a
+ * trasformare la cifra in qualcosa che qualcun altro ha accettato di pagare.
+ */
+export function readBidding(item: EbayItemSummary, now: number = Date.now()): Bidding | null {
+  const bids = item.bidCount ?? 0;
+  const price = item.currentBidPrice ?? item.price;
+  if (bids <= 0 || !price || !(item.buyingOptions ?? []).includes('AUCTION')) return null;
+
+  const end = item.itemEndDate ? Date.parse(item.itemEndDate) : NaN;
+  return {
+    bids,
+    price,
+    hoursLeft: Number.isNaN(end) ? null : Math.max(0, (end - now) / 3_600_000),
+  };
+}
+
+/** Quanto manca e quanti hanno offerto: le due cose che dicono quanto pesa quell'offerta. */
+function describeBidding(bidding: Bidding | null): string {
+  if (!bidding) return '';
+  const offerte = bidding.bids === 1 ? '1 offerta' : `${bidding.bids} offerte`;
+  if (bidding.hoursLeft === null) return `Asta in corso, ${offerte}`;
+  if (bidding.hoursLeft < 1) return `Asta in chiusura, ${offerte}`;
+  if (bidding.hoursLeft < 48) return `Asta, ${offerte}, chiude fra ${Math.round(bidding.hoursLeft)}h`;
+  return `Asta, ${offerte}, chiude fra ${Math.round(bidding.hoursLeft / 24)} giorni`;
+}
+
 /**
  * Da inserzione eBay a comparabile.
  *
- * `kind` e' sempre "asking": la Browse API restituisce inserzioni attive, cioe'
- * prezzi richiesti. I venduti stanno nella Marketplace Insights API, che ha
- * accesso separato. Dichiararli "sold" perche' vengono da eBay sarebbe la
- * bugia piu' facile e piu' costosa da fare qui.
+ * `kind` non e' mai "sold": la Browse API restituisce inserzioni attive. I
+ * venduti stanno nella Marketplace Insights API, chiusa ai nuovi utenti.
+ * Dichiararli "sold" perche' vengono da eBay sarebbe la bugia piu' facile e
+ * piu' costosa da fare qui.
+ *
+ * Ma non sono nemmeno tutti "asking". Un'asta con almeno un'offerta porta una
+ * cifra di natura diversa — soldi che qualcuno ha impegnato davvero — e va
+ * distinta: vedi `PRICE_KINDS`. Un'asta senza offerte resta `asking`, perche'
+ * la base d'asta e' esattamente quello: quanto chiede il venditore.
  */
 /** Cio' che si sa dell'oggetto cercato, per giudicare un'inserzione trovata. */
 export type ComparableContext = {
@@ -185,10 +245,17 @@ export function toComparable(raw: unknown, context: ComparableContext): Comparab
   if (!parsed.success) return null;
 
   const item = parsed.data;
-  const price = Number(item.price.value);
+  const bidding = readBidding(item);
+
+  // Su un'asta con offerte il prezzo che conta e' l'offerta corrente. Su
+  // tutto il resto e' `price`. Se non c'e' ne' l'una ne' l'altro non c'e'
+  // niente da confrontare.
+  const source = bidding?.price ?? item.price;
+  if (!source) return null;
+  const price = Number(source.value);
   if (!Number.isFinite(price) || price <= 0) return null;
 
-  const currency = toCurrency(item.price.currency);
+  const currency = toCurrency(source.currency);
   if (currency === null) return null;
 
   const matchLevel = inferMatchLevel(item.title, context.brand, context.model);
@@ -212,10 +279,12 @@ export function toComparable(raw: unknown, context: ComparableContext): Comparab
     url: item.itemWebUrl,
     price,
     currency,
-    kind: 'asking',
+    kind: bidding ? 'bid' : 'asking',
     soldAt: null,
     condition: mapCondition(item),
     matchLevel,
-    notes: item.condition ? `Stato dichiarato: ${item.condition}` : '',
+    notes: [describeBidding(bidding), item.condition ? `Stato dichiarato: ${item.condition}` : '']
+      .filter(Boolean)
+      .join(' · '),
   };
 }

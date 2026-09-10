@@ -426,3 +426,68 @@ describe('oggetti senza marca ne’ modello', () => {
     expect(result.observed).toBeNull();
   });
 });
+
+describe('aste ancora aperte', () => {
+  /*
+   * Un'offerta in corso entrava nel campione come un prezzo richiesto
+   * qualunque, e trascinava la stima verso il basso. Misurate su 446 aste
+   * reali, le offerte in corso stanno fra il 12% e il 71% della mediana dei
+   * prezzi fissi dello stesso oggetto, e la distanza non si chiude nemmeno
+   * nelle ultime due ore: non c'e' un fattore di correzione da applicare,
+   * c'e' solo un pavimento.
+   */
+  const asta = (price: number, index: number) =>
+    comparable({ price, kind: 'bid' as const, url: `https://asta.test/${index}` });
+
+  it('non entrano nel campione', () => {
+    const market = research([
+      comparable({ price: 100, url: 'https://a.test/1' }),
+      comparable({ price: 110, url: 'https://a.test/2' }),
+      comparable({ price: 120, url: 'https://a.test/3' }),
+      asta(12, 1),
+      asta(30, 2),
+    ]);
+
+    const valuation = valuate(identification, market);
+    expect(valuation.available).toBe(true);
+    if (!valuation.available) return;
+
+    expect(valuation.used.every((item) => item.comparable.kind !== 'bid')).toBe(true);
+    expect(valuation.discarded.filter((entry) => entry.comparable.kind === 'bid')).toHaveLength(2);
+  });
+
+  it('la stima non si abbassa per colpa loro', () => {
+    // Il punto della modifica: la stessa fascia con e senza le aste.
+    const soli = [
+      comparable({ price: 100, url: 'https://a.test/1' }),
+      comparable({ price: 110, url: 'https://a.test/2' }),
+      comparable({ price: 120, url: 'https://a.test/3' }),
+    ];
+
+    const senza = valuate(identification, research(soli));
+    const con = valuate(identification, research([...soli, asta(12, 1), asta(8, 2), asta(30, 3)]));
+
+    expect(senza.available && con.available).toBe(true);
+    if (!senza.available || !con.available) return;
+    expect(con.likely).toBe(senza.likely);
+    expect(con.low).toBe(senza.low);
+    expect(con.high).toBe(senza.high);
+  });
+
+  it('lo scarto dice perche’, invece di farle sparire', () => {
+    const valuation = valuate(identification, research([asta(40, 1), asta(45, 2), asta(50, 3)]));
+    const motivo = valuation.discarded[0]?.reason ?? '';
+    expect(motivo.toLowerCase()).toContain('asta');
+  });
+
+  it('quando c’erano solo aste, il «non lo so» le racconta', () => {
+    // Un rifiuto secco avendo visto tre persone fare offerte lascerebbe chi
+    // e' davanti al banco esattamente dove stava.
+    const valuation = valuate(identification, research([asta(40, 1), asta(45, 2), asta(62, 3)]));
+
+    expect(valuation.available).toBe(false);
+    if (valuation.available) return;
+    expect(valuation.reason).toContain('3 aste aperte');
+    expect(valuation.reason).toContain('62');
+  });
+});

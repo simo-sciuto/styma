@@ -35,6 +35,8 @@ E6 ████████████████████ prima di comprar
 F1 ████████████████████ esito reale in inventario   fatto
 F2 ████████████████████ autenticita' a livelli      fatto
 F3 ████████████████████ URL del risultato           fatto
+
+G1 ████████████████████ aste: il segnale che buttavamo  fatto
 ```
 
 ---
@@ -244,6 +246,38 @@ del prodotto che non ha modo di dichiararsi.
   colonne. Non e' codice di passaggio — ci finisce anche qualunque snapshot
   il cui JSON non superi piu' lo schema.
 
+### G1 — le aste, e il mercato dei dati sui venduti (commit successivo)
+Nato dall'analisi competitiva: tutti i concorrenti spingono sui *sold prices*.
+Prima di comprare qualcosa, la verifica.
+
+**Nessuna fonte lecita esiste.** La parola nascosta nella decisione del 9
+settembre non era «gratuita», era «lecita»: Marketplace Insights e' chiusa ai
+nuovi utenti, la Finding API e' morta a febbraio 2025, Terapeak e' solo
+interfaccia, LiveAuctioneers/Invaluable/Barnebys espongono API *in entrata*
+per le case d'asta, WorthPoint e' un abbonamento consumer. Tutto cio' che
+restituisce un prezzo di vendita e' uno scraper — e dal 22 luglio 2026 anche
+il filtro «venduti» del sito eBay e' dietro login. Nessun acquisto fatto.
+
+**Ma un segnale legittimo c'era, e lo buttavamo da sempre.**
+- `price` e' **opzionale** sulle inserzioni eBay: 18 aste su 20 non ce
+  l'hanno, portano solo `currentBidPrice`. Lo schema lo pretendeva, quindi
+  `safeParse` falliva e l'inserzione spariva senza una riga di log. Le aste
+  non sono mai entrate nel campione, mentre il commento nel codice diceva il
+  contrario. Uno schema severo su un campo facoltativo non protegge: nasconde.
+- Le aste vanno chieste **a parte**: col filtro combinato ne tornano 24 su
+  250, da sole 213. Ora c'e' un giro dedicato.
+- Un'offerta in corso non e' un prezzo richiesto: e' `bid`, un tipo nuovo.
+- **E non entra nella stima.** Misurato su 446 aste reali: l'offerta corrente
+  sta fra il 12% e il 71% della mediana dei prezzi fissi, e non converge
+  nemmeno nelle ultime due ore. Nessun fattore di correzione — sarebbe lo
+  sconto sintetico gia' escluso. E' un pavimento, come `lowest_price` di
+  Discogs, e si mostra come tale: «su 55 aste aperte qualcuno ha gia' offerto
+  fino a 154 €».
+- `ebaySoldSearchUrl`: un link che apre i venduti sul sito di eBay. Non li
+  mettiamo nella stima, ma li mettiamo a un tocco da chi sta al banco.
+  Avvertenza in pagina: serve essere loggati.
+- `bench/auction-bids.mjs` rifa' la misura quando serve.
+
 ---
 
 ## Prossimo — da scegliere
@@ -282,6 +316,8 @@ Multi-oggetto · Scout · allerte · analytics personali · escalation a esperto
 | Prezzo del banco salvato come acquisto | Separato: `asking_price` e' la domanda, `purchase_price` lo dichiari tu | F1 |
 | Identificazione su Haiku | A Sonnet: 2/9 contro 3/3 sullo schema vero, non su quello del bench | F2 |
 | Salvare l'analisi era un pulsante | Automatico: ogni analisi ha un indirizzo, e si archivia invece di cancellarla | F3 |
+| Comprare l'accesso ai venduti | No: nessuna fonte lecita esiste, solo scraper. Verificato il mercato dei dati | G1 |
+| Offerte d'asta nella stima | No: 12–71% dei prezzi fissi, nessun fattore di correzione. Pavimento dichiarato | G1 |
 
 ## Migliorie note, non ancora fatte
 

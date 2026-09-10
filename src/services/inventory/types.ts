@@ -94,7 +94,7 @@ export type ComparableRow = {
   url: string;
   price: number;
   currency: string;
-  kind: 'sold' | 'asking';
+  kind: 'sold' | 'asking' | 'bid';
   sold_at: string | null;
   condition: string | null;
   match_level: string | null;

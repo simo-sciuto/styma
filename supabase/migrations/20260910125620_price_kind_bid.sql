@@ -1,0 +1,17 @@
+-- Un'offerta su un'asta aperta non e' un prezzo richiesto.
+--
+-- Finora tutto cio' che arrivava da eBay era 'asking', aste comprese: la
+-- Browse API restituisce inserzioni attive, e l'offerta corrente di un'asta
+-- finiva nel campione con la stessa etichetta e lo stesso peso del prezzo che
+-- un venditore chiede per un pezzo a prezzo fisso.
+--
+-- Ma le due cifre non misurano la stessa cosa, e nemmeno sbagliano nella
+-- stessa direzione: un prezzo richiesto sta sopra il mercato, un'offerta a
+-- meta' corsa sta sotto. Misurato su 446 aste reali con offerte, distribuite
+-- su otto oggetti e cinque mercati, l'offerta corrente sta fra il 12% e il 71%
+-- della mediana dei prezzi fissi dello stesso oggetto — e non converge
+-- nemmeno nelle ultime due ore prima della chiusura.
+--
+-- 'bid' esiste per poterle dire per quello che sono: soldi impegnati davvero,
+-- su una gara che non e' finita. Un pavimento, non un prezzo.
+alter type public.price_kind add value if not exists 'bid' after 'sold';

@@ -115,11 +115,16 @@ sono ancora aperte.
   prodotto che non ha modo di dichiararsi. Ogni campo aggiunto allo schema va pagato con una
   rimisura, perche' il costo di un campo non e' il suo token: e' l'attenzione che toglie ai due
   campi da cui dipende tutto il resto.
-- **Non esiste una fonte gratuita di vendite concluse, quindi non fingiamo di stimarle.** Deciso
-  il 2026-09-09: Marketplace Insights di eBay e' Limited Release e chiusa a nuovi utenti, la
-  vecchia Finding API risponde 418, Discogs vuole un account venditore. La stima si basa sempre su
-  prezzi richiesti — niente sconto sintetico, niente calibrazione, niente corsia dedicata a
-  cacciare vendite. Il numero che conta e' se l'oggetto confrontato e' davvero lo stesso modello.
+- **Non esiste una fonte *lecita* di vendite concluse, quindi non fingiamo di stimarle.** Deciso
+  il 2026-09-09, riverificato il 2026-09-10 sul mercato dei dati: la parola non era «gratuita», era
+  «lecita». Marketplace Insights di eBay e' Limited Release e chiusa ai nuovi utenti (respinge i
+  piccoli), la Finding API e' stata dismessa il 4 febbraio 2025, Terapeak e' solo interfaccia,
+  LiveAuctioneers/Invaluable/Barnebys espongono API *in entrata* per le case d'asta e nessuna per i
+  prezzi, WorthPoint e' un abbonamento consumer senza API, Discogs vuole un account venditore. Ogni
+  fonte che restituisce davvero un prezzo di vendita e' uno scraper — e dal 22 luglio 2026 anche il
+  filtro «venduti» del sito eBay e' dietro login. La stima si basa sempre su prezzi richiesti:
+  niente sconto sintetico, niente calibrazione. Quello che si puo' fare senza mentire e' portarci
+  chi sta al banco: `ebaySoldSearchUrl` apre la ricerca dei venduti sul suo browser.
 - **Il livello dei comparabili sostituisce la vecchia distinzione sold/asking.**
   `valuate.ts` sceglie fra tre livelli, in ordine: `identical` (solo lo stesso modello — se bastano
   da soli, gli altri comparabili non entrano, anche se avrebbero superato la soglia di peso da
@@ -164,9 +169,26 @@ sono ancora aperte.
   vendita, cioe' quante alternative ha chi compra. Dedurne la domanda sarebbe un'invenzione:
   `demand` e `liquidity` restano `unknown` finche' nessuno ha guardato i venduti. E `lowest_price`
   e' un pavimento, non una media: non entra fra i comparabili, si dichiara come pavimento.
-- **Le inserzioni attive sono `asking`, mai `sold`.** La Browse API restituisce annunci in corso.
-  Spacciarli per vendite concluse sarebbe la bugia piu' facile da fare qui, e la piu' costosa: il
-  peso di una vendita conclusa e' quasi il doppio.
+- **Tre tipi di prezzo, non due.** La Browse API restituisce annunci in corso: `sold` non esiste,
+  e spacciarli per vendite concluse sarebbe la bugia piu' facile da fare qui. Ma non sono nemmeno
+  tutti `asking`. Un'asta con almeno un'offerta porta una cifra di natura diversa — soldi che
+  qualcuno ha davvero impegnato — ed e' `bid`. Un'asta senza offerte resta `asking`: la base d'asta
+  e' quanto chiede il venditore.
+- **Un'offerta in corso e' un pavimento, non un prezzo, e non entra nella stima.** Misurato su 446
+  aste reali con offerte, otto oggetti e cinque mercati: l'offerta corrente sta fra il **12% e il
+  71%** della mediana dei prezzi fissi dello stesso oggetto, e la distanza non si chiude nemmeno
+  nelle ultime due ore prima della chiusura. Non c'e' un fattore di correzione da applicare —
+  applicarne uno sarebbe lo sconto sintetico gia' escluso per le vendite concluse. Quello che
+  l'offerta dice per certo e' che almeno una persona ha impegnato quella cifra: si mostra come
+  pavimento, esattamente come `lowest_price` di Discogs. `bench/auction-bids.mjs` rifa' la misura.
+- **Le aste vanno chieste a parte.** Con `buyingOptions:{FIXED_PRICE|AUCTION}` eBay mette il prezzo
+  fisso davanti: su "canon ae-1" tornano 24 aste su 250 risultati. Chiedendo solo aste ne tornano
+  213. Un giro dedicato, con la query migliore, e si tengono le cinque offerte piu' alte — servono
+  a dire fin dove qualcuno si e' spinto, non a fare una media.
+- **`price` e' opzionale sulle inserzioni eBay.** Diciotto aste su venti non ce l'hanno: portano
+  solo `currentBidPrice`. Lo schema lo pretendeva, quindi `safeParse` falliva e l'inserzione
+  spariva senza una riga di log — le aste non sono mai entrate nel campione, mentre il commento nel
+  codice diceva il contrario. Uno schema severo su un campo facoltativo non protegge: nasconde.
 - **`similar_category` non e' un livello di somiglianza qualunque: e' il caso in cui non c'e'
   nessuna prova.** Senza marca ne' modello da confermare, un errore di corrispondenza di eBay (una
   ricerca di "borsa" che risponde con un trolley) entrerebbe come comparabile valido quanto uno
@@ -205,6 +227,7 @@ npm test           # vitest (valutazione, fusione delle corsie, lettura dello st
 node bench/research-bench.mjs [foto.jpg]   # cronometra e conta i costi di un'analisi contro `npm run dev`
 node bench/why-no-value.mjs foto.jpg ...   # segue l'imbuto quando non esce una stima
 node bench/compare-models.mjs foto.jpg ... # confronta i modelli sull'identificazione (si paga)
+node bench/auction-bids.mjs "query" ...     # quanto valgono le offerte d'asta contro i prezzi fissi
 ```
 
 ## Configurazione
