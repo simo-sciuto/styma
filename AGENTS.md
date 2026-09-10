@@ -58,6 +58,12 @@ sono ancora aperte.
 - **Ogni tabella ha RLS attiva** e la proprieta' si verifica risalendo a `items.user_id`, mai
   duplicando `user_id` sulle tabelle figlie: due fonti di verita' divergono.
 - **Le valutazioni sono immutabili.** Una nuova analisi inserisce una riga, non aggiorna la vecchia.
+- **Il prezzo del banco non e' un acquisto.** Il numero digitato per ottenere il verdetto e' quanto
+  *chiedono* (`asking_price`): finiva in `purchase_price` con lo stato "comprato" dedotto dalla sua
+  presenza, e l'inventario dichiarava acquisti mai fatti sommandoli fra le spese. Quanto hai pagato,
+  se hai comprato, quando l'hai venduto e a quanto lo dici tu dopo — `recordOutcome`. Vale anche per
+  cio' che non compri: `passed` e' uno stato, ed e' l'unico dato che puo' dire se un «lascia stare»
+  era giusto. Un magazzino che registra solo i «si'» non smentisce mai il prodotto.
 - **Le corsie di ricerca vanno deduplicate.** Piu' corsie possono trovare la stessa pagina: contarla
   due volte gonfia il campione e quindi la confidenza. La deduplica per URL normalizzato sta in
   `src/services/ai/merge.ts` ed e' testata.

@@ -1,0 +1,11 @@
+-- "Lasciato perdere" e' uno stato, non l'assenza di uno stato.
+--
+-- Finora un oggetto che non si comprava restava 'found' per sempre,
+-- indistinguibile da uno visto ieri e ancora da decidere. Ma la decisione di
+-- NON comprare e' il dato piu' prezioso che questo prodotto possa raccogliere:
+-- e' l'unico modo di sapere se un "lascia stare" era giusto. Senza, il
+-- magazzino registra solo i casi in cui abbiamo detto di si'.
+--
+-- Sta in una migrazione a se' perche' Postgres non permette di *usare* un
+-- valore di enum nella stessa transazione in cui lo aggiunge.
+alter type public.item_status add value if not exists 'passed' after 'found';

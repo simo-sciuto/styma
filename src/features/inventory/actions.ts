@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 
 import { getServerSupabase } from '@/lib/supabase/server';
 import type { AnalysisResult } from '@/schemas/analysis';
+import { OutcomeInputSchema } from '@/schemas/outcome';
 
 export type SaveResult = { ok: true; itemId: string } | { ok: false; error: string };
 
@@ -11,10 +12,16 @@ export type SaveResult = { ok: true; itemId: string } | { ok: false; error: stri
  * Salva l'analisi cosi' com'e' stata mostrata: fascia, punteggio e i
  * comparabili su cui si reggeva, usati e scartati. Una nuova analisi dello
  * stesso oggetto aggiungera' una valutazione, senza cancellare questa.
+ *
+ * Il prezzo che arriva qui e' quello *chiesto* dal banco, l'unico che si
+ * conosce mentre si guarda l'oggetto. Finiva in `purchase_price` con lo stato
+ * "comprato" dedotto dalla sua presenza: l'inventario dichiarava acquisti che
+ * nessuno aveva fatto, e il totale "speso" sommava soldi mai usciti. Quanto
+ * hai pagato davvero lo dici dopo, quando l'hai comprato davvero.
  */
 export async function saveAnalysis(
   result: AnalysisResult,
-  purchasePrice: number | null,
+  askingPrice: number | null,
 ): Promise<SaveResult> {
   const supabase = await getServerSupabase();
   if (!supabase) return { ok: false, error: 'Persistenza non configurata.' };
@@ -44,8 +51,8 @@ export async function saveAnalysis(
       characteristics: identification.characteristics,
       condition_notes: identification.conditionNotes,
       markings: identification.markings,
-      purchase_price: purchasePrice,
-      status: purchasePrice === null ? 'found' : 'bought',
+      asking_price: askingPrice,
+      status: 'found',
     })
     .select('id')
     .single();
@@ -137,6 +144,88 @@ export async function saveAnalysis(
 
   revalidatePath('/inventario');
   return { ok: true, itemId };
+}
+
+export type OutcomeResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Registra com'e' finita: comprato, lasciato perdere, messo in vendita,
+ * venduto.
+ *
+ * Ogni transizione scrive solo i campi che quel passaggio conosce davvero.
+ * Non si deduce niente: un oggetto venduto senza data di acquisto resta
+ * senza giorni di possesso, e l'interfaccia lo dira', invece di stimarli.
+ *
+ * La proprieta' non si verifica qui: la RLS lascia aggiornare solo le righe
+ * di chi chiede, e una riga altrui semplicemente non viene toccata. Per
+ * questo l'update chiede indietro l'id — zero righe e' l'unico modo di
+ * accorgersene.
+ */
+export async function recordOutcome(itemId: string, raw: unknown): Promise<OutcomeResult> {
+  const parsed = OutcomeInputSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, error: 'Dati non validi.' };
+
+  const supabase = await getServerSupabase();
+  if (!supabase) return { ok: false, error: 'Persistenza non configurata.' };
+
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) return { ok: false, error: 'Sessione assente: riprova.' };
+
+  const input = parsed.data;
+  const patch: Record<string, unknown> = (() => {
+    switch (input.type) {
+      case 'bought':
+        return {
+          status: 'bought',
+          purchase_price: input.price,
+          purchase_date: input.date,
+          purchase_location: input.location,
+        };
+      case 'passed':
+        // Il prezzo pagato si azzera apposta: se avevi segnato l'acquisto e
+        // poi correggi, lasciare la cifra la' vorrebbe dire contare fra le
+        // spese un oggetto che hai lasciato al banco.
+        return {
+          status: 'passed',
+          purchase_price: null,
+          purchase_date: null,
+          purchase_location: null,
+        };
+      case 'listed':
+        return { status: 'listed', listed_at: input.date, marketplace: input.marketplace };
+      case 'sold':
+        return {
+          status: 'sold',
+          sale_price: input.price,
+          sale_date: input.date,
+          marketplace: input.marketplace,
+        };
+      case 'reopen':
+        return {
+          status: 'found',
+          purchase_price: null,
+          purchase_date: null,
+          purchase_location: null,
+          listed_at: null,
+          sale_price: null,
+          sale_date: null,
+        };
+    }
+  })();
+
+  const { data, error } = await supabase.from('items').update(patch).eq('id', itemId).select('id');
+
+  if (error) {
+    console.error('[inventory] esito non registrato', error.message);
+    return { ok: false, error: 'Non siamo riusciti a registrare l’esito.' };
+  }
+  if (!data || data.length === 0) {
+    return { ok: false, error: 'Oggetto non trovato.' };
+  }
+
+  revalidatePath('/inventario');
+  revalidatePath(`/inventario/${itemId}`);
+  return { ok: true };
 }
 
 export async function registerImages(

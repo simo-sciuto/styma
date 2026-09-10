@@ -13,11 +13,12 @@ import { registerImages, saveAnalysis } from './actions';
 
 type Props = {
   result: AnalysisResult;
-  purchasePrice: number | null;
+  /** Quanto chiedono al banco: quanto pagherai davvero non si sa ancora. */
+  askingPrice: number | null;
   images: PreparedImage[];
 };
 
-export function SaveToInventory({ result, purchasePrice, images }: Props) {
+export function SaveToInventory({ result, askingPrice, images }: Props) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +38,7 @@ export function SaveToInventory({ result, purchasePrice, images }: Props) {
     try {
       const userId = await ensureSession();
 
-      const saved = await saveAnalysis(result, purchasePrice);
+      const saved = await saveAnalysis(result, askingPrice);
       if (!saved.ok) throw new Error(saved.error);
 
       const supabase = getBrowserSupabase();

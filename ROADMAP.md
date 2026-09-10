@@ -19,7 +19,10 @@ falso — gia' successo una volta.
 ## Dove siamo
 
 **Fase E — P0, il motore decisionale: completa.** Tutti e dodici i P0 del brief
-sono in pagina. Prossima fase da scegliere insieme.
+sono in pagina.
+
+**Fase F — P1, in corso.** Si procede nell'ordine deciso: esito reale →
+autenticita' a livelli → URL del risultato.
 
 ```
 E1 ████████████████████ blocco decisione            fatto
@@ -28,6 +31,10 @@ E3 ████████████████████ mercato come pro
 E4 ████████████████████ rischi in una sezione sola   fatto
 E5 ████████████████████ economia del flip            fatto
 E6 ████████████████████ prima di comprare + guida foto  fatto
+
+F1 ████████████████████ esito reale in inventario   fatto
+F2 ░░░░░░░░░░░░░░░░░░░░ autenticita' a livelli
+F3 ░░░░░░░░░░░░░░░░░░░░ URL del risultato
 ```
 
 ---
@@ -136,38 +143,52 @@ i rischi → la storia.
 dell'identificazione → perche' quel verdetto → il conto → il mercato →
 i rischi → prima di pagare → la storia.
 
+### F1 — l'esito reale (commit successivo)
+- **Il prezzo del banco non era un acquisto.** Il numero digitato per avere
+  il verdetto finiva in `purchase_price`, e lo stato "comprato" veniva
+  dedotto dalla sua sola presenza: l'inventario dichiarava acquisti mai
+  fatti e il totale "speso" sommava soldi mai usciti. Ora c'e'
+  `asking_price` per la domanda del venditore, e `purchase_price` si scrive
+  solo quando dichiari di aver comprato. Migrazione con backfill: tre righe
+  spostate, nessun valore perso.
+- **Stato `passed`.** Chi non compra non lasciava traccia, e un magazzino
+  che registra solo i "si'" non puo' dire se un "lascia stare" era giusto.
+- Nuovi campi: `listed_at` (giorni sul mercato, diversi dai giorni di
+  possesso), piu' `sale_price`/`sale_date`/`marketplace` che esistevano da
+  sempre e nessuno scriveva.
+- Due vincoli nello schema: niente `sold` senza prezzo di vendita, niente
+  vendita prima dell'acquisto. Verificati contro il database vero.
+- `describeOutcome` puro, 10 test: trattativa (chiesto − pagato), margine
+  lordo (due cifre digitate da te, verificabili), netto stimato (dichiarato
+  come stima), giorni tenuti e giorni sul mercato.
+- **Il confronto con la fascia.** Un venduto dice se il prezzo e' caduto
+  dentro, sotto o sopra la stima che avevamo dato. E' l'unico punto in cui
+  il prodotto puo' essere smentito.
+- L'inventario diventa un cruscotto a due piani: sopra le previsioni,
+  sotto i fatti — guadagnato davvero e **stime centrate** (`n/m`). Il
+  margine atteso non conta piu' i venduti: la' non e' piu' atteso.
+- `recordOutcome` valida l'input con Zod: un'azione server e' un endpoint
+  pubblico come tutti gli altri.
+
 ---
 
-## Prossimo — da scegliere
+## Prossimo
 
-La fase P0 e' chiusa. Le tre strade, in ordine di valore secondo il piano:
+**F2 — autenticita' a livelli.** Campo nuovo, a livelli, mai un giudizio
+secco. Il modello puo' dire cosa supporta un'attribuzione e cosa
+controllare, non se e' autentico.
 
-1. **My Finds con esito reale** (P1). L'inventario tiene la stima ma non
-   l'esito: manca il prezzo richiesto dal venditore, lo stato `passed`, il
-   prezzo di vendita e i giorni per vendere. E' la base del punto 27 del
-   brief — il dataset proprietario nasce da qui o non nasce.
-2. **Autenticita' a livelli** (P1). Campo nuovo, a livelli, mai un giudizio
-   secco. Il modello puo' dire cosa supporta un'attribuzione e cosa
-   controllare, non se e' autentico.
-3. **URL del risultato** (abilitante). Senza, il Second Look non e'
-   implementabile e ogni analisi si perde ricaricando la pagina.
+**F3 — URL del risultato.** Senza, il Second Look non e' implementabile e
+ogni analisi si perde ricaricando la pagina.
 
 ---
 
 ## Backlog
 
-### P0 rimanenti
-- **E3** mercato come prova: comparabili fuori dagli accordion, con peso e
-  motivo di scarto, asking/sold esplicito.
-- **E4** rischi raccolti in una sezione sola.
-- **E5** economia del flip come blocco leggibile.
-- **E6** «prima di comprare» + guida fotografica per tipo di oggetto.
-  ← primo cambio di contratto: campo nuovo nello schema.
-
 ### P1
 Autenticita' a livelli · analisi del marchio · Second Look (richiede prima
-l'URL del risultato) · modalita' trattativa · My Finds con esito reale ·
-sessione di mercato · dati d'asta.
+l'URL del risultato) · modalita' trattativa · sessione di mercato · dati
+d'asta.
 
 ### P2
 Multi-oggetto · Scout · allerte · analytics personali · escalation a esperto.
@@ -182,6 +203,7 @@ Multi-oggetto · Scout · allerte · analytics personali · escalation a esperto
 | Prezzo massimo non ispezionabile | Riscritto come sottrazione | `5ad7f4e` |
 | Domanda e tempi di vendita | Restano `unknown` dichiarato: la ricerca agentica costa 160× | piano |
 | Similarita' in percentuale | No: abbiamo 4 livelli e un peso, non una misura ottica | piano |
+| Prezzo del banco salvato come acquisto | Separato: `asking_price` e' la domanda, `purchase_price` lo dichiari tu | F1 |
 
 ## Migliorie note, non ancora fatte
 

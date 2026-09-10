@@ -5,7 +5,7 @@ import { Card, PageHeader, Pill } from '@/components/ui';
 import { summarizeInventory, type InventorySummary } from '@/services/inventory/summary';
 import { formatEur, formatRange } from '@/lib/format';
 import { listInventory } from '@/services/inventory/repository';
-import { ITEM_STATUS_LABELS } from '@/services/inventory/types';
+import { ITEM_STATUS_LABELS, type ItemRow } from '@/services/inventory/types';
 
 /**
  * Un dato mancante si dichiara invece di diventare uno zero: "non hai
@@ -22,9 +22,35 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
   );
 }
 
+/**
+ * Il prezzo che vale la pena mostrare in lista dipende da dove sei arrivato
+ * con quell'oggetto: prima conta quanto chiedono, poi quanto hai pagato,
+ * alla fine quanto hai incassato.
+ */
+function priceNote(item: ItemRow): string | null {
+  if (item.status === 'sold' && item.sale_price !== null) {
+    return `Venduto a ${formatEur(item.sale_price)}`;
+  }
+  if (item.purchase_price !== null) return `Pagato ${formatEur(item.purchase_price)}`;
+  if (item.asking_price !== null) return `Chiedevano ${formatEur(item.asking_price)}`;
+  return null;
+}
+
 function InventorySummaryBlock({ summary }: { summary: InventorySummary }) {
-  const { items, valued, estimatedValueEur, bought, spentEur, withBoth, potentialMarginEur } =
-    summary;
+  const {
+    items,
+    valued,
+    estimatedValueEur,
+    bought,
+    spentEur,
+    withBoth,
+    potentialMarginEur,
+    sold,
+    soldWithBoth,
+    realizedMarginEur,
+    checkedAgainstEstimate,
+    insideEstimate,
+  } = summary;
 
   return (
     <div className="mt-6 rounded-block bg-surface-warm p-5 sm:p-6">
@@ -38,18 +64,47 @@ function InventorySummaryBlock({ summary }: { summary: InventorySummary }) {
         <Stat
           label="Speso"
           value={spentEur !== null ? formatEur(spentEur) : '—'}
-          hint={bought < items ? `su ${bought} con prezzo` : undefined}
+          hint={bought < items ? `su ${bought} comprati davvero` : undefined}
         />
         <Stat
           label="Margine atteso"
           value={potentialMarginEur !== null ? formatEur(potentialMarginEur) : '—'}
           hint={
             withBoth > 0
-              ? `su ${withBoth} ${withBoth === 1 ? 'oggetto' : 'oggetti'}, al netto di commissioni e spedizione`
+              ? `su ${withBoth} ${withBoth === 1 ? 'oggetto' : 'oggetti'} ancora in mano, al netto di commissioni e spedizione`
               : 'serve sia il prezzo pagato sia una stima'
           }
         />
       </div>
+
+      {/* La riga dei fatti, separata da quella delle previsioni: sopra c'e'
+          quello che pensiamo, qui sotto quello che e' successo. Compare solo
+          quando c'e' almeno una vendita — quattro trattini non sono un
+          cruscotto, sono un rimprovero. */}
+      {sold > 0 ? (
+        <div className="mt-5 grid grid-cols-2 gap-4 border-t border-line pt-5">
+          <Stat
+            label="Guadagnato davvero"
+            value={realizedMarginEur !== null ? formatEur(realizedMarginEur) : '—'}
+            hint={
+              soldWithBoth > 0
+                ? `su ${soldWithBoth} ${soldWithBoth === 1 ? 'vendita' : 'vendite'} di cui sai anche quanto avevi pagato`
+                : 'serve anche il prezzo pagato'
+            }
+          />
+          <Stat
+            label="Stime centrate"
+            value={
+              checkedAgainstEstimate > 0 ? `${insideEstimate}/${checkedAgainstEstimate}` : '—'
+            }
+            hint={
+              checkedAgainstEstimate > 0
+                ? 'vendite finite dentro la fascia che avevamo dato'
+                : 'nessuna vendita confrontabile con una stima'
+            }
+          />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -144,12 +199,17 @@ export default async function InventoryPage() {
                       ) : (
                         <Pill tone="warn">Valore non stimato</Pill>
                       )}
-                      <Pill>{ITEM_STATUS_LABELS[item.status]}</Pill>
-                      {/* Quanto e' costato serve quando confronti, non quando
-                          cerchi: sul telefono ruberebbe la riga al valore. */}
-                      {item.purchase_price !== null ? (
+                      <Pill tone={item.status === 'sold' ? 'accent' : 'neutral'}>
+                        {ITEM_STATUS_LABELS[item.status]}
+                      </Pill>
+                      {/* Il prezzo che conta cambia col punto in cui sei: al
+                          banco quanto chiedono, in magazzino quanto hai
+                          pagato, dopo quanto hai incassato. Uno alla volta:
+                          sul telefono la seconda pillola ruberebbe la riga
+                          alla fascia. */}
+                      {priceNote(item) ? (
                         <span className="hidden sm:inline-flex">
-                          <Pill>Pagato {formatEur(item.purchase_price)}</Pill>
+                          <Pill>{priceNote(item)}</Pill>
                         </span>
                       ) : null}
                     </div>

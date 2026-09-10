@@ -1,13 +1,17 @@
 import type { Recommendation } from '@/schemas/analysis';
 
-export type ItemStatus = 'found' | 'bought' | 'listed' | 'sold';
+export type ItemStatus = 'found' | 'passed' | 'bought' | 'listed' | 'sold';
 
 export const ITEM_STATUS_LABELS: Record<ItemStatus, string> = {
-  found: 'Trovato',
+  found: 'Da decidere',
+  passed: 'Lasciato perdere',
   bought: 'Comprato',
   listed: 'In vendita',
   sold: 'Venduto',
 };
+
+/** L'ordine in cui un oggetto attraversa il magazzino, per le liste. */
+export const ITEM_STATUS_ORDER: ItemStatus[] = ['found', 'passed', 'bought', 'listed', 'sold'];
 
 export type ItemRow = {
   id: string;
@@ -23,10 +27,13 @@ export type ItemRow = {
   characteristics: string[];
   condition_notes: string[];
   markings: string[];
+  /** Quanto chiedeva chi vendeva. Non e' quanto hai pagato: vedi `purchase_price`. */
+  asking_price: number | null;
   purchase_price: number | null;
   purchase_currency: string;
   purchase_date: string | null;
   purchase_location: string | null;
+  listed_at: string | null;
   sale_price: number | null;
   sale_date: string | null;
   marketplace: string | null;

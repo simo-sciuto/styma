@@ -192,7 +192,7 @@ export function AnalyzeFlow() {
           saveSlot={
             <SaveToInventory
               result={liveResult}
-              purchasePrice={parsePurchasePrice(purchasePrice)}
+              askingPrice={parsePurchasePrice(purchasePrice)}
               images={images}
             />
           }

@@ -20,7 +20,9 @@ import {
   describeSavedComparableTier,
   describeSavedMarketSource,
 } from '@/services/inventory/types';
+import { describeOutcome } from '@/services/inventory/outcome';
 import { GenerateListing } from '@/features/listing/GenerateListing';
+import { OutcomeTracker } from '@/features/inventory/OutcomeTracker';
 
 export const dynamic = 'force-dynamic';
 
@@ -173,6 +175,14 @@ export default async function ItemPage({ params }: PageProps<'/inventario/[id]'>
             </p>
           </Card>
         )}
+
+        {/*
+          Subito sotto la stima, perche' e' la ragione per cui si riapre un
+          oggetto salvato: non per rileggere il numero, ma per dire com'e'
+          finita. Ed e' l'unico punto del prodotto in cui i dati arrivano dal
+          mondo invece che da noi.
+        */}
+        <OutcomeTracker item={item} outcome={describeOutcome(item, valuation)} />
 
         {/*
           Il giudizio, spiegato con quello che era gia' salvato e non veniva

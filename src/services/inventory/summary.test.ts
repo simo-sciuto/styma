@@ -2,58 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { summarizeInventory } from './summary';
 import { flipConfig } from '@/services/valuation/config';
-import type { ItemRow, ItemStatus, ValuationRow } from './types';
-
-function item(overrides: Partial<ItemRow> = {}): ItemRow {
-  return {
-    id: 'i1',
-    title: 'Oggetto',
-    category: null,
-    brand: null,
-    model: null,
-    description: null,
-    estimated_period: null,
-    condition: null,
-    identification_confidence: null,
-    materials: [],
-    characteristics: [],
-    condition_notes: [],
-    markings: [],
-    purchase_price: null,
-    purchase_currency: 'EUR',
-    purchase_date: null,
-    purchase_location: null,
-    sale_price: null,
-    sale_date: null,
-    marketplace: null,
-    status: 'found' as ItemStatus,
-    notes: null,
-    created_at: '2026-01-01T00:00:00Z',
-    updated_at: '2026-01-01T00:00:00Z',
-    ...overrides,
-  };
-}
-
-function valuation(likely: number | null): ValuationRow {
-  return {
-    id: 'v1',
-    item_id: 'i1',
-    currency: 'EUR',
-    low_value: likely,
-    high_value: likely,
-    likely_value: likely,
-    confidence: 'medium',
-    confidence_score: 0.5,
-    flip_score: null,
-    recommendation: null,
-    assessed_at_price: null,
-    market_researched_at: null,
-    market_research_cached: null,
-    comparable_tier: 'identical',
-    reasoning: {},
-    created_at: '2026-01-01T00:00:00Z',
-  };
-}
+import { item, valuedAt } from './testing';
 
 describe('totali del magazzino', () => {
   it('un inventario vuoto non inventa zeri', () => {
@@ -64,12 +13,13 @@ describe('totali del magazzino', () => {
     expect(summary.spentEur).toBeNull();
     expect(summary.estimatedValueEur).toBeNull();
     expect(summary.potentialMarginEur).toBeNull();
+    expect(summary.realizedMarginEur).toBeNull();
   });
 
   it('somma solo gli oggetti che hanno il dato, e dichiara quanti sono', () => {
     const summary = summarizeInventory([
-      { item: item({ purchase_price: 10 }), valuation: valuation(100) },
-      { item: item({ purchase_price: null }), valuation: valuation(50) },
+      { item: item({ purchase_price: 10 }), valuation: valuedAt(100) },
+      { item: item({ purchase_price: null }), valuation: valuedAt(50) },
       { item: item({ purchase_price: 5 }), valuation: null },
     ]);
 
@@ -84,8 +34,8 @@ describe('totali del magazzino', () => {
     // Il secondo oggetto ha una stima ma non un prezzo pagato: sommarlo
     // gonfierebbe il margine con un ricavo senza il suo costo.
     const summary = summarizeInventory([
-      { item: item({ purchase_price: 10 }), valuation: valuation(100) },
-      { item: item({ purchase_price: null }), valuation: valuation(900) },
+      { item: item({ purchase_price: 10 }), valuation: valuedAt(100) },
+      { item: item({ purchase_price: null }), valuation: valuedAt(900) },
     ]);
 
     expect(summary.withBoth).toBe(1);
@@ -100,7 +50,7 @@ describe('totali del magazzino', () => {
     // Pagato piu' di quanto vale: nasconderlo o azzerarlo sarebbe la bugia
     // piu' comoda di un inventario.
     const summary = summarizeInventory([
-      { item: item({ purchase_price: 200 }), valuation: valuation(50) },
+      { item: item({ purchase_price: 200 }), valuation: valuedAt(50) },
     ]);
     expect(summary.potentialMarginEur).toBeLessThan(0);
   });
@@ -108,9 +58,66 @@ describe('totali del magazzino', () => {
   it('conta gli oggetti per stato', () => {
     const summary = summarizeInventory([
       { item: item({ status: 'found' }), valuation: null },
-      { item: item({ status: 'sold' }), valuation: null },
-      { item: item({ status: 'sold' }), valuation: null },
+      { item: item({ status: 'passed' }), valuation: null },
+      { item: item({ status: 'sold', sale_price: 10 }), valuation: null },
+      { item: item({ status: 'sold', sale_price: 10 }), valuation: null },
     ]);
-    expect(summary.byStatus).toEqual({ found: 1, bought: 0, listed: 0, sold: 2 });
+    expect(summary.byStatus).toEqual({ found: 1, passed: 1, bought: 0, listed: 0, sold: 2 });
+  });
+});
+
+describe('quello che e’ successo davvero', () => {
+  it('un venduto esce dal margine atteso ed entra in quello realizzato', () => {
+    // Sommarlo in entrambi conterebbe due volte lo stesso oggetto, una come
+    // promessa e una come fatto.
+    const summary = summarizeInventory([
+      {
+        item: item({ status: 'sold', purchase_price: 20, sale_price: 90 }),
+        valuation: valuedAt(100),
+      },
+    ]);
+
+    expect(summary.withBoth).toBe(0);
+    expect(summary.potentialMarginEur).toBeNull();
+    expect(summary.soldWithBoth).toBe(1);
+    expect(summary.realizedMarginEur).toBe(
+      Math.round(90 - 20 - 90 * flipConfig.marketplaceFeeRate - flipConfig.defaultShippingCost),
+    );
+  });
+
+  it('un venduto senza prezzo pagato non produce un margine finto', () => {
+    const summary = summarizeInventory([
+      { item: item({ status: 'sold', purchase_price: null, sale_price: 90 }), valuation: null },
+    ]);
+    expect(summary.sold).toBe(1);
+    expect(summary.soldWithBoth).toBe(0);
+    expect(summary.realizedMarginEur).toBeNull();
+  });
+
+  it('conta quante vendite sono cadute dentro la fascia che avevamo dato', () => {
+    // E' il voto del prodotto, e lo da' il mercato. Senza questo conteggio
+    // ogni stima resta per sempre "plausibile".
+    const stima = { low_value: 50, high_value: 80, likely_value: 65 };
+    const summary = summarizeInventory([
+      { item: item({ status: 'sold', sale_price: 60 }), valuation: valuedAt(0) },
+      { item: item({ status: 'sold', sale_price: 60 }), valuation: { ...valuedAt(65), ...stima } },
+      { item: item({ status: 'sold', sale_price: 30 }), valuation: { ...valuedAt(65), ...stima } },
+      // Senza stima non c'e' niente da verificare: non conta ne' come
+      // centro ne' come errore.
+      { item: item({ status: 'sold', sale_price: 60 }), valuation: null },
+    ]);
+
+    expect(summary.checkedAgainstEstimate).toBe(3);
+    expect(summary.insideEstimate).toBe(1);
+  });
+
+  it('i bordi della fascia contano come dentro', () => {
+    const summary = summarizeInventory([
+      {
+        item: item({ status: 'sold', sale_price: 80 }),
+        valuation: { ...valuedAt(65), low_value: 50, high_value: 80 },
+      },
+    ]);
+    expect(summary.insideEstimate).toBe(1);
   });
 });
