@@ -2,9 +2,57 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { Card, PageHeader, Pill } from '@/components/ui';
+import { summarizeInventory, type InventorySummary } from '@/services/inventory/summary';
 import { formatEur, formatRange } from '@/lib/format';
 import { listInventory } from '@/services/inventory/repository';
 import { ITEM_STATUS_LABELS } from '@/services/inventory/types';
+
+/**
+ * Un dato mancante si dichiara invece di diventare uno zero: "non hai
+ * registrato spese" e "hai speso 0 €" sono due cose diverse, e la seconda
+ * e' quella che farebbe sembrare gratis un magazzino pieno.
+ */
+function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div>
+      <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">{label}</p>
+      <p className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">{value}</p>
+      {hint ? <p className="mt-0.5 text-[0.7rem] leading-snug text-muted">{hint}</p> : null}
+    </div>
+  );
+}
+
+function InventorySummaryBlock({ summary }: { summary: InventorySummary }) {
+  const { items, valued, estimatedValueEur, bought, spentEur, withBoth, potentialMarginEur } =
+    summary;
+
+  return (
+    <div className="mt-6 rounded-block bg-surface-warm p-5 sm:p-6">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <Stat label="Oggetti" value={String(items)} />
+        <Stat
+          label="Valore stimato"
+          value={estimatedValueEur !== null ? formatEur(estimatedValueEur) : '—'}
+          hint={valued < items ? `su ${valued} di ${items} stimati` : undefined}
+        />
+        <Stat
+          label="Speso"
+          value={spentEur !== null ? formatEur(spentEur) : '—'}
+          hint={bought < items ? `su ${bought} con prezzo` : undefined}
+        />
+        <Stat
+          label="Margine atteso"
+          value={potentialMarginEur !== null ? formatEur(potentialMarginEur) : '—'}
+          hint={
+            withBoth > 0
+              ? `su ${withBoth} ${withBoth === 1 ? 'oggetto' : 'oggetti'}, al netto di commissioni e spedizione`
+              : 'serve sia il prezzo pagato sia una stima'
+          }
+        />
+      </div>
+    </div>
+  );
+}
 
 export const metadata = { title: 'Inventario — STYMA' };
 export const dynamic = 'force-dynamic';
@@ -44,69 +92,73 @@ export default async function InventoryPage() {
           </p>
         </Card>
       ) : (
-        // Da riga a card immagine-avanti: una collezione di oggetti si
-        // scorre con gli occhi sulla foto, non sul testo — l'oggetto e'
-        // sempre la prima cosa che si riconosce, in un mercatino vero.
-        <ul className="mt-6 grid gap-4 sm:grid-cols-2">
-          {result.entries.map(({ item, valuation, coverUrl }) => (
-            // min-w-0: un elemento di griglia ha min-width:auto, e il titolo
-            // con `truncate` (white-space:nowrap) contribuisce con la sua
-            // larghezza intera. Con un titolo lungo la traccia diventava piu'
-            // larga della colonna e la pagina sbordava di lato sul telefono.
-            <li key={item.id} className="min-w-0">
-              {/* Riga compatta sul telefono, scheda con foto grande da sm in
-                  su. Una card 4:3 a tutta larghezza e' alta ~360px: su uno
-                  schermo da 667px se ne vedevano meno di due, e un inventario
-                  si scorre per trovare qualcosa, non si contempla. */}
-              <Link
-                href={`/inventario/${item.id}`}
-                className="group flex gap-3 overflow-hidden rounded-block border border-line bg-surface p-3 transition hover:border-tile-teal hover:shadow-sm sm:block sm:p-0"
-              >
-                <div className="aspect-square w-24 shrink-0 overflow-hidden rounded-xl bg-surface-warm sm:aspect-4/3 sm:w-full sm:rounded-none">
-                  {coverUrl ? (
-                    <Image
-                      src={coverUrl}
-                      alt=""
-                      width={400}
-                      height={300}
-                      unoptimized
-                      className="h-full w-full object-cover transition duration-600 ease-out group-hover:scale-105 sm:group-hover:rotate-1"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center px-2 text-center text-xs text-muted">
-                      Nessuna foto
-                    </div>
-                  )}
-                </div>
+        <>
+          {/* Il magazzino a colpo d'occhio, prima della lista: quanto vale,
+              quanto e' costato, quanto ci puoi guadagnare. Dati gia' caricati
+              per la lista, nessuna query in piu'. */}
+          <InventorySummaryBlock summary={summarizeInventory(result.entries)} />
 
-                <div className="flex min-w-0 flex-1 flex-col justify-center sm:block sm:p-4">
-                  <p className="truncate font-medium">{item.title}</p>
-                  <p className="mt-0.5 truncate text-sm text-muted">
-                    {[item.brand, item.estimated_period].filter(Boolean).join(' · ') || item.category}
-                  </p>
-
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {valuation?.low_value !== null && valuation?.high_value != null ? (
-                      <Pill tone="accent">
-                        {formatRange(valuation.low_value!, valuation.high_value)}
-                      </Pill>
+          <ul className="mt-4 grid gap-4 sm:grid-cols-2">
+            {result.entries.map(({ item, valuation, coverUrl }) => (
+              // min-w-0: un elemento di griglia ha min-width:auto, e il titolo
+              // con `truncate` (white-space:nowrap) contribuisce con la sua
+              // larghezza intera. Con un titolo lungo la traccia diventava piu'
+              // larga della colonna e la pagina sbordava di lato sul telefono.
+              <li key={item.id} className="min-w-0">
+                {/* Riga compatta sul telefono, scheda con foto grande da sm in
+                    su. Una card 4:3 a tutta larghezza e' alta ~360px: su uno
+                    schermo da 667px se ne vedevano meno di due, e un inventario
+                    si scorre per trovare qualcosa, non si contempla. */}
+                <Link
+                  href={`/inventario/${item.id}`}
+                  className="group flex gap-3 overflow-hidden rounded-block border border-line bg-surface p-3 transition hover:border-tile-teal hover:shadow-sm sm:block sm:p-0"
+                >
+                  <div className="aspect-square w-24 shrink-0 overflow-hidden rounded-xl bg-surface-warm sm:aspect-4/3 sm:w-full sm:rounded-none">
+                    {coverUrl ? (
+                      <Image
+                        src={coverUrl}
+                        alt=""
+                        width={400}
+                        height={300}
+                        unoptimized
+                        className="h-full w-full object-cover transition duration-600 ease-out group-hover:scale-105 sm:group-hover:rotate-1"
+                      />
                     ) : (
-                      <Pill tone="warn">Valore non stimato</Pill>
+                      <div className="flex h-full w-full items-center justify-center px-2 text-center text-xs text-muted">
+                        Nessuna foto
+                      </div>
                     )}
-                    <Pill>{ITEM_STATUS_LABELS[item.status]}</Pill>
-                    {/* Quanto e' costato serve quando confronti, non quando
-                        cerchi: sul telefono ruberebbe la riga al valore. */}
-                    {item.purchase_price !== null ? (
-                      <span className="hidden sm:inline-flex">
-                        <Pill>Pagato {formatEur(item.purchase_price)}</Pill>
-                      </span>
-                    ) : null}
                   </div>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
+
+                  <div className="flex min-w-0 flex-1 flex-col justify-center sm:block sm:p-4">
+                    <p className="truncate font-medium">{item.title}</p>
+                    <p className="mt-0.5 truncate text-sm text-muted">
+                      {[item.brand, item.estimated_period].filter(Boolean).join(' · ') || item.category}
+                    </p>
+
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {valuation?.low_value !== null && valuation?.high_value != null ? (
+                        <Pill tone="accent">
+                          {formatRange(valuation.low_value!, valuation.high_value)}
+                        </Pill>
+                      ) : (
+                        <Pill tone="warn">Valore non stimato</Pill>
+                      )}
+                      <Pill>{ITEM_STATUS_LABELS[item.status]}</Pill>
+                      {/* Quanto e' costato serve quando confronti, non quando
+                          cerchi: sul telefono ruberebbe la riga al valore. */}
+                      {item.purchase_price !== null ? (
+                        <span className="hidden sm:inline-flex">
+                          <Pill>Pagato {formatEur(item.purchase_price)}</Pill>
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </main>
   );
