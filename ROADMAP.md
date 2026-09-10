@@ -18,13 +18,13 @@ falso — gia' successo una volta.
 
 ## Dove siamo
 
-**Fase E — P0, il motore decisionale.** 3 passi su 6 completati.
+**Fase E — P0, il motore decisionale.** 4 passi su 6 completati.
 
 ```
 E1 ████████████████████ blocco decisione            fatto
 E2 ████████████████████ prove dell'identificazione  fatto
-E3 ░░░░░░░░░░░░░░░░░░░░ mercato come prova          prossimo
-E4 ░░░░░░░░░░░░░░░░░░░░ rischi in una sezione sola
+E3 ████████████████████ mercato come prova          fatto
+E4 ░░░░░░░░░░░░░░░░░░░░ rischi in una sezione sola   prossimo
 E5 ░░░░░░░░░░░░░░░░░░░░ economia del flip
 E6 ░░░░░░░░░░░░░░░░░░░░ prima di comprare + guida foto
 ```
@@ -68,14 +68,30 @@ E6 ░░░░░░░░░░░░░░░░░░░░ prima di comprar
 - Sparita la disclosure «Dettagli dell'oggetto»: era tutto li' dentro, chiuso.
 - `ResultView` da 373 a 337 righe.
 
+### E3 — mercato come prova (commit successivo)
+- Una sezione «Sul mercato» al posto di tre pezzi sparsi: concorrenza,
+  comparabili usati, comparabili scartati e lettura del mercato erano in
+  quattro punti diversi, tre dentro accordion chiusi.
+- Le quattro inserzioni piu' pesanti stanno aperte, il resto si piega:
+  mostrarne trenta scaricherebbe su chi legge il lavoro di scegliere.
+- Il peso di ogni inserzione e' in chiaro — e' il motivo per cui una ha
+  spostato la stima piu' di un'altra.
+- «Sono tutti prezzi richiesti» dichiarato una volta in testa invece che
+  ripetuto su ogni riga, dove diventava un'etichetta che non si legge piu'.
+- Gli scarti hanno il loro motivo accanto: e' la meta' meno vistosa della
+  prova, e l'unica che dimostra che qualcuno ha guardato.
+- Ordine della pagina corretto: il mercato e' prova per la decisione, stava
+  dopo la storia.
+- `ResultView` da 337 a 218 righe — da 471 all'inizio della fase.
+
 ---
 
 ## Prossimo
 
-### E3 — mercato come prova
-Comparabili fuori dagli accordion, con il peso che hanno avuto e il motivo di
-chi e' stato scartato. Asking e sold dichiarati esplicitamente. Nessun
-contratto da cambiare.
+### E4 — rischi in una sezione sola
+Oggi i segnali di rischio sono sparsi fra `warnings`, i motivi di scarto, i
+tetti di confidenza e i fattori negativi del punteggio. Raccoglierli in un
+posto solo, come chiede il punto 22 del brief. Nessun contratto da cambiare.
 
 ---
 
