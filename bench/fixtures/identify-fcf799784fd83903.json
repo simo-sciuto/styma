@@ -37,6 +37,12 @@
     "dettaglio della base a slitta e dei bordi per valutare usura",
     "eventuale etichetta adesiva o incisione con anno di produzione"
   ],
+  "physicalChecks": [
+    "Cerca il marchio sotto la seduta o sul retro della base: se c’e’, dice chi l’ha prodotta e cambia il valore piu’ di ogni altra cosa.",
+    "Passa la mano lungo la curva a S sotto la seduta cercando crepe da fatica: e’ il punto dove queste sedie si rompono.",
+    "Premi sulla seduta con il peso del corpo e ascolta: uno scricchiolio secco e’ plastica gia’ stanca.",
+    "Guarda la superficie di sbieco controluce per capire se e’ stata riverniciata."
+  ],
   "searchQueries": [
     "Panton Chair Vitra gialla usata",
     "Verner Panton chair yellow original Vitra",

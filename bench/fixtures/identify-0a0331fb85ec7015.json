@@ -48,6 +48,13 @@
     "display/mirino e ghiera dei tempi dall'alto",
     "vano batteria per verifica corrosione"
   ],
+  "physicalChecks": [
+    "Arma e scatta a tutti i tempi, dal piu’ lento al piu’ veloce: sulle AE-1 tenute ferme a lungo le tendine si impastano ai tempi bassi.",
+    "Guarda dentro l’obiettivo controluce cercando aloni o filamenti: sono funghi, e non si tolgono.",
+    "Apri il vano batteria e controlla che i contatti non siano corrosi da una pila lasciata dentro.",
+    "Premi a meta’ corsa: se l’ago dell’esposimetro non si muove, l’elettronica potrebbe essere morta.",
+    "Fai ruotare la ghiera della messa a fuoco: deve essere fluida, non granulosa."
+  ],
   "searchQueries": [
     "Canon AE-1 black FD 50mm 1.8 sold",
     "Canon AE-1 nera usata reflex analogica",

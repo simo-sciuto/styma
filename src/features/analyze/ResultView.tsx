@@ -11,6 +11,7 @@ import { ObjectEvidence } from './identity/ObjectEvidence';
 import { MarketScan } from './market/MarketScan';
 import { RiskList } from './risks/RiskList';
 import { FlipEconomics } from './flip/FlipEconomics';
+import { BeforeYouBuy } from './checks/BeforeYouBuy';
 import {
   formatEur,
 } from '@/lib/format';
@@ -176,6 +177,8 @@ export function ResultView({
       ) : null}
 
       <RiskList result={result} />
+
+      <BeforeYouBuy identification={identification} />
 
       {identification.history ? (
         <Disclosure summary="Cos’e’, in breve">

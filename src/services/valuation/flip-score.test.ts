@@ -25,6 +25,7 @@ const identification: Identification = {
   marketPace: 'slow',
   imageQuality: 'good',
   missingShots: [],
+  physicalChecks: [],
   searchQueries: [],
 };
 

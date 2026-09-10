@@ -30,6 +30,7 @@ function identification(overrides: Partial<Identification> = {}): Identification
     imageQuality: 'good',
     marketPace: 'slow',
     missingShots: [],
+  physicalChecks: [],
     searchQueries: [],
     ...overrides,
   };

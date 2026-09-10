@@ -6,14 +6,30 @@ import { MAX_IMAGES } from '@/lib/uploads';
 import { prepareImages, type PreparedImage } from '@/lib/images';
 import { Button, Pill } from '@/components/ui';
 
+/**
+ * Non un elenco di scatti ma tre gruppi con un motivo ciascuno.
+ *
+ * «Da 4 a 8 foto» non dice a nessuno quali. E le sette voci di prima erano
+ * identiche per un vaso e per una fotocamera, il che le rendeva vere e
+ * inutili insieme: la guida davvero specifica arriva dopo la prima analisi,
+ * quando sappiamo cos'e' e possiamo dire quale scatto manca.
+ */
 const GUIDANCE = [
-  'Fronte',
-  'Retro',
-  'Lato',
-  'Sotto / marchio',
-  'Logo o numero di serie',
-  'Difetti e usura',
-  'Dettaglio del materiale',
+  {
+    title: 'Sempre',
+    why: 'Senza non si parte.',
+    shots: ['L’oggetto intero'],
+  },
+  {
+    title: 'Quelle che cambiano il risultato',
+    why: 'Marchi ed etichette spostano l’identificazione piu’ di qualsiasi altra foto: da «forse e’ questo» a «e’ questo».',
+    shots: ['Sotto o dietro', 'Marchio o punzone', 'Etichetta', 'Numero di serie', 'Firma'],
+  },
+  {
+    title: 'Lo stato',
+    why: 'Quello che non fotografi resta non valutato, e in rivendita diventa una sorpresa per chi compra.',
+    shots: ['Crepe e scheggiature', 'Usura', 'Riparazioni', 'Parti mancanti'],
+  },
 ];
 
 type Props = {
@@ -173,16 +189,21 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
         </ul>
       ) : null}
 
-      <div className="mt-4 rounded-block border border-line bg-surface p-4">
+      <div className="mt-4 space-y-4 rounded-block border border-line bg-surface p-4">
         <p className="text-sm font-medium">Cosa fotografare</p>
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {GUIDANCE.map((item) => (
-            <Pill key={item}>{item}</Pill>
-          ))}
-        </div>
-        <p className="mt-3 text-xs text-muted">
-          Il marchio sotto la base e i difetti sono gli scatti che cambiano di piu’ il risultato.
-        </p>
+        {GUIDANCE.map((group) => (
+          <div key={group.title}>
+            <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
+              {group.title}
+            </p>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {group.shots.map((shot) => (
+                <Pill key={shot}>{shot}</Pill>
+              ))}
+            </div>
+            <p className="mt-1.5 text-xs text-muted">{group.why}</p>
+          </div>
+        ))}
       </div>
     </div>
   );

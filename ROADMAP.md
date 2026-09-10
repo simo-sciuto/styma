@@ -18,8 +18,8 @@ falso — gia' successo una volta.
 
 ## Dove siamo
 
-**Fase E — P0, il motore decisionale.** 6 passi su 6. Manca solo E6, che e' il primo
-cambio di contratto.
+**Fase E — P0, il motore decisionale: completa.** Tutti e dodici i P0 del brief
+sono in pagina. Prossima fase da scegliere insieme.
 
 ```
 E1 ████████████████████ blocco decisione            fatto
@@ -27,7 +27,7 @@ E2 ████████████████████ prove dell'ident
 E3 ████████████████████ mercato come prova          fatto
 E4 ████████████████████ rischi in una sezione sola   fatto
 E5 ████████████████████ economia del flip            fatto
-E6 ░░░░░░░░░░░░░░░░░░░░ prima di comprare + guida foto  prossimo
+E6 ████████████████████ prima di comprare + guida foto  fatto
 ```
 
 ---
@@ -117,16 +117,40 @@ E6 ░░░░░░░░░░░░░░░░░░░░ prima di comprar
 dell'identificazione → perche' quel verdetto → il conto → il mercato →
 i rischi → la storia.
 
+### E6 — prima di comprare, e guida fotografica (commit successivo)
+- Campo nuovo `physicalChecks` nello schema: da 2 a 5 controlli da fare con
+  l'oggetto in mano. Primo cambio di contratto della fase — trascina prompt,
+  tre fixture e cinque costruttori nei test.
+- Il prompt tiene separate le due cose che sembravano una: `missingShots`
+  sono foto che servono a *noi* per identificare meglio, `physicalChecks`
+  sono verifiche che servono a *chi compra* e che nessuna fotografia puo'
+  fare — un suono, un peso, una giuntura, un meccanismo da provare.
+- La sezione sta in fondo apposta: si legge a decisione presa, come ultimo
+  passaggio prima di pagare.
+- Guida fotografica da sette chip identici per ogni oggetto a tre gruppi con
+  un motivo ciascuno: sempre / quelle che cambiano il risultato / lo stato.
+  La guida davvero specifica resta `missingShots`, che arriva dopo la prima
+  analisi quando sappiamo cos'e'.
+
+**Ordine finale della pagina risultato:** identita' → decisione → prove
+dell'identificazione → perche' quel verdetto → il conto → il mercato →
+i rischi → prima di pagare → la storia.
+
 ---
 
-## Prossimo
+## Prossimo — da scegliere
 
-### E6 — prima di comprare, e guida fotografica
-Ultimo P0, e il primo cambio di contratto: serve un campo nuovo nello schema
-di identificazione per i controlli fisici da fare davanti all'oggetto
-(«guarda il fondo», «controlla le giunture»), che `missingShots` non copre —
-quello parla di foto, non di cosa toccare con le mani. Trascina prompt e le
-tre fixture registrate.
+La fase P0 e' chiusa. Le tre strade, in ordine di valore secondo il piano:
+
+1. **My Finds con esito reale** (P1). L'inventario tiene la stima ma non
+   l'esito: manca il prezzo richiesto dal venditore, lo stato `passed`, il
+   prezzo di vendita e i giorni per vendere. E' la base del punto 27 del
+   brief — il dataset proprietario nasce da qui o non nasce.
+2. **Autenticita' a livelli** (P1). Campo nuovo, a livelli, mai un giudizio
+   secco. Il modello puo' dire cosa supporta un'attribuzione e cosa
+   controllare, non se e' autentico.
+3. **URL del risultato** (abilitante). Senza, il Second Look non e'
+   implementabile e ogni analisi si perde ricaricando la pagina.
 
 ---
 

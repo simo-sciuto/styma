@@ -61,6 +61,19 @@ export const IdentificationSchema = z.object({
   missingShots: z
     .array(z.string())
     .describe('Foto aggiuntive che migliorerebbero l’identificazione, se ce ne sono'),
+  /**
+   * Cosa fare con l'oggetto in mano, prima di pagare.
+   *
+   * Non e' `missingShots` con altre parole: quelle sono foto che servono a
+   * *noi* per identificare meglio, questi sono controlli che servono a *chi
+   * compra* e che nessuna fotografia puo' fare al posto suo — un suono, un
+   * peso, una giuntura da toccare, un meccanismo da provare.
+   */
+  physicalChecks: z
+    .array(z.string())
+    .describe(
+      'Da 2 a 5 controlli da fare con l’oggetto in mano prima di comprarlo: cosa toccare, ascoltare, provare, contare o misurare. Non foto da scattare. Basali su quello che hai visto e sul tipo di oggetto: se non sei sicuro che una caratteristica esista su questo pezzo, scrivilo al condizionale invece di darla per presente.',
+    ),
   searchQueries: z
     .array(z.string())
     .describe('2-5 query di ricerca, in italiano o inglese, per trovare vendite comparabili'),
