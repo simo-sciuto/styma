@@ -46,7 +46,7 @@ function rejectOutliers(
 }
 
 /**
- * Trasforma i comparabili in una forbice di mercato.
+ * Trasforma i comparabili in una fascia di mercato.
  * Il modello linguistico non entra mai in questo calcolo: qui si lavora
  * solo sui dati raccolti e sui pesi configurati.
  *
@@ -147,7 +147,7 @@ export function valuate(identification: Identification, research: MarketResearch
           ? 'La ricerca di mercato non e’ stata completata.'
           : seen.length === 0
             ? 'Non abbiamo trovato annunci comparabili abbastanza affidabili per stimare un valore.'
-            : `Abbiamo trovato solo ${seen.length} annunci comparabili: troppo poco per una forbice onesta.`,
+            : `Abbiamo trovato solo ${seen.length} annunci comparabili: troppo poco per una stima onesta.`,
       discarded,
     };
   }
@@ -159,13 +159,13 @@ export function valuate(identification: Identification, research: MarketResearch
 
   /**
    * Il valore probabile e' la media pesata, non il mediano: su tre o quattro
-   * punti il mediano pesato finisce sul bordo della forbice e il risultato
+   * punti il mediano pesato finisce sul bordo della fascia e il risultato
    * si legge come "fra 190 e 545, probabile 545", che non aiuta nessuno.
    */
   const likely = Math.min(high, Math.max(low, weightedMean(used)));
 
   /**
-   * Con pochi punti la forbice osservata sottostima l'incertezza reale:
+   * Con pochi punti la fascia osservata sottostima l'incertezza reale:
    * la allarghiamo fino a un minimo che decresce al crescere del campione.
    */
   const sampleFullness = clamp01(effectiveSample / valuationConfig.effectiveSampleTargets.high);
@@ -224,18 +224,18 @@ export function valuate(identification: Identification, research: MarketResearch
   if (comparableTier === 'similar') {
     reasons.push(
       identicalCount > 0
-        ? `Solo ${identicalCount} annunci dello stesso modello: la forbice include anche oggetti simili`
-        : 'Nessun annuncio dello stesso modello: la forbice include oggetti simili (stessa marca o famiglia)',
+        ? `Solo ${identicalCount} annunci dello stesso modello: la fascia include anche oggetti simili`
+        : 'Nessun annuncio dello stesso modello: la fascia include oggetti simili (stessa marca o famiglia)',
     );
   }
   if (comparableTier === 'weak') {
     reasons.push(
-      'Nessun comparabile davvero vicino: la forbice esce da annunci della stessa categoria, non dello stesso modello',
+      'Nessun comparabile davvero vicino: la fascia esce da annunci della stessa categoria, non dello stesso modello',
     );
   }
   if (dispersion > 0.6) reasons.push('Prezzi molto dispersi: il mercato non e’ stabile');
   if (effectiveSample < effectiveSampleTargets.medium) {
-    reasons.push('Campione ridotto: forbice allargata per riflettere l’incertezza');
+    reasons.push('Campione ridotto: fascia di prezzo allargata per riflettere l’incertezza');
   }
   if (!dispersionIsMeaningful) reasons.push('Troppo pochi dati per giudicare la stabilita’ dei prezzi');
   if (identification.confidence < 0.6) reasons.push('Identificazione dell’oggetto incerta');

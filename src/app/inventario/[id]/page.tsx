@@ -103,29 +103,30 @@ export default async function ItemPage({ params }: PageProps<'/inventario/[id]'>
         </div>
       ) : null}
 
-      {/* Stesso terracotta del blocco identificazione in analisi: stesso
-          ruolo, sempre — cosi' la scheda salvata non sembra un'altra app
-          rispetto al risultato appena visto. */}
-      <div className="mt-5 rounded-block bg-tile-terracotta p-5 text-tile-ink sm:p-6">
-        <h1 className="text-[clamp(1.75rem,1.4rem+1.6vw,2.5rem)] font-semibold leading-[0.95] tracking-tight text-balance">
+      {/* Il terracotta resta il segno dell'identificazione — lo stesso
+          colore del tile "Identifica" in home — ma come pallino, non come
+          campo pieno: a tutta larghezza era una parete arancione sopra ogni
+          scheda. L'unico blocco a colore pieno qui e' il prezzo. */}
+      <Card className="mt-5">
+        <p className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.16em] text-muted">
+          <span className="h-1.5 w-1.5 rounded-full bg-tile-terracotta" aria-hidden />
+          Identificato
+        </p>
+        <h1 className="mt-2 text-[clamp(1.6rem,1.35rem+1.4vw,2.25rem)] font-semibold leading-[0.95] tracking-tight text-balance">
           {item.title}
         </h1>
-        <p className="mt-2 text-sm">
+        <p className="mt-1 text-sm text-muted">
           {[item.category, item.brand, item.model, item.estimated_period].filter(Boolean).join(' · ')}
         </p>
 
         <div className="mt-3 flex flex-wrap gap-1.5">
-          <Pill tone="onTile">{ITEM_STATUS_LABELS[item.status]}</Pill>
-          {item.condition ? (
-            <Pill tone="onTile">{CONDITION_LABELS[item.condition] ?? item.condition}</Pill>
-          ) : null}
+          <Pill>{ITEM_STATUS_LABELS[item.status]}</Pill>
+          {item.condition ? <Pill>{CONDITION_LABELS[item.condition] ?? item.condition}</Pill> : null}
           {item.identification_confidence !== null ? (
-            <Pill tone="onTile">
-              Identificazione {Math.round(item.identification_confidence * 100)}%
-            </Pill>
+            <Pill>Identificazione {Math.round(item.identification_confidence * 100)}%</Pill>
           ) : null}
         </div>
-      </div>
+      </Card>
 
       <div className="mt-4 space-y-4">
         {valuation && valuation.low_value !== null && valuation.high_value !== null ? (
@@ -175,96 +176,98 @@ export default async function ItemPage({ params }: PageProps<'/inventario/[id]'>
 
         {/*
           Il giudizio, spiegato con quello che era gia' salvato e non veniva
-          mostrato: le soglie di prezzo, come e' nata la forbice, la lettura
+          mostrato: le soglie di prezzo, come e' nata la stima, la lettura
           del mercato, le avvertenze. Prima restava un elenco di piu' e meno
           senza un numero accanto.
         */}
         {hasJudgement ? (
-          <Reveal className="rounded-block border border-line bg-surface p-5 sm:p-6">
-            <h2 className="text-lg font-semibold tracking-tight">Perche’ quel giudizio</h2>
+          <Reveal>
+            <Card>
+              <h2 className="text-lg font-semibold tracking-tight">Perche’ quel giudizio</h2>
 
-            {thresholds ? (
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="rounded-2xl bg-accent-soft p-3 sm:p-4">
-                  <p className="text-xs font-medium text-accent">Affare fino a</p>
-                  <p className="mt-1 text-2xl font-semibold tracking-tight text-accent sm:text-3xl">
-                    {thresholds.buyUpTo !== null ? formatEur(thresholds.buyUpTo) : '—'}
-                  </p>
-                  {thresholds.buyUpTo === null ? (
-                    <p className="mt-1 text-xs text-accent">
-                      Nessun prezzo lo rendeva un affare sicuro: la stima era troppo incerta.
+              {thresholds ? (
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl bg-accent-soft p-3 sm:p-4">
+                    <p className="text-xs font-medium text-accent">Affare fino a</p>
+                    <p className="mt-1 text-2xl font-semibold tracking-tight text-accent sm:text-3xl">
+                      {thresholds.buyUpTo !== null ? formatEur(thresholds.buyUpTo) : '—'}
                     </p>
-                  ) : null}
-                </div>
-                <div className="rounded-2xl bg-warn-soft p-3 sm:p-4">
-                  <p className="text-xs font-medium text-warn">Ci potevi pensare fino a</p>
-                  <p className="mt-1 text-2xl font-semibold tracking-tight text-warn sm:text-3xl">
-                    {thresholds.maybeUpTo !== null ? formatEur(thresholds.maybeUpTo) : '—'}
-                  </p>
-                  {thresholds.maybeUpTo === null ? (
-                    <p className="mt-1 text-xs text-warn">
-                      Nessun prezzo copriva i costi di rivendita.
+                    {thresholds.buyUpTo === null ? (
+                      <p className="mt-1 text-xs text-accent">
+                        Nessun prezzo lo rendeva un affare sicuro: la stima era troppo incerta.
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="rounded-2xl bg-warn-soft p-3 sm:p-4">
+                    <p className="text-xs font-medium text-warn">Ci potevi pensare fino a</p>
+                    <p className="mt-1 text-2xl font-semibold tracking-tight text-warn sm:text-3xl">
+                      {thresholds.maybeUpTo !== null ? formatEur(thresholds.maybeUpTo) : '—'}
                     </p>
-                  ) : null}
+                    {thresholds.maybeUpTo === null ? (
+                      <p className="mt-1 text-xs text-warn">
+                        Nessun prezzo copriva i costi di rivendita.
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-            ) : null}
+              ) : null}
 
-            {factors.length > 0 ? (
-              <ul className="mt-5 space-y-2.5">
-                {factors.map((factor) => (
-                  <li key={factor.label} className="flex items-start gap-2.5 text-sm">
-                    <span
-                      aria-hidden
-                      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                        factor.direction === 'positive'
-                          ? 'bg-accent-soft text-accent'
-                          : 'bg-danger-soft text-danger'
-                      }`}
-                    >
-                      {factor.direction === 'positive' ? '+' : '−'}
-                    </span>
-                    <span className="leading-snug">{factor.label}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-
-            {reasons.length > 0 ? (
-              <div className="mt-5 border-t border-line pt-4">
-                <p className="font-mono text-xs uppercase tracking-[0.16em] text-muted">
-                  Come e’ nata la forbice
-                </p>
-                <ul className="mt-2 space-y-1 text-sm text-muted">
-                  {reasons.map((reason) => (
-                    <li key={reason}>— {reason}</li>
+              {factors.length > 0 ? (
+                <ul className="mt-5 space-y-2.5">
+                  {factors.map((factor) => (
+                    <li key={factor.label} className="flex items-start gap-2.5 text-sm">
+                      <span
+                        aria-hidden
+                        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                          factor.direction === 'positive'
+                            ? 'bg-accent-soft text-accent'
+                            : 'bg-danger-soft text-danger'
+                        }`}
+                      >
+                        {factor.direction === 'positive' ? '+' : '−'}
+                      </span>
+                      <span className="leading-snug">{factor.label}</span>
+                    </li>
                   ))}
                 </ul>
-              </div>
-            ) : null}
+              ) : null}
 
-            {hasMarketReading ? (
-              <div className="mt-5 border-t border-line pt-4">
-                <p className="font-mono text-xs uppercase tracking-[0.16em] text-muted">
-                  Lettura del mercato
-                </p>
-                <p className="mt-2 text-sm text-muted">
-                  Domanda {DEMAND_LABELS[reasoning?.demand ?? 'unknown'] ?? 'non determinata'} ·{' '}
-                  {LIQUIDITY_LABELS[reasoning?.liquidity ?? 'unknown'] ?? 'non determinata'}
-                </p>
-              </div>
-            ) : null}
+              {reasons.length > 0 ? (
+                <div className="mt-5 border-t border-line pt-4">
+                  <p className="font-mono text-xs uppercase tracking-[0.16em] text-muted">
+                    Come e’ nata la stima
+                  </p>
+                  <ul className="mt-2 space-y-1 text-sm text-muted">
+                    {reasons.map((reason) => (
+                      <li key={reason}>— {reason}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
 
-            {warnings.length > 0 ? (
-              <div className="mt-5 rounded-2xl bg-warn-soft p-4">
-                <p className="text-xs font-medium text-warn">Da tenere presente</p>
-                <ul className="mt-1.5 space-y-1 text-sm">
-                  {warnings.map((warning) => (
-                    <li key={warning}>— {warning}</li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
+              {hasMarketReading ? (
+                <div className="mt-5 border-t border-line pt-4">
+                  <p className="font-mono text-xs uppercase tracking-[0.16em] text-muted">
+                    Lettura del mercato
+                  </p>
+                  <p className="mt-2 text-sm text-muted">
+                    Domanda {DEMAND_LABELS[reasoning?.demand ?? 'unknown'] ?? 'non determinata'} ·{' '}
+                    {LIQUIDITY_LABELS[reasoning?.liquidity ?? 'unknown'] ?? 'non determinata'}
+                  </p>
+                </div>
+              ) : null}
+
+              {warnings.length > 0 ? (
+                <div className="mt-5 rounded-2xl bg-warn-soft p-4">
+                  <p className="text-xs font-medium text-warn">Da tenere presente</p>
+                  <ul className="mt-1.5 space-y-1 text-sm">
+                    {warnings.map((warning) => (
+                      <li key={warning}>— {warning}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </Card>
           </Reveal>
         ) : null}
 

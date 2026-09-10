@@ -92,18 +92,23 @@ export function ResultView({
       ) : null}
 
       {/*
-        Terracotta: lo stesso colore del tile "Identifica" in home — lo
-        stesso ruolo, sempre. Un blocco pieno come il prezzo e il verdetto,
-        non una Card neutra, cosi' la pagina di risultato non sembra
-        un'altra app rispetto alla home.
+        Il terracotta resta il segno dell'identificazione — lo stesso colore
+        del tile "Identifica" in home — ma come pallino, non come campo
+        pieno: a tutta larghezza era una parete arancione sopra ogni
+        risultato. Un solo blocco a colore pieno per pagina, e quello e' il
+        prezzo: e' l'unico colore che qui significa qualcosa.
       */}
-      <div className="rounded-block bg-tile-terracotta p-5 text-tile-ink sm:p-6">
+      <Card>
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="text-[clamp(1.6rem,1.35rem+1.4vw,2.25rem)] font-semibold leading-[0.95] tracking-tight text-balance">
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.16em] text-muted">
+              <span className="h-1.5 w-1.5 rounded-full bg-tile-terracotta" aria-hidden />
+              Identificato
+            </p>
+            <h1 className="mt-2 text-[clamp(1.6rem,1.35rem+1.4vw,2.25rem)] font-semibold leading-[0.95] tracking-tight text-balance">
               {identification.name}
             </h1>
-            <p className="mt-1 text-sm">
+            <p className="mt-1 text-sm text-muted">
               {[
                 identification.category,
                 identification.brand,
@@ -126,7 +131,7 @@ export function ResultView({
             Identificazione {Math.round(identification.confidence * 100)}%
           </Pill>
         </div>
-      </div>
+      </Card>
 
       {valuation.available ? (
         // Il numero su cui si decide tutto prende la forma di un vero
@@ -155,7 +160,7 @@ export function ResultView({
             per dire quanto vale. {valuation.reason}
           </p>
           {/*
-            Anche senza forbice si mostra cio' che si e' visto: un rifiuto secco
+            Anche senza fascia si mostra cio' che si e' visto: un rifiuto secco
             lascia chi e' davanti al banco esattamente dove stava, mentre due
             prezzi osservati — dichiarati come insufficienti — no.
           */}

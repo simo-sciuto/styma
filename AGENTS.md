@@ -22,7 +22,7 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
 - `src/services/ai` — integrazione col modello, isolata dietro `ObjectIntelligenceProvider`.
   La ricerca di mercato gira su corsie parallele con mandati disgiunti (`config.ts`) e i
   risultati vengono ricomposti da `merge.ts`.
-- `src/services/valuation` — forbice di prezzo e flip score. Codice puro, testato.
+- `src/services/valuation` — fascia di prezzo e flip score. Codice puro, testato.
 - `src/services/inventory` — lettura e scrittura degli oggetti salvati.
 - `src/services/market-cache` — riuso delle ricerche di mercato per modello, con scadenza
   per ritmo di mercato. `policy.ts` e' puro e testato.
@@ -59,10 +59,10 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
   `src/services/ai/merge.ts` ed e' testata.
 - **La soglia sui comparabili sceglie, non rifiuta.** Se nessun comparabile la supera ma qualcuno
   c'e' — tipico degli oggetti senza marca ne' modello, dove tutto vale `similar_category` — si usano
-  quelli, dichiarando che la forbice esce da annunci di categoria e tenendo la confidenza al minimo
+  quelli, dichiarando che la fascia esce da annunci di categoria e tenendo la confidenza al minimo
   (`weakEvidenceConfidenceCap`). Diciannove annunci reali buttati per lasciare "non lo so" e' il
   comportamento sbagliato.
-- **Un "non lo so" non e' mai secco.** Quando non basta per una forbice, `valuation.observed` porta
+- **Un "non lo so" non e' mai secco.** Quando non basta per una fascia, `valuation.observed` porta
   comunque quanti annunci si sono visti e fra che prezzi. Chi e' davanti a un banco deve poter
   guardare i dati grezzi invece di restare a mani vuote.
 - **Un errore deve dire cosa e' successo davvero.** Una registrazione mancante rispondeva "il

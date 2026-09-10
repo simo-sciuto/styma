@@ -57,7 +57,7 @@ describe('valuate', () => {
     expect(valuation.available).toBe(false);
   });
 
-  it('scarta i comparabili troppo deboli invece di diluirli nella forbice', () => {
+  it('scarta i comparabili troppo deboli invece di diluirli nella fascia', () => {
     const valuation = valuate(
       identification,
       research([
@@ -104,7 +104,7 @@ describe('valuate', () => {
     // identification.confidence e' 0.9 e i due prezzi coincidono: senza il
     // tetto sul campione uscirebbe "confidenza alta" da soli due punti.
     expect(valuation.confidence).not.toBe('high');
-    // e la forbice non puo' collassare su un punto solo.
+    // e la fascia non puo' collassare su un punto solo.
     expect(valuation.high).toBeGreaterThan(valuation.low);
 
     const fewer = valuate(
@@ -123,7 +123,7 @@ describe('valuate', () => {
     expect(fewer.confidence).not.toBe('high');
   });
 
-  it('restringe la forbice quando i comparabili sono molti', () => {
+  it('restringe la fascia quando i comparabili sono molti', () => {
     const few = valuate(
       identification,
       research(
@@ -145,7 +145,7 @@ describe('valuate', () => {
     expect(many.confidenceScore).toBeGreaterThan(few.confidenceScore);
   });
 
-  it('colloca la forbice attorno ai comparabili e resta ordinata', () => {
+  it('colloca la fascia attorno ai comparabili e resta ordinata', () => {
     const prices = [80, 90, 100, 110, 120];
     const valuation = valuate(
       identification,
@@ -161,7 +161,7 @@ describe('valuate', () => {
     expect(valuation.identicalCount).toBe(5);
   });
 
-  it('tiene il valore probabile dentro la forbice, non sul bordo', () => {
+  it('tiene il valore probabile dentro la fascia, non sul bordo', () => {
     // Distribuzione reale osservata in campo: tre annunci molto distanti fra loro.
     const valuation = valuate(
       identification,
@@ -293,7 +293,7 @@ describe('livello identical / similar / weak', () => {
     if (!result.available) return;
     expect(result.comparableTier).toBe('identical');
     expect(result.used.every((entry) => entry.comparable.matchLevel === 'exact_model')).toBe(true);
-    // Il prezzo riflette solo gli identici: la forbice non si sposta verso i 400+.
+    // Il prezzo riflette solo gli identici: la fascia non si sposta verso i 400+.
     expect(result.high).toBeLessThan(300);
   });
 
@@ -313,7 +313,7 @@ describe('livello identical / similar / weak', () => {
   });
 
   it('non scarta nulla sotto tre punti: non si sa quale sia quello sbagliato', () => {
-    // Con due soli prezzi il campione e' comunque troppo esile per una forbice;
+    // Con due soli prezzi il campione e' comunque troppo esile per una fascia;
     // quello che si verifica qui e' che nessuno dei due venga bollato come
     // errore, perche' non c'e' modo di sapere quale lo sia.
     const result = valuate(identification, market([listing(100), listing(50000)]));
@@ -321,7 +321,7 @@ describe('livello identical / similar / weak', () => {
     expect(result.discarded.some((entry) => /fuori scala/.test(entry.reason))).toBe(false);
   });
 
-  it('il valore probabile resta dentro la forbice', () => {
+  it('il valore probabile resta dentro la fascia', () => {
     const result = valuate(
       identification,
       market([listing(80), listing(120), listing(600, { matchLevel: 'exact_model' })]),
@@ -380,7 +380,7 @@ describe('oggetti senza marca ne’ modello', () => {
   });
 
   it('non ripesca i deboli quando c’e’ di meglio', () => {
-    // Due buoni, perche' uno solo non fa comunque una forbice.
+    // Due buoni, perche' uno solo non fa comunque una fascia.
     const buoni: Comparable[] = [200, 220].map((price, index) => ({
       ...categoryMatch(price, 90 + index),
       matchLevel: 'exact_model' as const,
@@ -390,7 +390,7 @@ describe('oggetti senza marca ne’ modello', () => {
 
     expect(result.available).toBe(true);
     if (!result.available) return;
-    // I due deboli restano fuori: bastano gli identici, quindi la forbice
+    // I due deboli restano fuori: bastano gli identici, quindi la fascia
     // non li usa anche se il loro peso individuale avrebbe retto.
     expect(result.comparableTier).toBe('identical');
     expect(result.used.every((entry) => entry.comparable.matchLevel === 'exact_model')).toBe(true);
@@ -414,7 +414,7 @@ describe('oggetti senza marca ne’ modello', () => {
   });
 
   it('quando non basta comunque, dice cosa ha visto', () => {
-    // Un solo annuncio non fa una forbice, ma tacere il prezzo osservato
+    // Un solo annuncio non fa una fascia, ma tacere il prezzo osservato
     // lascia chi e' davanti al banco esattamente dove stava.
     const result = valuate(anonimo, market([categoryMatch(80, 1)]));
 

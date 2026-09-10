@@ -7,7 +7,7 @@ export function Card({
 }: ComponentProps<'section'> & { children: ReactNode }) {
   return (
     <section
-      className={`rounded-3xl border border-line bg-surface p-5 ${className}`}
+      className={`rounded-block border border-line bg-surface p-5 sm:p-6 ${className}`}
       {...props}
     >
       {children}
@@ -20,17 +20,13 @@ export function Pill({
   tone = 'neutral',
 }: {
   children: ReactNode;
-  tone?: 'neutral' | 'accent' | 'warn' | 'danger' | 'onTile';
+  tone?: 'neutral' | 'accent' | 'warn' | 'danger';
 }) {
   const tones = {
     neutral: 'border-line text-muted',
     accent: 'border-transparent bg-accent-soft text-accent',
     warn: 'border-transparent bg-warn-soft text-warn',
     danger: 'border-transparent bg-danger-soft text-danger',
-    // Per quando la pillola sta sopra un tile a colore pieno (teal,
-    // terracotta): tile-cream/tile-ink sono fissi fra i temi, come i tile
-    // stessi — text-muted o border-line ci sparirebbero sotto.
-    onTile: 'border-transparent bg-tile-cream text-tile-ink',
   } as const;
 
   return (
@@ -65,14 +61,14 @@ export function Button({
 
 export function Disclosure({ summary, children }: { summary: string; children: ReactNode }) {
   return (
-    <details className="group rounded-3xl border border-line bg-surface">
-      <summary className="cursor-pointer list-none px-5 py-4 text-sm font-medium marker:hidden">
+    <details className="group rounded-block border border-line bg-surface">
+      <summary className="cursor-pointer list-none px-5 py-4 text-sm font-medium marker:hidden sm:px-6">
         <span className="flex items-center justify-between gap-3">
           {summary}
           <span className="text-muted transition group-open:rotate-180">⌄</span>
         </span>
       </summary>
-      <div className="border-t border-line px-5 py-4 text-sm">{children}</div>
+      <div className="border-t border-line px-5 py-4 text-sm sm:px-6">{children}</div>
     </details>
   );
 }

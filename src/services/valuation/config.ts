@@ -56,14 +56,14 @@ export const valuationConfig = {
   /** Sotto questi punti non si distingue un errore da una coda: non si scarta nulla. */
   outlierMinimumSample: 3,
 
-  /** Somma dei pesi necessaria per considerare la forbice affidabile. */
+  /** Somma dei pesi necessaria per considerare la fascia affidabile. */
   effectiveSampleTargets: {
     high: 6,
     medium: 3,
   },
 
   /**
-   * Sotto questa soglia non produciamo alcuna forbice. Un comparabile solo
+   * Sotto questa soglia non produciamo alcuna fascia. Un comparabile solo
    * non e' un mercato: meglio dire che non lo sappiamo.
    */
   minimumViable: {
@@ -73,8 +73,8 @@ export const valuationConfig = {
   },
 
   /**
-   * Ampiezza minima della forbice, in quota sul valore probabile.
-   * Con pochi dati l'incertezza e' maggiore, non minore: la forbice si allarga
+   * Ampiezza minima della fascia, in quota sul valore probabile.
+   * Con pochi dati l'incertezza e' maggiore, non minore: la fascia si allarga
    * invece di restringersi attorno ai pochi punti osservati.
    */
   minimumSpread: {
@@ -107,7 +107,7 @@ export const valuationConfig = {
    *   marca/famiglia/categoria vicina. Tetto a "medium": non e' piu' lo
    *   stesso oggetto, e dirlo "high" affermerebbe una precisione che i dati
    *   non hanno.
-   * - `weak`: nemmeno quello, solo comparabili di categoria. La forbice e'
+   * - `weak`: nemmeno quello, solo comparabili di categoria. La fascia e'
    *   un ordine di grandezza, non una stima, e resta su "low".
    */
   comparableTierConfidenceCaps: {

@@ -48,10 +48,10 @@ export type ValuationRow = {
   flip_score: number | null;
   recommendation: Recommendation | null;
   assessed_at_price: number | null;
-  /** Quando e' stata fatta la ricerca su cui poggia la forbice. Null se non c'e' stata. */
+  /** Quando e' stata fatta la ricerca su cui poggia la fascia. Null se non c'e' stata. */
   market_researched_at: string | null;
   market_research_cached: boolean | null;
-  /** Su cosa poggiava la forbice: solo stesso modello, anche simili, o solo debole evidenza. */
+  /** Su cosa poggiava la fascia: solo stesso modello, anche simili, o solo debole evidenza. */
   comparable_tier: 'identical' | 'similar' | 'weak' | null;
   reasoning: {
     factors?: { label: string; direction: 'positive' | 'negative' }[];
@@ -105,7 +105,7 @@ export const IMAGE_BUCKET = 'item-photos';
 
 /**
  * Su cosa poggiava davvero una valutazione salvata. Riaprire un oggetto fra
- * un mese e leggere la stessa forbice senza sapere se la ricerca era fresca
+ * un mese e leggere la stessa fascia senza sapere se la ricerca era fresca
  * la farebbe sembrare piu' solida di com'era.
  */
 export function describeSavedMarketSource(valuation: {
@@ -130,16 +130,16 @@ export function describeSavedMarketSource(valuation: {
 }
 
 /**
- * Se la forbice salvata poggiava sullo stesso identico modello o su oggetti
+ * Se la fascia salvata poggiava sullo stesso identico modello o su oggetti
  * solo simili. Il caso "identical" e' quello normale e non si segnala: si
- * dice solo quando la forbice e' uscita da un ripiego.
+ * dice solo quando la fascia e' uscita da un ripiego.
  */
 export function describeSavedComparableTier(tier: ValuationRow['comparable_tier']): string | null {
   if (tier === 'similar') {
-    return 'Nessun annuncio dello stesso identico modello: la forbice include anche oggetti simili.';
+    return 'Nessun annuncio dello stesso identico modello: la fascia include anche oggetti simili.';
   }
   if (tier === 'weak') {
-    return 'Nessun comparabile davvero vicino: la forbice esce da annunci della stessa categoria.';
+    return 'Nessun comparabile davvero vicino: la fascia esce da annunci della stessa categoria.';
   }
   return null;
 }

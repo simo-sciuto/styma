@@ -152,7 +152,7 @@ export async function POST(request: Request) {
          * La soglia serve a decidere se vale la pena pagare la ricerca
          * agentica, non a buttare cio' che si e' gia' trovato: con la ricaduta
          * spenta, tre annunci veri restano tre annunci veri, e sara' la
-         * valutazione a dire se bastano per una forbice o solo per mostrare
+         * valutazione a dire se bastano per una fascia o solo per mostrare
          * cosa si e' visto.
          */
         if (!market && structured && !aiConfig.research.agenticFallback) {

@@ -12,7 +12,7 @@ export type MarketDataOutcome = {
 /**
  * Quanti comparabili bastano perche' non valga la pena pagare anche la
  * ricerca col modello. Sotto questa soglia il campione e' troppo esile per
- * reggere da solo una forbice, e l'agente sul web guadagna il suo costo.
+ * reggere da solo una fascia, e l'agente sul web guadagna il suo costo.
  */
 export const ENOUGH_COMPARABLES = 5;
 

@@ -49,7 +49,11 @@ export default async function InventoryPage() {
         // sempre la prima cosa che si riconosce, in un mercatino vero.
         <ul className="mt-6 grid gap-4 sm:grid-cols-2">
           {result.entries.map(({ item, valuation, coverUrl }) => (
-            <li key={item.id}>
+            // min-w-0: un elemento di griglia ha min-width:auto, e il titolo
+            // con `truncate` (white-space:nowrap) contribuisce con la sua
+            // larghezza intera. Con un titolo lungo la traccia diventava piu'
+            // larga della colonna e la pagina sbordava di lato sul telefono.
+            <li key={item.id} className="min-w-0">
               <Link
                 href={`/inventario/${item.id}`}
                 className="group block overflow-hidden rounded-block border border-line bg-surface transition hover:border-tile-teal hover:shadow-sm"
@@ -62,7 +66,7 @@ export default async function InventoryPage() {
                       width={400}
                       height={300}
                       unoptimized
-                      className="h-full w-full object-cover transition duration-[600ms] ease-out group-hover:scale-105 group-hover:rotate-1"
+                      className="h-full w-full object-cover transition duration-600 ease-out group-hover:scale-105 group-hover:rotate-1"
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-xs text-muted">

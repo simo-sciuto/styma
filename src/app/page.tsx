@@ -48,7 +48,7 @@ const STEPS = [
   },
   {
     title: 'Decidi',
-    body: 'Cerchiamo annunci reali dello stesso oggetto, calcoliamo la forbice di prezzo e diciamo fino a quanto conviene pagarlo.',
+    body: 'Cerchiamo annunci reali dello stesso oggetto, calcoliamo la fascia di prezzo e diciamo fino a quanto conviene pagarlo.',
     tone: 'bg-accent-vivid text-accent-on-vivid',
     icon: TagIcon,
   },

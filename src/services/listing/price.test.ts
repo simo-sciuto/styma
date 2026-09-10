@@ -35,7 +35,7 @@ describe('prezzo suggerito per un annuncio', () => {
     expect(suggestPrice(null)).toBeNull();
   });
 
-  it('non suggerisce nulla se la valutazione non aveva prodotto una forbice', () => {
+  it('non suggerisce nulla se la valutazione non aveva prodotto una fascia', () => {
     // Il caso "non lo so": low/high/likely/confidence sono tutti null.
     const price = suggestPrice(
       valuation({ low_value: null, high_value: null, likely_value: null, confidence: null }),

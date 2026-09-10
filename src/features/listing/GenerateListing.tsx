@@ -94,7 +94,7 @@ export function GenerateListing({ itemId }: Props) {
           <p className="text-sm text-muted">Prezzo suggerito</p>
           <p className="mt-1 text-2xl font-semibold tracking-tight">{formatEur(price.amount)}</p>
           <p className="mt-1 text-xs text-muted">
-            Forbice {formatEur(price.low)}–{formatEur(price.high)}
+            Fascia di prezzo {formatEur(price.low)}–{formatEur(price.high)}
             {price.confidence !== 'high'
               ? ` · stima a confidenza ${price.confidence === 'medium' ? 'media' : 'bassa'}: guardala prima di fissare il prezzo`
               : null}

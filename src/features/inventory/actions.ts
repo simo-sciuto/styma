@@ -8,7 +8,7 @@ import type { AnalysisResult } from '@/schemas/analysis';
 export type SaveResult = { ok: true; itemId: string } | { ok: false; error: string };
 
 /**
- * Salva l'analisi cosi' com'e' stata mostrata: forbice, punteggio e i
+ * Salva l'analisi cosi' com'e' stata mostrata: fascia, punteggio e i
  * comparabili su cui si reggeva, usati e scartati. Una nuova analisi dello
  * stesso oggetto aggiungera' una valutazione, senza cancellare questa.
  */
@@ -70,12 +70,12 @@ export async function saveAnalysis(
       recommendation: flip?.atPrice?.recommendation ?? null,
       assessed_at_price: flip?.atPrice?.purchasePrice ?? null,
       // Una valutazione immutabile deve restare leggibile fra un mese: senza
-      // questo, la forbice sembrerebbe piu' fresca di quanto fosse.
+      // questo, la fascia sembrerebbe piu' fresca di quanto fosse.
       market_researched_at: marketSource?.researchedAt ?? null,
       market_research_cached: marketSource?.cached ?? null,
-      // Su cosa poggiava la forbice: solo stesso modello, o anche oggetti
+      // Su cosa poggiava la fascia: solo stesso modello, o anche oggetti
       // simili perche' di identici non ce n'erano abbastanza. Riletto fra un
-      // mese, chi vede la forbice deve poter capire quanto fidarsene.
+      // mese, chi vede la fascia deve poter capire quanto fidarsene.
       comparable_tier: valuation.available ? valuation.comparableTier : null,
       reasoning: {
         factors: flip?.factors ?? [],

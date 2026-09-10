@@ -7,7 +7,7 @@ export type WeightedComparable = {
   comparable: Comparable;
   /** Prezzo letto sulla pagina, normalizzato in EUR. E' questo che entra nel calcolo, senza sconti. */
   priceEur: number;
-  /** Peso complessivo 0-1 usato nel calcolo della forbice. */
+  /** Peso complessivo 0-1 usato nel calcolo della fascia. */
   weight: number;
   /** Contributi al peso, per trasparenza. */
   weightBreakdown: {
@@ -17,7 +17,7 @@ export type WeightedComparable = {
 };
 
 /**
- * Su cosa poggiava la forbice: solo sullo stesso modello, o anche su oggetti
+ * Su cosa poggiava la fascia: solo sullo stesso modello, o anche su oggetti
  * simili perche' di identici non ce n'erano abbastanza. Non e' un dettaglio
  * interno — cambia quanto fidarsi del numero, e va detto.
  */
@@ -49,7 +49,7 @@ export type Valuation =
       reason: string;
       discarded: { comparable: Comparable; reason: string }[];
       /**
-       * Cosa si e' comunque visto, quando non basta per una forbice.
+       * Cosa si e' comunque visto, quando non basta per una fascia.
        * Un rifiuto secco lascia chi e' davanti al banco esattamente dove
        * stava; due prezzi osservati, dichiarati come insufficienti, no.
        */
