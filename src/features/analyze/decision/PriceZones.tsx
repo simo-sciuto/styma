@@ -4,10 +4,13 @@ import type { PriceThresholds } from '@/schemas/analysis';
 import { formatEur } from '@/lib/format';
 import { zoneBar, type ZoneKey } from './zones';
 
+/* Le stesse tinte del verdetto: la barra dice dove cade il prezzo e il
+   blocco sopra dice come si chiama quel punto. Se i due usassero due verdi
+   diversi sarebbero due informazioni invece che una detta due volte. */
 const FILL: Record<ZoneKey, string> = {
-  buy: 'bg-accent-vivid',
-  negotiate: 'bg-warn',
-  pass: 'bg-danger',
+  buy: 'bg-verdict-buy',
+  negotiate: 'bg-verdict-maybe',
+  pass: 'bg-verdict-pass',
 };
 
 /**
@@ -49,7 +52,7 @@ export function PriceZones({
             : `Margine sottile fino a ${formatEur(thresholds.maybeUpTo ?? 0)}, oltre non resta margine`
         }
       >
-        <div className="flex h-2.5 overflow-hidden rounded-full">
+        <div className="flex h-4 overflow-hidden rounded-[0.35rem] border-2 border-line">
           {bar.segments.map((segment) => (
             <div
               key={segment.key}
@@ -61,7 +64,7 @@ export function PriceZones({
 
         {bar.marker ? (
           <div
-            className="absolute -top-1 h-4.5 w-0.5 -translate-x-1/2 rounded-full bg-foreground"
+            className="absolute -top-1.5 h-7 w-1 -translate-x-1/2 rounded-[0.15rem] border-2 border-line bg-surface"
             style={{ left: `${bar.marker.ratio * 100}%` }}
             aria-hidden
           />
@@ -71,7 +74,7 @@ export function PriceZones({
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
         {bar.segments.map((segment) => (
           <span key={segment.key} className="flex items-center gap-1.5 text-muted">
-            <span className={`h-2 w-2 shrink-0 rounded-full ${FILL[segment.key]}`} aria-hidden />
+            <span className={`h-2.5 w-2.5 shrink-0 rounded-[0.15rem] border-2 border-line ${FILL[segment.key]}`} aria-hidden />
             {LABEL[segment.key]}
             {segment.key === 'pass' ? (
               <span className="font-mono">oltre {formatEur(segment.from)}</span>

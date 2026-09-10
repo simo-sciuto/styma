@@ -15,9 +15,9 @@ export default function Loading() {
 
       <Skeleton className="mt-5 aspect-4/3 w-full rounded-block" />
 
-      <div className="mt-6 rounded-block border border-line bg-surface p-5 sm:p-6">
+      <div className="mt-6 rounded-block border-2 border-line bg-surface p-5 sm:p-6">
         <div className="flex gap-4">
-          <Skeleton className="h-20 w-20 shrink-0 rounded-2xl sm:h-24 sm:w-24" />
+          <Skeleton className="h-20 w-20 shrink-0 rounded-block sm:h-24 sm:w-24" />
           <div className="min-w-0 flex-1">
             <Skeleton className="h-2.5 w-24" />
             <Skeleton className="mt-2 h-7 w-3/4" />
@@ -27,9 +27,9 @@ export default function Loading() {
       </div>
 
       {/* Il blocco della decisione: campo prezzo, verdetto, le due cifre. */}
-      <div className="mt-4 rounded-block border border-line bg-surface p-5 sm:p-6">
+      <div className="mt-4 rounded-block border-2 border-line bg-surface p-5 sm:p-6">
         <Skeleton className="h-2.5 w-28" />
-        <Skeleton className="mt-2 h-12 w-full rounded-2xl" />
+        <Skeleton className="mt-2 h-12 w-full rounded-block" />
         <Skeleton className="mt-4 h-16 w-full rounded-block" />
         <div className="mt-5 grid grid-cols-2 gap-4">
           <div>
@@ -44,7 +44,7 @@ export default function Loading() {
         <Skeleton className="mt-4 h-2.5 w-full rounded-full" />
       </div>
 
-      <div className="mt-4 rounded-block border border-line bg-surface p-5 sm:p-6">
+      <div className="mt-4 rounded-block border-2 border-line bg-surface p-5 sm:p-6">
         <Skeleton className="h-2.5 w-32" />
         <SkeletonText className="mt-3" lines={3} />
       </div>

@@ -37,7 +37,7 @@ export default function Loading() {
       <ul className="mt-4 grid gap-4 sm:grid-cols-2">
         {[0, 1, 2, 3].map((index) => (
           <li key={index} className="min-w-0">
-            <div className="flex gap-3 rounded-block border border-line bg-surface p-3 sm:block sm:p-0">
+            <div className="flex gap-3 rounded-block border-2 border-line bg-surface p-3 sm:block sm:p-0">
               <Skeleton className="aspect-square w-24 shrink-0 rounded-xl sm:aspect-4/3 sm:w-full sm:rounded-none" />
               <div className="flex min-w-0 flex-1 flex-col justify-center sm:block sm:p-4">
                 <Skeleton className="h-4 w-2/3" />

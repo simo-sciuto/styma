@@ -60,7 +60,7 @@ test('@istantanea la pagina risultato', async ({ page }) => {
     path.join(process.cwd(), 'bench', 'photos', 'olivetti-valentine.jpg'),
   );
   await page.getByRole('button', { name: 'Analizza', exact: true }).click();
-  await page.getByText('Identificato').first().waitFor({ timeout: 150_000 });
+  await page.getByText('Quanto costa', { exact: true }).first().waitFor({ timeout: 150_000 });
   await page.getByLabel('Prezzo richiesto dal venditore').fill('30');
   await page.waitForTimeout(500);
 

@@ -53,7 +53,7 @@ export default async function ItemPage({ params }: PageProps<'/inventario/[id]'>
           riconosce prima di leggere qualsiasi parola. Le altre restano a
           fianco, piccole, invece di stare tutte in fila alte 128px. */}
       {cover ? (
-        <div className="mt-5 overflow-hidden rounded-block border border-line bg-surface-warm">
+        <div className="mt-5 overflow-hidden rounded-block border-2 border-line bg-surface-warm">
           <Image
             src={cover}
             alt=""
@@ -75,7 +75,7 @@ export default async function ItemPage({ params }: PageProps<'/inventario/[id]'>
               width={200}
               height={200}
               unoptimized
-              className="h-20 w-20 shrink-0 rounded-2xl border border-line object-cover sm:h-24 sm:w-24"
+              className="h-20 w-20 shrink-0 rounded-block border-2 border-line object-cover sm:h-24 sm:w-24"
             />
           ))}
         </div>

@@ -45,7 +45,7 @@ function MoneyInput({
   return (
     <label className="block">
       <Eyebrow>{label}</Eyebrow>
-      <span className="mt-1.5 flex items-center gap-2 rounded-2xl border border-line bg-background px-4 py-2.5 focus-within:border-accent">
+      <span className="mt-1.5 flex items-center gap-2 rounded-block border-2 border-line bg-background px-4 py-2.5 focus-within:border-accent">
         <span className="text-xl text-muted">€</span>
         <input
           type="number"
@@ -86,7 +86,7 @@ function PlainInput({
         value={value}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-1.5 w-full rounded-2xl border border-line bg-background px-4 py-2.5 text-base outline-none focus:border-accent"
+        className="mt-1.5 w-full rounded-block border-2 border-line bg-background px-4 py-2.5 text-base outline-none focus:border-accent"
       />
     </label>
   );
@@ -300,7 +300,7 @@ export function OutcomeTracker({ item, outcome }: { item: ItemRow; outcome: Outc
         {formatEur(outcome.salePrice)}
       </p>
 
-      <div className="mt-5 grid grid-cols-2 gap-4 border-t border-line pt-4 sm:grid-cols-4">
+      <div className="mt-5 grid grid-cols-2 gap-4 border-t-2 border-line pt-4 sm:grid-cols-4">
         {outcome.purchasePrice !== null ? (
           <Figure label="Pagato" value={formatEur(outcome.purchasePrice)} />
         ) : null}
@@ -329,7 +329,7 @@ export function OutcomeTracker({ item, outcome }: { item: ItemRow; outcome: Outc
           sbagliata si dice qui, con lo stesso rilievo di quando e' giusta. */}
       {vsEstimate ? (
         <div
-          className={`mt-4 rounded-2xl p-4 text-sm ${
+          className={`mt-4 rounded-block p-4 text-sm ${
             vsEstimate.verdict === 'inside' ? 'bg-accent-soft text-accent' : 'bg-warn-soft text-warn'
           }`}
         >

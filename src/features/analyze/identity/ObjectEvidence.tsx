@@ -2,7 +2,7 @@
 
 import type { Identification } from '@/schemas/identification';
 import { CONDITION_LABELS } from '@/lib/format';
-import { Card } from '@/components/ui';
+import { Disclosure } from '@/components/ui';
 
 const IMAGE_QUALITY_NOTES: Record<string, string> = {
   mixed: 'Le foto ricevute sono di qualita’ mista: qualche dettaglio resta interpretato.',
@@ -53,13 +53,9 @@ export function ObjectEvidence({ identification }: { identification: Identificat
   const qualityNote = IMAGE_QUALITY_NOTES[imageQuality];
 
   return (
-    <Card>
-      <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
-        Perche’ pensiamo sia questo
-      </p>
-
+    <Disclosure summary={`Perche’ pensiamo sia questo (${Math.round(confidence * 100)}%)`}>
       {confidenceReasons.length > 0 ? (
-        <ul className="mt-2 space-y-1.5 text-sm">
+        <ul className="space-y-1.5 text-sm">
           {confidenceReasons.map((reason) => (
             <li key={reason} className="flex gap-2">
               <span aria-hidden className="text-muted">
@@ -70,7 +66,7 @@ export function ObjectEvidence({ identification }: { identification: Identificat
           ))}
         </ul>
       ) : (
-        <p className="mt-2 text-sm text-muted">
+        <p className="text-sm text-muted">
           Nessun motivo dichiarato: l’identificazione al {Math.round(confidence * 100)}% poggia sul
           riconoscimento visivo e basta.
         </p>
@@ -79,7 +75,7 @@ export function ObjectEvidence({ identification }: { identification: Identificat
       {qualityNote ? <p className="mt-3 text-xs text-warn">{qualityNote}</p> : null}
 
       {markings.length > 0 ? (
-        <div className="mt-4 rounded-2xl bg-surface-warm p-4">
+        <div className="mt-4 rounded-block border-2 border-line bg-surface-warm p-4">
           <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
             Letto sull’oggetto
           </p>
@@ -115,7 +111,7 @@ export function ObjectEvidence({ identification }: { identification: Identificat
       ) : null}
 
       {conditionNotes.length > 0 ? (
-        <div className="mt-4 rounded-2xl bg-warn-soft p-4">
+        <div className="mt-4 rounded-block border-2 border-line bg-warn-soft p-4">
           <p className="text-xs font-medium text-warn">Difetti visti nelle foto</p>
           <ul className="mt-1.5 space-y-1 text-sm">
             {conditionNotes.map((note) => (
@@ -131,7 +127,7 @@ export function ObjectEvidence({ identification }: { identification: Identificat
         vale piu' di un invito generico a fotografare meglio.
       */}
       {missingShots.length > 0 ? (
-        <div className="mt-4 border-t border-line pt-4">
+        <div className="mt-4 border-t-2 border-line pt-4">
           <p className="text-sm font-medium">Una foto in piu’ aiuterebbe</p>
           <ul className="mt-1.5 space-y-1 text-sm text-muted">
             {missingShots.map((shot) => (
@@ -140,6 +136,6 @@ export function ObjectEvidence({ identification }: { identification: Identificat
           </ul>
         </div>
       ) : null}
-    </Card>
+    </Disclosure>
   );
 }

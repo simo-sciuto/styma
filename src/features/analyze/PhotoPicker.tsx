@@ -84,7 +84,7 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
-        className={`rounded-block border-2 border-dashed p-6 text-center transition sm:p-8 ${
+        className={`rounded-block border-[3px] border-dashed p-6 text-center transition sm:p-8 ${
           dragging ? 'border-tile-teal bg-accent-soft' : 'border-line bg-surface'
         } ${disabled ? 'opacity-60' : ''}`}
       >
@@ -138,7 +138,7 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
           {images.map((image, index) => (
             <li
               key={image.id}
-              className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm"
+              className="overflow-hidden rounded-block border-2 border-line bg-surface"
             >
               <div className="relative">
                 <Image
@@ -154,7 +154,7 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
                 </span>
               </div>
               {!disabled ? (
-                <div className="flex items-center justify-between gap-1 border-t border-line px-1.5 py-1">
+                <div className="flex items-center justify-between gap-1 border-t-2 border-line px-1.5 py-1">
                   <div className="flex">
                     <button
                       type="button"
@@ -194,7 +194,7 @@ export function PhotoPicker({ images, onChange, disabled = false }: Props) {
           fotografare diventa il blocco piu' alto della pagina e copre il
           lavoro in corso, che e' l'unica cosa che si vuole guardare. */}
       <div
-        className={`mt-4 space-y-4 rounded-block border border-line bg-surface p-4 ${
+        className={`mt-4 space-y-4 rounded-block border-2 border-line bg-surface p-4 ${
           disabled ? 'hidden' : ''
         }`}
       >

@@ -10,7 +10,7 @@ import { Authenticity } from './identity/Authenticity';
 import { ObjectEvidence } from './identity/ObjectEvidence';
 import { MarketScan } from './market/MarketScan';
 import { RiskList } from './risks/RiskList';
-import { FlipEconomics } from './flip/FlipEconomics';
+import { Ledger } from './flip/Ledger';
 import { BeforeYouBuy } from './checks/BeforeYouBuy';
 import {
   formatEur,
@@ -57,49 +57,47 @@ export function ResultView({
   return (
     <div className="mt-6 space-y-4">
       {/*
-        Identita' e foto su una riga sola. La foto era a tutta larghezza in
-        4:3 — 257px del primo viewport su un telefono — e spingeva il
-        verdetto sotto la piega. L'oggetto lo hai appena fotografato: una
-        miniatura basta a confermare che abbiamo guardato il tuo.
-      */}
-      <Card>
-        <div className="flex gap-4">
-          {coverUrl ? (
-            <Image
-              src={coverUrl}
-              alt=""
-              width={200}
-              height={200}
-              unoptimized
-              className="h-20 w-20 shrink-0 rounded-2xl object-cover sm:h-24 sm:w-24"
-            />
-          ) : null}
+        L'identita' non ha piu' una scheda attorno.
 
-          <div className="min-w-0 flex-1">
-            <p className="flex items-center gap-2 font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
-              <span className="h-1.5 w-1.5 rounded-full bg-tile-terracotta" aria-hidden />
-              Identificato
-            </p>
-            <h1 className="mt-1 line-clamp-2 text-[clamp(1.35rem,1.2rem+1vw,1.85rem)] font-semibold leading-[1.05] tracking-tight text-balance">
-              {titolo}
-            </h1>
-            <p className="mt-1 text-sm text-muted">{sottotitolo}</p>
-            <div className="mt-2">
-              <Pill
-                tone={
-                  identification.confidence >= 0.75
-                    ? 'accent'
-                    : identification.confidence >= 0.5
-                      ? 'warn'
-                      : 'danger'
-                }
-              >
-                Identificazione {Math.round(identification.confidence * 100)}%
-              </Pill>
-            </div>
-          </div>
+        Era un blocco con lo stesso bordo e lo stesso fondo del verdetto,
+        quindi diceva «conto quanto lui» — e occupava la parte alta dello
+        schermo esattamente dove serve la risposta. L'oggetto lo hai appena
+        fotografato e ce l'hai in mano: la riga serve a confermare che
+        abbiamo guardato il tuo, non a essere letta. Senza scatola sta in
+        centoventi pixel e il verdetto entra nella prima schermata.
+      */}
+      <div className="flex items-center gap-3">
+        {coverUrl ? (
+          <Image
+            src={coverUrl}
+            alt=""
+            width={200}
+            height={200}
+            unoptimized
+            className="h-16 w-16 shrink-0 rounded-block border-2 border-line object-cover"
+          />
+        ) : null}
+
+        <div className="min-w-0 flex-1">
+          <h1 className="line-clamp-2 text-[clamp(1.25rem,1.1rem+0.9vw,1.6rem)] font-semibold leading-[1.05] tracking-tight text-balance">
+            {titolo}
+          </h1>
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+            <span>{sottotitolo}</span>
+            <Pill
+              tone={
+                identification.confidence >= 0.75
+                  ? 'accent'
+                  : identification.confidence >= 0.5
+                    ? 'warn'
+                    : 'danger'
+              }
+            >
+              {Math.round(identification.confidence * 100)}% sicuri
+            </Pill>
+          </p>
         </div>
-      </Card>
+      </div>
 
       {/* La domanda del prodotto, subito. Tutto cio' che segue serve a
           capire perche', non se. */}
@@ -140,8 +138,21 @@ export function ResultView({
         </Card>
       ) : null}
 
-      {decision && valuation.available ? (
-        <FlipEconomics economics={decision.economics} valuation={valuation} />
+      {/*
+        Cosa fai adesso, subito sotto il verdetto.
+        Stava in fondo alla pagina, dopo tutte le prove: ma e' l'unica
+        sezione che parla di quello che puo' sapere solo chi e' li', e il
+        momento in cui serve e' il secondo dopo aver letto COMPRALO — con
+        l'oggetto in mano e il venditore che aspetta.
+      */}
+      <BeforeYouBuy identification={identification} />
+
+      {valuation.available && flip ? (
+        <Ledger
+          thresholds={flip.thresholds}
+          economics={decision?.economics ?? null}
+          valuation={valuation}
+        />
       ) : null}
 
       {valuation.available ? (
@@ -156,46 +167,56 @@ export function ResultView({
       <RiskList result={result} />
 
       {/*
-        Il punteggio e "cosa lo muove" stavano in una scheda propria, subito
-        sotto il verdetto: due numeri grandi uno accanto all'altro che
-        rispondono a domande diverse — "quanto pagarlo" e "quanto e' buona
-        l'occasione" — e chi legge deve capire da solo quale guardare. Ora e'
-        una riga sola, piegata: la domanda del prodotto resta una.
+        Livello 3: quello che si legge solo se ti viene un dubbio.
+
+        Erano cinque blocchi in fila con lo stesso peso di tutto il resto —
+        autenticita', prove dell'identificazione, punteggio, storia — e la
+        loro utilita' non e' «prima di decidere» ma «se qualcosa non torna».
+        Sotto un'intestazione sola e tutti chiusi occupano una schermata
+        invece di cinque, e chi ha bisogno di controllare sa dove guardare.
       */}
-      {flip && flip.atPrice ? (
-        <Disclosure summary={`Quanto e’ buona l’occasione: ${flip.atPrice.score}/100`}>
-          <ul className="space-y-1">
-            {flip.factors.map((factor) => (
-              <li
-                key={factor.label}
-                className={factor.direction === 'positive' ? 'text-accent' : 'text-danger'}
-              >
-                {factor.direction === 'positive' ? '+' : '−'} {factor.label}
-              </li>
-            ))}
-          </ul>
-          <p className="mt-3 text-xs text-muted">
-            Non e’ quanto vale l’oggetto ne’ quanto pagarlo: e’ quanto conviene questo affare
-            rispetto a un altro, a parita’ di soldi che hai in tasca.
-          </p>
-        </Disclosure>
-      ) : null}
+      <section className="border-t-2 border-line pt-5">
+        <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
+          Se vuoi controllare
+        </p>
 
-      <ObjectEvidence identification={identification} />
+        <div className="mt-3 space-y-2">
+          <ObjectEvidence identification={identification} />
+          {/* Subito dopo le prove dell'identificazione, perche' e' la stessa
+              domanda portata un passo piu' in la': non «cos'e'» ma «quanto
+              regge il fatto che sia proprio quello». */}
+          <Authenticity authenticity={identification.authenticity} />
 
-      {/* Subito dopo le prove dell'identificazione, perche' e' la stessa
-          domanda portata un passo piu' in la': non «cos'e'» ma «quanto
-          regge il fatto che sia proprio quello». */}
-      <Authenticity authenticity={identification.authenticity} />
+          {/* Il punteggio risponde a un'altra domanda rispetto al prezzo
+              massimo — non «quanto pagarlo» ma «quanto e' buona questa
+              occasione» — e due numeri grandi vicini si contendono lo
+              sguardo senza che nessuno dica quale guardare. */}
+          {flip && flip.atPrice ? (
+            <Disclosure summary={`Quanto e’ buona l’occasione: ${flip.atPrice.score}/100`}>
+              <ul className="space-y-1">
+                {flip.factors.map((factor) => (
+                  <li
+                    key={factor.label}
+                    className={factor.direction === 'positive' ? 'text-accent' : 'text-danger'}
+                  >
+                    {factor.direction === 'positive' ? '+' : '−'} {factor.label}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-xs text-muted">
+                Non e’ quanto vale l’oggetto ne’ quanto pagarlo: e’ quanto conviene questo affare
+                rispetto a un altro, a parita’ di soldi che hai in tasca.
+              </p>
+            </Disclosure>
+          ) : null}
 
-
-      <BeforeYouBuy identification={identification} />
-
-      {identification.history ? (
-        <Disclosure summary="Cos’e’, in breve">
-          <p className="leading-relaxed">{identification.history}</p>
-        </Disclosure>
-      ) : null}
+          {identification.history ? (
+            <Disclosure summary="Cos’e’, in breve">
+              <p className="leading-relaxed">{identification.history}</p>
+            </Disclosure>
+          ) : null}
+        </div>
+      </section>
 
       {saveSlot}
     </div>

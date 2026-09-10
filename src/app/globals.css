@@ -1,45 +1,78 @@
 @import "tailwindcss";
 
 /**
- * Seconda revisione. La prima aveva preso solo la palette del sito di
- * riferimento (mindmarket.com) senza una voce propria: sembrava un altro
- * sito SaaS con lo sfondo color crema. Qui la palette e' rifatta da capo
- * attorno a un'idea sola — un cartellino del prezzo, quello che un
- * rigattiere lega a un oggetto — non un dashboard.
+ * Terza revisione: la gerarchia diventa un materiale, non una sfumatura.
  *
- * Sfondo caldo da carta kraft, non crema chiara: si vede, non solo si
- * dichiara "neutro sul serio". Inchiostro quasi-nero con una base calda
- * (bruno, non grigio-verde) per tutto il testo. Un solo colore ha un
- * significato — il verde di --accent-vivid, riservato al prezzo e al
- * verdetto BUY — il teal e il terracotta sono ritmo decorativo sui tile,
- * mai su un numero che conta.
+ * La seconda revisione aveva una voce — il cartellino del rigattiere, carta
+ * kraft e inchiostro bruno — ma un solo livello di superficie: ogni blocco
+ * della pagina risultato aveva lo stesso bordo tenue, lo stesso fondo, lo
+ * stesso raggio. Undici schede identiche in fila, e il verdetto — l'unica
+ * cosa che serve mentre hai l'oggetto in mano — pesava quanto «Cos'e', in
+ * breve». Non era un problema di colori: era che il sistema non aveva un
+ * modo di dire «questo conta piu' di quello».
+ *
+ * Il bordo spesso con l'ombra piena ne ha uno, ed e' il motivo per cui la
+ * direzione e' questa e non un'altra. Ogni blocco sta a uno di tre livelli,
+ * e i tre si distinguono da lontano, sfocati, su un telefono al sole:
+ *
+ *   1  bordo spesso + ombra piena + colore pieno   la risposta
+ *   2  bordo spesso + fondo chiaro, niente ombra   le prove
+ *   3  nessuna scatola, solo un filo               il resto
+ *
+ * L'ombra e' netta e senza sfocatura: non simula una luce, e' un secondo
+ * contorno spostato. Una `box-shadow` sfumata avrebbe dato tre livelli che
+ * si distinguono solo da vicino, cioe' di nuovo nessun livello.
+ *
+ * I colori del verdetto sono gli unici tre ad alta saturazione e portano
+ * tutti testo nero: sono segnali, non decorazione, e nessun altro elemento
+ * della pagina ha il permesso di usarli.
  */
 :root {
-  --background: #eee0c2;
-  --surface: #fffaf0;
-  --surface-warm: #e4d3a8;
-  --foreground: #241c10;
-  --muted: #6b5b3f;
-  --border: #d6c391;
-  --accent: #3c6b1f;
-  --accent-vivid: #63b83f;
-  --accent-on-vivid: #16260c;
-  --accent-soft: #e3f0d7;
-  --warn: #8f4e10;
-  --warn-soft: #f7ecd3;
-  --danger: #a83a24;
-  --danger-soft: #f6e2da;
+  --background: #f0ebe0;
+  --surface: #fffdf7;
+  --surface-warm: #e6ddc9;
+  --foreground: #14110d;
+  --muted: #6a6153;
+  --border: #14110d;
+  --accent: #0f5c55;
+  --accent-vivid: #b4e830;
+  --accent-on-vivid: #14110d;
+  --accent-soft: #eaf7cf;
+  --warn: #7a5205;
+  --warn-soft: #fbeecb;
+  --danger: #a3301a;
+  --danger-soft: #fadfd8;
   /**
-   * Colori dei tile decorativi (i tre passi "come funziona"): fissi fra
-   * chiaro e scuro, come --accent-vivid — un blocco di colore deve restare
-   * leggibile a prescindere dal tema attivo. --tile-cream e --tile-ink sono
-   * i due soli testi ammessi sopra questi sfondi, scelti per contrasto,
-   * mai il --foreground del tema (che su teal o terracotta illeggibile).
+   * I tre colori del verdetto, e nient'altro nell'app li usa.
+   *
+   * Restano separati da --warn-soft e --danger-soft, che sono tinte tenui
+   * per gli avvisi: un rischio segnalato in fondo alla pagina e la risposta
+   * «lascia stare» non possono gridare con la stessa voce, o la seconda
+   * smette di significare qualcosa. Portano tutti e tre testo --tile-ink:
+   * sono scelti per essere leggibili in nero, in entrambi i temi.
    */
-  --tile-teal: #155f59;
-  --tile-terracotta: #cf7a44;
-  --tile-ink: #241c10;
-  --tile-cream: #f8ecd2;
+  --verdict-buy: #b4e830;
+  --verdict-maybe: #ffd02e;
+  --verdict-pass: #ff5b38;
+  /**
+   * I tre colori decorativi, fissi fra chiaro e scuro: un blocco a colore
+   * pieno deve restare leggibile a prescindere dal tema attivo, e --tile-ink
+   * e --tile-cream sono i due soli testi ammessi sopra, mai il --foreground
+   * del tema (che su teal sarebbe illeggibile in chiaro).
+   */
+  --tile-teal: #0f5c55;
+  --tile-terracotta: #ff5b38;
+  --tile-ink: #14110d;
+  --tile-cream: #fffdf7;
+  /**
+   * Il tratto e l'ombra: sono la gerarchia, quindi sono token e non numeri
+   * scritti a mano nei componenti. Un blocco che sceglie il proprio spessore
+   * e' un blocco che domani litiga col vicino.
+   */
+  --rule: 2px;
+  --rule-thick: 3px;
+  --pop: 5px 5px 0 0 var(--border);
+  --pop-sm: 3px 3px 0 0 var(--border);
   /**
    * Curve nominate per intento, non un solo ease-out scritto a mano ovunque
    * — misurate su mindmarket.com (--ease, --ease-smooth, --ease-bounce).
@@ -55,48 +88,57 @@
   --duration-slow: 0.6s;
 }
 
+/**
+ * Al buio il tratto si inverte: il contorno che in chiaro e' inchiostro su
+ * carta diventa carta su inchiostro, e l'ombra piena con lui. Restano tre
+ * livelli distinguibili, che e' l'unica cosa che questo tema deve garantire.
+ *
+ * I tre colori del verdetto non cambiano: sono gia' scelti per portare testo
+ * nero, e un verde che al buio diventa un altro verde e' un verdetto che
+ * cambia faccia a seconda dell'ora.
+ */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --background: #171009;
-    --surface: #211809;
-    --surface-warm: #2a1f0f;
-    --foreground: #f2e6c9;
-    --muted: #b7a480;
-    --border: #3c2f18;
-    --accent: #7fcf57;
-    --accent-vivid: #63b83f;
-    --accent-on-vivid: #16260c;
-    --accent-soft: #24371a;
-    --warn: #e3ab5c;
-    --warn-soft: #3a2a10;
-    --danger: #e2896b;
-    --danger-soft: #3c1c12;
-    --tile-teal: #155f59;
-    --tile-terracotta: #cf7a44;
-    --tile-ink: #241c10;
-    --tile-cream: #f8ecd2;
+    --background: #141210;
+    --surface: #1e1b17;
+    --surface-warm: #2a2621;
+    --foreground: #f5f0e6;
+    --muted: #a89e8e;
+    --border: #f5f0e6;
+    --accent: #4fbfae;
+    --accent-vivid: #b4e830;
+    --accent-on-vivid: #14110d;
+    --accent-soft: #24301a;
+    --warn: #e8bd6a;
+    --warn-soft: #33291a;
+    --danger: #f08a6f;
+    --danger-soft: #3a201a;
+    --tile-teal: #0f5c55;
+    --tile-terracotta: #ff5b38;
+    --tile-ink: #14110d;
+    --tile-cream: #fffdf7;
   }
 }
 
 :root[data-theme="dark"] {
-  --background: #171009;
-  --surface: #211809;
-  --surface-warm: #2a1f0f;
-  --foreground: #f2e6c9;
-  --muted: #b7a480;
-  --border: #3c2f18;
-  --accent: #7fcf57;
-  --accent-vivid: #63b83f;
-  --accent-on-vivid: #16260c;
-  --accent-soft: #24371a;
-  --warn: #e3ab5c;
-  --warn-soft: #3a2a10;
-  --danger: #e2896b;
-  --danger-soft: #3c1c12;
-  --tile-teal: #155f59;
-  --tile-terracotta: #cf7a44;
-  --tile-ink: #241c10;
-  --tile-cream: #f8ecd2;
+  --background: #141210;
+  --surface: #1e1b17;
+  --surface-warm: #2a2621;
+  --foreground: #f5f0e6;
+  --muted: #a89e8e;
+  --border: #f5f0e6;
+  --accent: #4fbfae;
+  --accent-vivid: #b4e830;
+  --accent-on-vivid: #14110d;
+  --accent-soft: #24301a;
+  --warn: #e8bd6a;
+  --warn-soft: #33291a;
+  --danger: #f08a6f;
+  --danger-soft: #3a201a;
+  --tile-teal: #0f5c55;
+  --tile-terracotta: #ff5b38;
+  --tile-ink: #14110d;
+  --tile-cream: #fffdf7;
 }
 
 @theme inline {
@@ -118,14 +160,20 @@
   --color-tile-terracotta: var(--tile-terracotta);
   --color-tile-ink: var(--tile-ink);
   --color-tile-cream: var(--tile-cream);
+  --color-verdict-buy: var(--verdict-buy);
+  --color-verdict-maybe: var(--verdict-maybe);
+  --color-verdict-pass: var(--verdict-pass);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   /**
-   * Raggio generoso per i blocchi che devono leggersi come una dichiarazione
-   * — il prezzo, il verdetto, i tile decorativi — non come una scheda
-   * qualunque.
+   * Il raggio scende da 1,75rem a 0,875: con un bordo di tre pixel e
+   * un'ombra piena, l'angolo molto tondo faceva sembrare ogni blocco un
+   * adesivo. Abbastanza tondo da non essere ostile sotto il pollice,
+   * abbastanza asciutto da reggere il tratto.
    */
-  --radius-block: 1.75rem;
+  --radius-block: 0.875rem;
+  --shadow-pop: var(--pop);
+  --shadow-pop-sm: var(--pop-sm);
 }
 
 body {

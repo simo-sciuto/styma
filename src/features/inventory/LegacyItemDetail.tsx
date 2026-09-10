@@ -135,7 +135,7 @@ export function LegacyItemDetail({
 
               {thresholds ? (
                 <div className="mt-4 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl bg-accent-soft p-3 sm:p-4">
+                  <div className="rounded-block border-2 border-line bg-accent-soft p-3 sm:p-4">
                     <p className="text-xs font-medium text-accent">Affare fino a</p>
                     <p className="mt-1 text-2xl font-semibold tracking-tight text-accent sm:text-3xl">
                       {thresholds.buyUpTo !== null ? formatEur(thresholds.buyUpTo) : '—'}
@@ -146,7 +146,7 @@ export function LegacyItemDetail({
                       </p>
                     ) : null}
                   </div>
-                  <div className="rounded-2xl bg-warn-soft p-3 sm:p-4">
+                  <div className="rounded-block border-2 border-line bg-warn-soft p-3 sm:p-4">
                     <p className="text-xs font-medium text-warn">Ci potevi pensare fino a</p>
                     <p className="mt-1 text-2xl font-semibold tracking-tight text-warn sm:text-3xl">
                       {thresholds.maybeUpTo !== null ? formatEur(thresholds.maybeUpTo) : '—'}
@@ -181,7 +181,7 @@ export function LegacyItemDetail({
               ) : null}
 
               {reasons.length > 0 ? (
-                <div className="mt-5 border-t border-line pt-4">
+                <div className="mt-5 border-t-2 border-line pt-4">
                   <p className="font-mono text-xs uppercase tracking-[0.16em] text-muted">
                     Come e’ nata la stima
                   </p>
@@ -194,7 +194,7 @@ export function LegacyItemDetail({
               ) : null}
 
               {hasMarketReading ? (
-                <div className="mt-5 border-t border-line pt-4">
+                <div className="mt-5 border-t-2 border-line pt-4">
                   <p className="font-mono text-xs uppercase tracking-[0.16em] text-muted">
                     Lettura del mercato
                   </p>
@@ -206,7 +206,7 @@ export function LegacyItemDetail({
               ) : null}
 
               {warnings.length > 0 ? (
-                <div className="mt-5 rounded-2xl bg-warn-soft p-4">
+                <div className="mt-5 rounded-block border-2 border-line bg-warn-soft p-4">
                   <p className="text-xs font-medium text-warn">Da tenere presente</p>
                   <ul className="mt-1.5 space-y-1 text-sm">
                     {warnings.map((warning) => (

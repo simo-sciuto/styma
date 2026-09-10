@@ -129,7 +129,7 @@ export function GenerateListing({ itemId }: Props) {
             className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
               option === marketplace
                 ? 'bg-tile-teal text-tile-cream'
-                : 'border border-line text-muted hover:text-foreground'
+                : 'border-2 border-line text-muted hover:text-foreground'
             }`}
           >
             {MARKETPLACE_LABELS[option]}

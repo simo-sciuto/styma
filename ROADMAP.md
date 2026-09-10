@@ -42,6 +42,10 @@ G3 ████████████████████ il prezzo massim
 G4 ████████████████████ accessori scambiati per l'oggetto  fatto
 G5 ████████████████████ home: un esempio vero al posto delle statistiche  fatto
 G6 ████████████████████ l'attesa diventa una lingua sola  fatto
+
+H1 ████████████████████ tre livelli al posto di undici blocchi pari  fatto
+H2 ████████████████████ i comparabili hanno una faccia               fatto
+H3 ░░░░░░░░░░░░░░░░░░░░ le occasioni dai comparabili                 da fare
 ```
 
 ---
@@ -497,9 +501,6 @@ Multi-oggetto · Scout · allerte · analytics personali · escalation a esperto
   nemmeno dovrebbe provarci a costo di falsi positivi. Serve un segnale
   diverso — forse la distanza dal mediano *insieme* alla parola, misurata
   meglio di come l'ho misurata io.
-- **Il peso dei comparabili e' quasi sempre lo stesso** (0,85 su tutti gli
-  annunci di uno stesso oggetto): mostrarlo accanto a ogni riga suggerisce una
-  discriminazione che non c'e'. O si differenzia davvero, o si toglie.
 
 - **`confidenceReasons` non ha polarita'.** Sono stringhe: non sappiamo quali
   sostengono l'attribuzione e quali la indeboliscono, quindi si mostrano
@@ -507,6 +508,46 @@ Multi-oggetto · Scout · allerte · analytics personali · escalation a esperto
   un guadagno di leggibilita' grosso.
 - **Manca l'origine geografica** fra i dettagli dell'oggetto: il modello non
   la produce. Campo nuovo nello schema quando servira'.
+
+### H1 — tre livelli al posto di undici blocchi pari (commit successivo)
+- La pagina risultato aveva undici blocchi con lo stesso identico trattamento
+  grafico: stesso bordo, stesso fondo, stesso padding, stesso raggio. Il conto
+  del flip e «Cos'e', in breve» pesavano uguale.
+- `Card` prende un livello (1 risposta / 2 prove / 3 il resto) e la palette si
+  rifa attorno al tratto spesso con l'ombra piena, che e' l'unico linguaggio
+  in cui tre livelli si distinguono da lontano — che e' la condizione d'uso
+  vera: un telefono, in mano, al sole, col venditore che aspetta.
+- **Il conto era stampato due volte.** Guardandole vicine si vede perche' non
+  sono due conti: le prime tre righe sono identiche, e da li' cambia solo cosa
+  sottrai. `Ledger` scrive il tronco una volta e ne fa uscire i due rami.
+- «Prima di pagare» sale sotto il verdetto: sono i gesti dei dieci secondi
+  dopo aver letto COMPRALO, non un epilogo.
+- Prove dell'identificazione, autenticita', punteggio e storia scendono sotto
+  un'intestazione sola, tutti chiusi: una schermata invece di cinque.
+- Tutti e tre i verdetti a colore pieno. Prima solo il si', perche' la palette
+  non aveva un giallo e un rosso che reggessero del testo sopra.
+
+### H2 — i comparabili hanno una faccia (commit successivo)
+- La Browse API restituisce `image.imageUrl` su **20 inserzioni su 20**
+  (misurato in produzione), e la buttavamo via. Ora ogni comparabile porta la
+  sua miniatura: se il titolo eBay e' scritto per un motore di ricerca, la
+  foto e' l'unico controllo che chi legge puo' fare al posto nostro.
+- Lo schema che vede il modello resta senza `imageUrl`
+  (`ModelMarketResearchSchema`): un campo in piu' non costa token, costa
+  attenzione tolta a marca e modello.
+- **Il peso si mostra solo se varia.** Leggeva «peso 1.00» su tutte le righe
+  aperte, e adesso si sa perche': eBay dichiara la condizione su **3
+  inserzioni su 20**, quindi uno dei due fattori del peso e' una costante
+  sulle altre 17. Il conto si fa per elenco mostrato, non sull'insieme.
+- **Bug trovato e corretto: l'indirizzo dell'analisi rubava la rotta.** Il
+  risultato si riscriveva l'indirizzo in `/inventario/<id>` con
+  `history.replaceState`, credendo che non fosse una navigazione. In App
+  Router lo e': alla prima azione server successiva — il primo carattere del
+  prezzo — il router rigenerava quella rotta, il risultato spariva dietro uno
+  scheletro e il prezzo appena scritto si perdeva nella corsa col salvataggio
+  ritardato. L'indirizzo e' ora `/analizza?oggetto=<id>`, stessa rotta, come
+  prescrive `linking-and-navigating.md`. L'e2e era rosso su `main` per questo
+  motivo e adesso lo verifica esplicitamente.
 
 ## Decisioni aperte
 

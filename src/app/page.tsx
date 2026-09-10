@@ -149,13 +149,13 @@ export default function HomePage() {
         <div className="reveal reveal-delay-3 mt-9 flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/analizza"
-            className="inline-flex items-center justify-center rounded-full bg-tile-cream px-7 py-4 text-base font-medium text-tile-ink transition hover:opacity-90"
+            className="inline-flex items-center justify-center rounded-block border-[3px] border-tile-ink bg-tile-cream px-7 py-4 text-base font-semibold text-tile-ink shadow-[5px_5px_0_0_var(--tile-ink)] transition-[transform,box-shadow] duration-100 active:translate-x-[5px] active:translate-y-[5px] active:shadow-none"
           >
             Fotografa un oggetto
           </Link>
           <Link
             href="/inventario"
-            className="rounded-full border border-tile-cream/50 px-4 py-2 text-sm transition hover:border-tile-cream hover:bg-black/10"
+            className="rounded-block border-2 border-tile-cream px-4 py-2.5 text-sm font-semibold transition hover:bg-black/15"
           >
             Inventario
           </Link>
@@ -168,7 +168,7 @@ export default function HomePage() {
           stessa barra della pagina che vedrai. Un esempio disegnato a parte
           avrebbe promesso una cosa e consegnato un'altra.
         */}
-        <Reveal className="rounded-block border border-line bg-surface p-6 sm:p-8">
+        <Reveal className="rounded-block border-2 border-line bg-surface p-6 sm:p-8">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
               Cosa vedi alla fine
@@ -183,7 +183,7 @@ export default function HomePage() {
             <strong className="font-semibold">{formatEur(ESEMPIO_RICHIESTO)}</strong>.
           </p>
 
-          <div className="mt-3 rounded-block bg-accent-vivid px-5 py-4 text-accent-on-vivid">
+          <div className="mt-3 rounded-block border-2 border-line bg-verdict-buy px-5 py-5 text-tile-ink">
             <p className="text-[clamp(1.75rem,1.5rem+1.4vw,2.5rem)] font-semibold leading-none tracking-tight">
               {RECOMMENDATION_STYLES[ESEMPIO_VERDETTO].label}
             </p>
@@ -212,7 +212,7 @@ export default function HomePage() {
             <PriceZones thresholds={ESEMPIO_SOGLIE} askingPrice={ESEMPIO_RICHIESTO} />
           </div>
 
-          <p className="mt-5 border-t border-line pt-4 text-sm text-muted">
+          <p className="mt-5 border-t-2 border-line pt-4 text-sm text-muted">
             Il prezzo massimo e’ una sottrazione che puoi rifare a mente: quanto lo rivendi, meno
             commissioni, spedizione e quello che teniamo da parte perche’ la stima puo’ sbagliare.
             Nell’analisi trovi il conto, riga per riga.
@@ -225,10 +225,10 @@ export default function HomePage() {
               key={step.title}
               as="li"
               delay={index * 90}
-              className={`rounded-block p-5 sm:p-6 ${step.tone}`}
+              className={`rounded-block border-[3px] border-tile-ink p-5 shadow-[5px_5px_0_0_var(--tile-ink)] sm:p-6 ${step.tone}`}
             >
               <div className="flex items-center justify-between">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-black/10">
+                <span className="flex h-10 w-10 items-center justify-center rounded-[0.5rem] border-2 border-tile-ink bg-black/10">
                   <step.icon />
                 </span>
                 <span className="font-mono text-xs">0{index + 1}</span>

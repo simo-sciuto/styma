@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 import { Button, Card, PageHeader } from '@/components/ui';
@@ -7,6 +8,7 @@ import { readAnalysisEvents } from '@/lib/analysis-stream';
 import { assessFlip } from '@/services/valuation/flip-score';
 import type { PreparedImage } from '@/lib/images';
 import type { AnalysisResult } from '@/schemas/analysis';
+import type { AnalysisSnapshot } from '@/schemas/snapshot';
 import type { Identification } from '@/schemas/identification';
 import { ArchiveToggle } from '@/features/inventory/ArchiveToggle';
 import { AutoSave } from '@/features/inventory/AutoSave';
@@ -16,6 +18,18 @@ import { PhotoPicker } from './PhotoPicker';
 import { ResultView } from './ResultView';
 
 type Stage = 'idle' | 'identifying' | 'researching' | 'done';
+
+/**
+ * Un'analisi gia' salvata, passata dal server quando l'indirizzo porta un
+ * `?oggetto=`. Il verdetto non c'e' e non deve esserci: e' funzione del
+ * prezzo che stai digitando adesso, e si ricalcola qui con `assessFlip`.
+ */
+export type SavedAnalysis = {
+  itemId: string;
+  snapshot: AnalysisSnapshot;
+  coverUrl: string | null;
+  askingPrice: number | null;
+};
 
 /**
  * Una corsia di ricerca vista da chi aspetta. Lo stato arriva dal server
@@ -43,12 +57,21 @@ async function readError(response: Response, fallback: string): Promise<string> 
   }
 }
 
-export function AnalyzeFlow() {
+export function AnalyzeFlow({ saved = null }: { saved?: SavedAnalysis | null }) {
+  // Il prezzo gia' registrato per questo oggetto. Serve anche dopo, come
+  // valore di riferimento del salvataggio ritardato: senza, il primo effetto
+  // riscriverebbe `null` sopra la cifra appena riletta dal database.
+  const prezzoSalvato = saved?.askingPrice != null ? String(saved.askingPrice) : '';
+
   const [images, setImages] = useState<PreparedImage[]>([]);
-  const [purchasePrice, setPurchasePrice] = useState('');
-  const [stage, setStage] = useState<Stage>('idle');
-  const [identification, setIdentification] = useState<Identification | null>(null);
-  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [purchasePrice, setPurchasePrice] = useState(prezzoSalvato);
+  const [stage, setStage] = useState<Stage>(saved ? 'done' : 'idle');
+  const [identification, setIdentification] = useState<Identification | null>(
+    saved?.snapshot.identification ?? null,
+  );
+  const [result, setResult] = useState<AnalysisResult | null>(
+    saved ? { ...saved.snapshot, flip: null } : null,
+  );
   const [lanes, setLanes] = useState<LaneProgress[]>([]);
   const [reusedResearch, setReusedResearch] = useState<{ ageDays: number; comparables: number } | null>(
     null,
@@ -59,26 +82,34 @@ export function AnalyzeFlow() {
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   /** L'id dell'oggetto salvato: e' l'indirizzo a cui questa analisi vive. */
-  const [itemId, setItemId] = useState<string | null>(null);
+  const [itemId, setItemId] = useState<string | null>(saved?.itemId ?? null);
+  /** Se questa analisi arriva dal database: allora e' gia' salvata, e
+   *  rimetterla in salvataggio la duplicherebbe. */
+  const [giaSalvata, setGiaSalvata] = useState(saved !== null);
 
   const busy = stage === 'identifying' || stage === 'researching';
 
   /**
    * Appena l'oggetto esiste, l'indirizzo della pagina diventa il suo.
    *
-   * `history.replaceState` e non una navigazione: navigare qui rimonterebbe
-   * la pagina e butterebbe via il risultato appena arrivato, per rileggerlo
-   * dal database un istante dopo. Cosi' la pagina resta quella che sta gia'
-   * leggendo, e ricaricando si riapre l'analisi salvata.
+   * Cambia il parametro di ricerca e resta su `/analizza`, che e' l'unica
+   * forma sicura: in App Router `replaceState` e' agganciato al router, e
+   * riscrivere il *percorso* — come si faceva prima, verso `/inventario/<id>`
+   * — convinceva il router di stare su un'altra rotta. Alla prima azione
+   * server successiva, cioe' al primo carattere del prezzo, rigenerava quella
+   * rotta e buttava via il risultato appena arrivato: esattamente il rimonto
+   * che questa riga voleva evitare, solo differito di qualche secondo e
+   * quindi molto piu' difficile da vedere. Vedi `app/analizza/page.tsx`.
    */
   useEffect(() => {
-    if (itemId) window.history.replaceState(null, '', `/inventario/${itemId}`);
+    if (itemId) window.history.replaceState(null, '', `/analizza?oggetto=${itemId}`);
   }, [itemId]);
 
   // Il prezzo si scrive dopo il salvataggio automatico, quindi va portato
-  // all'oggetto man mano che lo digiti. Parte da vuoto: e' quello che
-  // `saveAnalysis` ha appena messo nel database.
-  usePersistAskingPrice(itemId, purchasePrice, '');
+  // all'oggetto man mano che lo digiti. Il valore di riferimento e' quello
+  // che sta gia' nel database: vuoto per un'analisi appena fatta, la cifra
+  // riletta per una riaperta.
+  usePersistAskingPrice(itemId, purchasePrice, prezzoSalvato);
 
   /**
    * Il verdetto al prezzo digitato, ricalcolato qui invece che sul server.
@@ -220,6 +251,7 @@ export function AnalyzeFlow() {
     // e questa pagina ricomincia da capo.
     window.history.replaceState(null, '', '/analizza');
     setItemId(null);
+    setGiaSalvata(false);
     setImages([]);
     setPurchasePrice('');
     setResult(null);
@@ -236,15 +268,31 @@ export function AnalyzeFlow() {
       <>
         <ResultView
           result={liveResult}
-          coverUrl={images[0]?.previewUrl ?? null}
+          coverUrl={images[0]?.previewUrl ?? saved?.coverUrl ?? null}
           purchasePrice={purchasePrice}
           onPurchasePriceChange={setPurchasePrice}
-          saveSlot={<AutoSave result={liveResult} images={images} onSaved={setItemId} />}
+          saveSlot={
+            giaSalvata ? null : (
+              <AutoSave result={liveResult} images={images} onSaved={setItemId} />
+            )
+          }
         />
-        {/* Compare solo a salvataggio avvenuto: prima non c'e' niente da
-            togliere dalla lista. */}
+        {/*
+          Compare solo a salvataggio avvenuto: prima non c'e' niente da
+          togliere dalla lista, e nessuna scheda da aprire.
+
+          Il collegamento sta qui e non dentro `AutoSave` perche' deve esserci
+          anche su un'analisi riaperta dal suo indirizzo, dove non c'e' niente
+          da salvare e quel componente non viene montato affatto.
+        */}
         {itemId ? (
-          <div className="mt-4 text-center">
+          <div className="mt-5 flex flex-col items-center gap-3">
+            <Link
+              href={`/inventario/${itemId}`}
+              className="text-sm font-medium underline decoration-line underline-offset-4"
+            >
+              Registra com’e’ andata
+            </Link>
             <ArchiveToggle itemId={itemId} archived={false} />
           </div>
         ) : null}

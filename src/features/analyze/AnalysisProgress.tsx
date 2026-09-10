@@ -156,7 +156,7 @@ export function AnalysisProgress({ passi, corsie }: { passi: Passo[]; corsie: Co
         })}
       </ol>
 
-      <p className="mt-4 border-t border-line pt-3 text-xs text-muted">
+      <p className="mt-4 border-t-2 border-line pt-3 text-xs text-muted">
         Guardiamo annunci veri su cinque mercati. Ci mette il tempo che ci mette: nessuna barra che
         avanza da sola.
       </p>

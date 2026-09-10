@@ -29,40 +29,82 @@ function describeSource(source: MarketSource): string {
   return `Ricerca riusata, fatta ${source.ageDays} giorni fa per lo stesso modello.`;
 }
 
-function ComparableRow({ item, showKind }: { item: WeightedComparable; showKind: boolean }) {
+/**
+ * Un'inserzione, con la sua foto.
+ *
+ * La foto arriva da eBay su ogni inserzione — misurato, venti su venti — e
+ * fino a ieri la buttavamo via, lasciando quattro righe di testo dove il
+ * titolo eBay e' scritto per essere trovato da un motore di ricerca, non per
+ * essere letto («OLIVETTI VALENTINE Schreibmaschine funktionstuchtig mit
+ * Koffer»). Chi guarda deve poter dire in un secondo «questo e' il mio
+ * oggetto» oppure «questa e' un'altra cosa», ed e' un giudizio che si fa con
+ * gli occhi: e' l'unico controllo sui comparabili che il nostro codice non
+ * puo' fare al posto suo.
+ */
+function ComparableRow({
+  item,
+  showKind,
+  showWeight,
+}: {
+  item: WeightedComparable;
+  showKind: boolean;
+  showWeight: boolean;
+}) {
   const { comparable } = item;
   const date = formatDate(comparable.soldAt);
 
   return (
-    <li className="border-t border-line py-3 first:border-0 first:pt-0">
-      <div className="flex items-baseline justify-between gap-3">
-        <span className="font-mono text-lg font-semibold">{formatEur(item.priceEur)}</span>
-        <span className="shrink-0 text-xs text-muted">{comparable.source}</span>
-      </div>
-
-      <a
-        href={comparable.url}
-        target="_blank"
-        rel="noreferrer noopener"
-        className="mt-0.5 block text-sm underline decoration-line underline-offset-4"
-      >
-        {comparable.title}
-      </a>
-
-      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-        <Pill tone={comparable.matchLevel === 'exact_model' ? 'accent' : 'neutral'}>
-          {MATCH_LABELS[comparable.matchLevel]}
-        </Pill>
-        {/* Il peso si mostra perche' e' il motivo per cui questa inserzione
-            ha spostato la stima piu' o meno di un'altra: senza, l'elenco
-            sembrerebbe una media di cose messe sullo stesso piano. */}
-        <span className="font-mono text-xs text-muted">peso {item.weight.toFixed(2)}</span>
-        {showKind ? (
-          <Pill tone={comparable.kind === 'sold' ? 'accent' : comparable.kind === 'bid' ? 'warn' : 'neutral'}>
-            {PRICE_KIND_LABELS[comparable.kind]}
-          </Pill>
+    <li className="border-t-2 border-line py-3 first:border-0 first:pt-0">
+      <div className="flex gap-3">
+        {comparable.imageUrl ? (
+          /* Non `next/image`: sono miniature da 225px gia' dimensionate da
+             eBay, e passarle dall'ottimizzatore costerebbe una
+             trasformazione a testa per non guadagnare un byte. */
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={comparable.imageUrl}
+            alt=""
+            loading="lazy"
+            className="h-20 w-20 shrink-0 rounded-block border-2 border-line bg-surface object-cover"
+          />
         ) : null}
-        {date ? <span className="text-xs text-muted">{date}</span> : null}
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="font-mono text-lg font-semibold tabular-nums">
+              {formatEur(item.priceEur)}
+            </span>
+            <span className="shrink-0 text-xs text-muted">{comparable.source}</span>
+          </div>
+
+          <a
+            href={comparable.url}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="mt-0.5 line-clamp-2 block text-sm underline decoration-line underline-offset-4"
+          >
+            {comparable.title}
+          </a>
+
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            <Pill tone={comparable.matchLevel === 'exact_model' ? 'accent' : 'neutral'}>
+              {MATCH_LABELS[comparable.matchLevel]}
+            </Pill>
+            {showWeight ? (
+              <span className="font-mono text-xs text-muted">peso {item.weight.toFixed(2)}</span>
+            ) : null}
+            {showKind ? (
+              <Pill
+                tone={
+                  comparable.kind === 'sold' ? 'accent' : comparable.kind === 'bid' ? 'warn' : 'neutral'
+                }
+              >
+                {PRICE_KIND_LABELS[comparable.kind]}
+              </Pill>
+            ) : null}
+            {date ? <span className="text-xs text-muted">{date}</span> : null}
+          </div>
+        </div>
       </div>
 
       {comparable.notes ? <p className="mt-1.5 text-xs text-muted">{comparable.notes}</p> : null}
@@ -110,6 +152,29 @@ export function MarketScan({
   // una volta in testa e' piu' onesto che ripetere "Richiesto" su ogni riga,
   // dove diventa un'etichetta che non si legge piu'.
   const allAsking = used.every((item) => item.comparable.kind === 'asking');
+
+  /*
+   * Il peso si mostra solo se cambia da una riga all'altra.
+   *
+   * Esisteva per spiegare perche' un'inserzione avesse spostato la stima piu'
+   * di un'altra, ed e' un buon motivo — ma sulle ricerche vere leggeva
+   * «peso 1.00» su tutte e quattro le righe aperte. Il peso e' il prodotto di
+   * due fattori, e uno dei due, lo stato di conservazione, eBay lo dichiara
+   * su 3 inserzioni su 20 (misurato sulla Browse API in produzione): sulle
+   * altre 17 vale la stessa costante. Con una ricerca riuscita, dove tutti i
+   * comparabili sono lo stesso modello, anche il primo fattore e' costante.
+   *
+   * Una colonna di numeri identici non e' trasparenza: e' rumore travestito
+   * da informazione, e insegna a saltare la riga in cui sta — compresa la
+   * volta in cui quel numero varia davvero e conta.
+   *
+   * Il conto si fa per elenco, non sull'insieme: le quattro righe aperte
+   * possono valere tutte 1,00 mentre fra i settantaquattro piegati il peso
+   * varia eccome, e guardare il totale rimetterebbe la colonna costante
+   * proprio dove si legge.
+   */
+  const pesiVariano = (elenco: WeightedComparable[]) =>
+    new Set(elenco.map((item) => item.weight.toFixed(2))).size > 1;
 
   const identical = used.filter((item) => item.comparable.matchLevel === 'exact_model');
   const competition =
@@ -187,6 +252,7 @@ export function MarketScan({
               key={`${item.comparable.url}-${item.comparable.price}`}
               item={item}
               showKind={!allAsking}
+              showWeight={pesiVariano(strongest)}
             />
           ))}
         </ul>
@@ -201,6 +267,7 @@ export function MarketScan({
                   key={`${item.comparable.url}-${item.comparable.price}`}
                   item={item}
                   showKind={!allAsking}
+                  showWeight={pesiVariano(rest)}
                 />
               ))}
             </ul>
@@ -211,7 +278,7 @@ export function MarketScan({
       {/* Come si e' arrivati da queste inserzioni a quella fascia. Stava in
           una scheda a se', staccata dagli annunci di cui parla. */}
       {valuation.reasons.length > 0 ? (
-        <div className="mt-4 border-t border-line pt-3">
+        <div className="mt-4 border-t-2 border-line pt-3">
           <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
             Come siamo arrivati alla fascia
           </p>
@@ -240,11 +307,11 @@ export function MarketScan({
       ) : null}
 
       {hasMarketRead ? (
-        <p className="mt-4 border-t border-line pt-3 text-sm text-muted">
+        <p className="mt-4 border-t-2 border-line pt-3 text-sm text-muted">
           Domanda {DEMAND_LABELS[market.demand]} · {LIQUIDITY_LABELS[market.liquidity]}
         </p>
       ) : (
-        <p className="mt-4 border-t border-line pt-3 text-xs text-muted">
+        <p className="mt-4 border-t-2 border-line pt-3 text-xs text-muted">
           Domanda e tempi di vendita non osservati: servirebbero le vendite concluse, e non esiste
           una fonte gratuita che ce le dia.
         </p>

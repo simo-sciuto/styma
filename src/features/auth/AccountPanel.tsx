@@ -132,7 +132,7 @@ export function AccountPanel() {
               autoComplete="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="w-full rounded-lg border border-line bg-background px-3 py-2 text-base outline-none focus:border-accent"
+              className="w-full rounded-lg border-2 border-line bg-background px-3 py-2 text-base outline-none focus:border-accent"
             />
           </Field>
           <Field label="Password" hint={linking ? 'Almeno 8 caratteri.' : undefined}>
@@ -141,7 +141,7 @@ export function AccountPanel() {
               autoComplete={linking ? 'new-password' : 'current-password'}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-lg border border-line bg-background px-3 py-2 text-base outline-none focus:border-accent"
+              className="w-full rounded-lg border-2 border-line bg-background px-3 py-2 text-base outline-none focus:border-accent"
             />
           </Field>
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { Card } from '@/components/ui';
+import { Disclosure } from '@/components/ui';
 import { AUTHENTICITY_METER, AUTHENTICITY_LABELS } from '@/lib/format';
 import type { Authenticity as AuthenticityData } from '@/schemas/identification';
 
@@ -27,22 +27,19 @@ export function Authenticity({ authenticity }: { authenticity: AuthenticityData 
   const hasConcerns = concerns.length > 0;
 
   return (
-    <Card>
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
-          Quanto e’ sicuro che sia questo
-        </p>
-        <p className={`text-sm font-medium ${hasConcerns ? 'text-warn' : ''}`}>
-          {AUTHENTICITY_LABELS[level]}
-        </p>
-      </div>
-
-      <div className="mt-2 flex gap-1" aria-hidden>
+    <Disclosure
+      summary={`Quanto e’ sicuro che sia questo: ${AUTHENTICITY_LABELS[level]}`}
+    >
+      {/* La barra a quattro tacche non si riempie mai del tutto: piena si
+          leggerebbe come «certo», e la certezza qui non e' fra le risposte
+          disponibili. Le tacche vuote sono un contorno, non un pieno — un
+          pieno le renderebbe indistinguibili da quelle accese. */}
+      <div className="flex gap-1.5" aria-hidden>
         {[0, 1, 2, 3].map((step) => (
           <span
             key={step}
-            className={`h-1.5 flex-1 rounded-full ${
-              step < filled ? (hasConcerns ? 'bg-warn' : 'bg-accent') : 'bg-line'
+            className={`h-2.5 flex-1 rounded-[0.2rem] border-2 border-line ${
+              step < filled ? (hasConcerns ? 'bg-warn' : 'bg-accent-vivid') : ''
             }`}
           />
         ))}
@@ -51,7 +48,7 @@ export function Authenticity({ authenticity }: { authenticity: AuthenticityData 
       {/* Cosa non torna sta in cima: e' l'unica parte che puo' cambiare la
           decisione di chi sta per pagare. */}
       {hasConcerns ? (
-        <div className="mt-4 rounded-2xl bg-warn-soft p-4">
+        <div className="mt-4 rounded-block border-2 border-line bg-warn-soft p-4">
           <p className="text-xs font-medium text-warn">Cosa non torna</p>
           <ul className="mt-1.5 space-y-1.5 text-sm">
             {concerns.map((concern) => (
@@ -79,7 +76,7 @@ export function Authenticity({ authenticity }: { authenticity: AuthenticityData 
       ) : null}
 
       {toVerify.length > 0 ? (
-        <div className="mt-4 border-t border-line pt-3">
+        <div className="mt-4 border-t-2 border-line pt-3">
           <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
             Cosa guardare per esserne piu’ sicuro
           </p>
@@ -97,6 +94,6 @@ export function Authenticity({ authenticity }: { authenticity: AuthenticityData 
         Nessuna di queste righe dice che il pezzo e’ autentico, e nemmeno che non lo e’: da una
         fotografia non si stabilisce. Dice quanta evidenza si vede — e dove cercarne altra.
       </p>
-    </Card>
+    </Disclosure>
   );
 }

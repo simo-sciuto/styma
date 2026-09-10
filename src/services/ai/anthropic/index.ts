@@ -4,7 +4,11 @@ import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 
 import { IdentificationSchema, type Identification } from '@/schemas/identification';
 import { groundAuthenticity } from '../grounding';
-import { MarketResearchSchema, type MarketResearch } from '@/schemas/market';
+import {
+  MarketResearchSchema,
+  ModelMarketResearchSchema,
+  type MarketResearch,
+} from '@/schemas/market';
 import { ListingCopySchema } from '@/schemas/listing';
 import { toStrictToolSchema } from '@/lib/json-schema';
 import { aiConfig, type ResearchLane } from '../config';
@@ -360,7 +364,12 @@ export class AnthropicProvider implements ObjectIntelligenceProvider {
         description:
           'Consegna i comparabili trovati e la lettura del mercato. Chiamalo una sola volta, alla fine della ricerca.',
         strict: true,
-        input_schema: toStrictToolSchema(MarketResearchSchema) as Anthropic.Tool['input_schema'],
+        // Lo schema senza `imageUrl`: quel campo lo riempiono le fonti
+        // strutturate, e chiederlo al modello sarebbe invitarlo a
+        // inventare un URL. La lettura resta su MarketResearchSchema.
+        input_schema: toStrictToolSchema(
+          ModelMarketResearchSchema,
+        ) as Anthropic.Tool['input_schema'],
       },
     ];
 

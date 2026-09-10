@@ -71,13 +71,19 @@ test('dall’analisi all’archivio, passando per la vendita', async ({ page }) 
   await analizza.click();
 
   // — L'identificazione arriva dalle risposte registrate, il mercato da eBay —
-  await expect(page.getByText('Identificato')).toBeVisible({ timeout: 150_000 });
+  await expect(page.getByText('Quanto costa', { exact: true })).toBeVisible({ timeout: 150_000 });
   await expect(page.getByRole('heading', { level: 1 })).toContainText(/Olivetti|Valentine/i);
 
   // — Si salva da sola, e l'indirizzo diventa il suo ————————————————
+  //
+  // L'indirizzo e' `/analizza?oggetto=<id>`: stessa rotta, parametro diverso.
+  // Riscrivere il percorso verso `/inventario/<id>`, come si faceva prima,
+  // convinceva il router App Router di stare su un'altra rotta, e la prima
+  // azione server successiva — cioe' il primo carattere del prezzo qui sotto
+  // — rigenerava quella, buttando via il risultato appena letto.
   await expect(page.getByText(/Salvato in inventario/)).toBeVisible({ timeout: 60_000 });
-  await expect(page).toHaveURL(/\/inventario\/[0-9a-f-]{36}$/, { timeout: 30_000 });
-  itemId = new URL(page.url()).pathname.split('/').pop()!;
+  await expect(page).toHaveURL(/\/analizza\?oggetto=[0-9a-f-]{36}$/, { timeout: 30_000 });
+  itemId = new URL(page.url()).searchParams.get('oggetto')!;
 
   // — Il prezzo del banco produce un verdetto, senza tornare al server ——
   const prezzo = page.getByLabel('Prezzo richiesto dal venditore');
@@ -85,11 +91,20 @@ test('dall’analisi all’archivio, passando per la vendita', async ({ page }) 
   await prezzo.fill('30');
   await expect(page.getByText(/^(Compralo|Tratta|Lascia stare)$/)).toBeVisible();
 
+  // — E il verdetto resta li': la pagina non se ne va da sola ————————
+  await page.waitForTimeout(3_000);
+  await expect(page).toHaveURL(/\/analizza\?oggetto=/);
+  await expect(page.getByText(/^(Compralo|Tratta|Lascia stare)$/)).toBeVisible();
+
   // — E sopravvive a una ricarica: e' il punto di tutta la fase F3 ————
   await attendiPrezzoScritto(itemId);
   await page.reload();
   await expect(page.getByRole('heading', { level: 1 })).toContainText(/Olivetti|Valentine/i);
   await expect(page.getByLabel('Prezzo richiesto dal venditore')).toHaveValue('30');
+
+  // — Dall'analisi alla scheda dell'oggetto, con un collegamento vero ——
+  await page.getByRole('link', { name: /Registra com/ }).click();
+  await expect(page).toHaveURL(new RegExp(`/inventario/${itemId}$`));
 
   // — L'ho comprato ————————————————————————————————————————————
   await expect(page.getByText('Com’e’ andata')).toBeVisible();

@@ -82,7 +82,7 @@ function InventorySummaryBlock({ summary }: { summary: InventorySummary }) {
           quando c'e' almeno una vendita — quattro trattini non sono un
           cruscotto, sono un rimprovero. */}
       {sold > 0 ? (
-        <div className="mt-5 grid grid-cols-2 gap-4 border-t border-line pt-5">
+        <div className="mt-5 grid grid-cols-2 gap-4 border-t-2 border-line pt-5">
           <Stat
             label="Guadagnato davvero"
             value={realizedMarginEur !== null ? formatEur(realizedMarginEur) : '—'}
@@ -200,7 +200,7 @@ export default async function InventoryPage({ searchParams }: PageProps<'/invent
                     si scorre per trovare qualcosa, non si contempla. */}
                 <Link
                   href={`/inventario/${item.id}`}
-                  className="group flex gap-3 overflow-hidden rounded-block border border-line bg-surface p-3 transition hover:border-tile-teal hover:shadow-sm sm:block sm:p-0"
+                  className="group flex gap-3 overflow-hidden rounded-block border-2 border-line bg-surface p-3 transition-shadow hover:shadow-pop-sm sm:block sm:p-0"
                 >
                   <div className="aspect-square w-24 shrink-0 overflow-hidden rounded-xl bg-surface-warm sm:aspect-4/3 sm:w-full sm:rounded-none">
                     {coverUrl ? (

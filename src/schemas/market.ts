@@ -51,6 +51,17 @@ export const ComparableSchema = z.object({
   condition: ConditionSchema.describe('Stato dichiarato del comparabile'),
   matchLevel: MatchLevelSchema.describe('Quanto e’ vicino all’oggetto analizzato'),
   notes: z.string().describe('Perché e’ o non e’ un buon comparabile'),
+  /**
+   * La foto dell'inserzione. Arriva solo dalle fonti strutturate: eBay la
+   * restituisce su ogni inserzione (misurato: 20 su 20) e finora la
+   * buttavamo via.
+   *
+   * E' facoltativa e resta fuori dallo schema che vede il modello — vedi
+   * `modelFacing` qui sotto. Un comparabile e' credibile per il prezzo e il
+   * titolo, non per l'immagine, e chiedere al modello di trovarne una
+   * vorrebbe dire invitarlo a inventare un URL.
+   */
+  imageUrl: z.string().nullable().optional(),
 });
 
 export type Comparable = z.infer<typeof ComparableSchema>;
@@ -65,3 +76,22 @@ export const MarketResearchSchema = z.object({
 });
 
 export type MarketResearch = z.infer<typeof MarketResearchSchema>;
+
+/**
+ * Lo stesso schema, ma senza i campi che il modello non deve compilare.
+ *
+ * Ogni campo aggiunto allo schema che il modello vede non si paga in token,
+ * si paga in attenzione — attenzione tolta a marca e modello, da cui dipende
+ * tutto il resto (un'identificazione sbagliata non degrada la stima, la
+ * sostituisce senza dirlo). `imageUrl` lo riempiono le fonti strutturate,
+ * quindi al modello non lo si chiede; e se non glielo si chiede, non glielo
+ * si nomina nemmeno.
+ *
+ * Questo e' lo schema da passare al modello. `MarketResearchSchema` resta
+ * quello con cui l'applicazione legge e valida tutto il resto.
+ */
+export const ModelMarketResearchSchema = MarketResearchSchema.extend({
+  comparables: z
+    .array(ComparableSchema.omit({ imageUrl: true }))
+    .describe('Comparabili realmente trovati. Vuoto se non ne esistono.'),
+});

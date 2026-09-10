@@ -34,21 +34,25 @@ const LINKS = [
 ] as const;
 
 /**
- * Barra di navigazione fissa e fluttuante, come sul sito di riferimento:
- * un pillolone che non scompare mai, cosi' le tre pagine dell'app si
- * raggiungono da ovunque invece che tornando indietro un passo alla volta.
+ * Barra di navigazione fissa e fluttuante: non scompare mai, cosi' le tre
+ * pagine dell'app si raggiungono da ovunque invece che tornando indietro un
+ * passo alla volta.
+ *
+ * Ha il tratto e l'ombra dei blocchi, non piu' la pillola dal bordo tenue:
+ * galleggia sopra il contenuto, e con un contorno appena accennato sembrava
+ * appartenere alla pagina sotto invece che stare davanti a lei.
  */
 export function Header() {
   const pathname = usePathname();
 
   return (
     <header className="sticky top-3 z-40 px-4 sm:px-5">
-      <nav className="mx-auto flex w-full max-w-2xl items-center justify-between gap-1 rounded-full border border-line bg-surface/95 px-1.5 py-1.5 shadow-sm backdrop-blur sm:px-2 sm:py-2">
+      <nav className="mx-auto flex w-full max-w-2xl items-center justify-between gap-1 rounded-block border-2 border-line bg-surface/95 px-1.5 py-1.5 shadow-pop-sm backdrop-blur sm:px-2 sm:py-2">
         <Link
           href="/"
-          className="flex shrink-0 items-center gap-1.5 rounded-full px-2 py-2 font-mono text-[11px] uppercase tracking-[0.16em] text-foreground sm:gap-2 sm:px-3 sm:text-xs sm:tracking-[0.2em]"
+          className="flex shrink-0 items-center gap-1.5 rounded-[0.5rem] px-2 py-2 font-mono text-[11px] uppercase tracking-[0.16em] text-foreground sm:gap-2 sm:px-3 sm:text-xs sm:tracking-[0.2em]"
         >
-          <span className="h-2 w-2 rounded-full bg-tile-teal" aria-hidden />
+          <span className="h-2.5 w-2.5 rounded-[0.2rem] border-2 border-line bg-tile-teal" aria-hidden />
           {/* Sotto i 360px logo, due voci e account non ci stanno in fila:
               resta il pallino, che porta a casa lo stesso. */}
           <span className="hidden min-[360px]:inline">STYMA</span>
@@ -62,10 +66,10 @@ export function Header() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`rounded-full px-2.5 py-2 text-[13px] font-medium transition sm:px-3.5 sm:text-sm ${
+                className={`rounded-[0.5rem] px-2.5 py-2 text-[13px] font-semibold transition sm:px-3.5 sm:text-sm ${
                   active
-                    ? 'bg-tile-teal text-tile-cream'
-                    : 'text-muted hover:bg-accent-soft hover:text-foreground'
+                    ? 'border-2 border-line bg-tile-teal text-tile-cream'
+                    : 'border-2 border-transparent text-muted hover:bg-accent-soft hover:text-foreground'
                 }`}
               >
                 {link.label}
@@ -76,10 +80,10 @@ export function Header() {
           <Link
             href="/account"
             aria-label="Account"
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition ${
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.5rem] transition ${
               pathname === '/account'
-                ? 'bg-tile-teal text-tile-cream'
-                : 'text-muted hover:bg-accent-soft hover:text-foreground'
+                ? 'border-2 border-line bg-tile-teal text-tile-cream'
+                : 'border-2 border-transparent text-muted hover:bg-accent-soft hover:text-foreground'
             }`}
           >
             <svg

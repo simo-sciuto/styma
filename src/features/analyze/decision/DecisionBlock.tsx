@@ -2,19 +2,27 @@
 
 import type { FlipAssessment, Valuation } from '@/schemas/analysis';
 import { RECOMMENDATION_STYLES, formatEur, formatRange } from '@/lib/format';
-import { Disclosure } from '@/components/ui';
 import { PriceZones } from './PriceZones';
 
 /**
- * Il verdetto e' l'unico blocco a colore pieno della pagina, e solo quando e'
- * un si': l'occasione entusiasmante e' quella. "Tratta" e "lascia stare" si
- * leggono benissimo su un fondo tenue, e gridarli darebbe a ogni oggetto la
- * stessa temperatura.
+ * Tutti e tre i verdetti a colore pieno, adesso, e non e' un ripensamento
+ * estetico.
+ *
+ * Prima solo il si' prendeva il colore: "tratta" e "lascia stare" stavano su
+ * un fondo tenue, perche' la palette di allora non aveva un giallo e un rosso
+ * che reggessero del testo sopra — gridarli avrebbe voluto dire dare a ogni
+ * oggetto la stessa temperatura. Con tre colori scelti per portare
+ * l'inchiostro nero il ruolo cambia: il colore non dice piu' «quanto essere
+ * entusiasti», dice *quale* dei tre e' — e a un metro di distanza, in mano,
+ * al sole, e' l'unica cosa che si legge di questa pagina.
+ *
+ * Chi guarda ha il venditore davanti che aspetta. Deve poter distinguere il
+ * verde dal rosso senza mettere a fuoco.
  */
 const VERDICT_TONE: Record<string, string> = {
-  BUY: 'bg-accent-vivid text-accent-on-vivid',
-  MAYBE: 'bg-warn-soft text-warn',
-  PASS: 'bg-danger-soft text-danger',
+  BUY: 'bg-verdict-buy text-tile-ink',
+  MAYBE: 'bg-verdict-maybe text-tile-ink',
+  PASS: 'bg-verdict-pass text-tile-ink',
 };
 
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
@@ -58,7 +66,10 @@ export function DecisionBlock({
   const restaInMano = thresholds.maybeUpTo;
 
   return (
-    <section className="rounded-block border border-line bg-surface p-5 sm:p-6">
+    /* Livello 1: l'unico blocco della pagina con bordo spesso e ombra piena.
+       E' la risposta, e deve staccarsi da tutto il resto anche visto di
+       sfuggita, prima ancora di essere letto. */
+    <section className="rounded-block border-[3px] border-line bg-surface p-5 shadow-pop sm:p-6">
       <label className="block">
         {/* "Quanto te lo chiedono" era gergo da mercatino: chiarissimo per
             chi ci sta dentro, opaco per tutti gli altri. "Quanto costa" e' la
@@ -66,7 +77,7 @@ export function DecisionBlock({
         <span className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
           Quanto costa
         </span>
-        <span className="mt-1.5 flex items-center gap-2 rounded-2xl border border-line bg-background px-4 py-2.5 focus-within:border-accent">
+        <span className="mt-1.5 flex items-center gap-2 rounded-block border-2 border-line bg-background px-4 py-2.5 focus-within:border-accent">
           <span className="text-xl text-muted">€</span>
           <input
             type="number"
@@ -84,15 +95,18 @@ export function DecisionBlock({
 
       {decision ? (
         <div
-          className={`mt-4 rounded-block px-5 py-4 ${VERDICT_TONE[decision.recommendation]}`}
+          className={`mt-4 rounded-block border-2 border-line px-5 py-5 ${VERDICT_TONE[decision.recommendation]}`}
         >
-          <p className="text-[clamp(1.75rem,1.5rem+1.4vw,2.5rem)] font-semibold leading-none tracking-tight">
+          <p className="text-[clamp(2rem,1.6rem+2vw,3rem)] font-semibold leading-none tracking-tighter">
             {RECOMMENDATION_STYLES[decision.recommendation].label}
           </p>
         </div>
       ) : (
-        <p className="mt-4 rounded-block bg-surface-warm px-5 py-4 text-sm text-muted">
-          Scrivi quanto costa e qui sopra ti diciamo se conviene.
+        /* Lo spazio del verdetto e' occupato anche da spento: se comparisse
+           dal nulla, la prima cifra digitata spingerebbe giu' tutto quello
+           che sta sotto mentre il pollice e' ancora sulla tastiera. */
+        <p className="mt-4 rounded-block border-[3px] border-dashed border-line px-5 py-5 text-sm text-muted">
+          Scrivi quanto costa e qui ti diciamo se conviene.
         </p>
       )}
 
@@ -116,12 +130,14 @@ export function DecisionBlock({
       </div>
 
       {/*
-        La riga che tiene insieme i due numeri. Senza, la pagina mostra una
-        fascia larga e un prezzo massimo basso e lascia a chi legge il compito
-        di indovinare il perche'.
+        La riga che tiene insieme i due numeri resta, e resta aperta: senza,
+        la pagina mostra una fascia larga e un prezzo massimo basso e lascia a
+        chi legge il compito di indovinare il perche'. Il conto vero e' subito
+        sotto, in un blocco suo — qui c'era anche una seconda copia, chiusa in
+        un accordion, che diceva le stesse cose in colonna.
       */}
       {restaInMano !== null ? (
-        <p className="mt-4 border-t border-line pt-4 text-sm leading-relaxed">
+        <p className="mt-4 border-t-2 border-line pt-4 text-sm leading-relaxed">
           Sembrano due numeri lontani, e c’e’ un motivo: di{' '}
           {formatEur(breakdown.expectedSalePrice)} che incassi vendendolo, in mano te ne restano{' '}
           <strong>{formatEur(restaInMano)}</strong> — il resto se ne va in commissioni, spedizione e
@@ -129,43 +145,6 @@ export function DecisionBlock({
           {formatEur(restaInMano)} ci stanno sia quanto paghi sia quanto ci guadagni.
         </p>
       ) : null}
-
-      <div className="mt-3">
-        <Disclosure summary="Il conto, riga per riga">
-          <dl className="space-y-1.5 font-mono text-sm">
-            <div className="flex justify-between gap-3">
-              <dt>Lo rivendi a</dt>
-              <dd>{formatEur(breakdown.expectedSalePrice, { precise: true })}</dd>
-            </div>
-            <div className="flex justify-between gap-3 text-muted">
-              <dt>− Commissioni</dt>
-              <dd>{formatEur(breakdown.fees, { precise: true })}</dd>
-            </div>
-            <div className="flex justify-between gap-3 text-muted">
-              <dt>− Spedizione e imballo</dt>
-              <dd>{formatEur(breakdown.shipping, { precise: true })}</dd>
-            </div>
-            <div className="flex justify-between gap-3 text-muted">
-              <dt>− Tenuto da parte per sicurezza</dt>
-              <dd>{formatEur(breakdown.riskBuffer, { precise: true })}</dd>
-            </div>
-            <div className="flex justify-between gap-3 text-muted">
-              <dt>− Quanto ci guadagni</dt>
-              <dd>{formatEur(breakdown.targetProfit, { precise: true })}</dd>
-            </div>
-            <div className="flex justify-between gap-3 border-t border-line pt-1.5 font-semibold">
-              <dt>Paga fino a</dt>
-              <dd>{thresholds.buyUpTo !== null ? formatEur(thresholds.buyUpTo) : '—'}</dd>
-            </div>
-          </dl>
-          <p className="mt-3 font-sans text-xs text-muted">
-            Il guadagno e’ meta’ di quello che spendi, sempre: che l’oggetto costi dieci euro o
-            cinquecento, la richiesta e’ la stessa. Quello che teniamo da parte, invece, cambia con
-            quanto siamo sicuri — una stima fragile ti abbassa il prezzo massimo, cosi’ l’incertezza
-            la paghi in trattativa e non dopo.
-          </p>
-        </Disclosure>
-      </div>
     </section>
   );
 }

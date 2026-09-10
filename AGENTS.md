@@ -269,6 +269,57 @@ sono ancora aperte.
   Ogni indicatore parte con 120 ms di ritardo — un'azione che dura un battito non deve produrre un
   lampo — e occupa spazio anche da spento, perche' un puntino che appare non deve spostare
   l'etichetta sotto il dito.
+- **Una pagina ha tre livelli, non undici blocchi pari.** La pagina risultato
+  aveva undici schede con lo stesso bordo, lo stesso fondo e lo stesso raggio:
+  il conto del flip pesava quanto «Cos'e', in breve», e chi legge doveva
+  decidere da solo cosa guardare — cioe' fare il lavoro che il prodotto esiste
+  per fare. `Card` prende un livello: **1** bordo spesso, ombra piena e colore
+  (la risposta), **2** bordo spesso e fondo chiaro (le prove), **3** nessuna
+  scatola, solo un filo (il resto). Il tratto e l'ombra non sono uno stile:
+  sono l'unico linguaggio in cui tre livelli si distinguono da lontano e
+  sfocati, che e' la condizione d'uso vera — un telefono, in mano, al sole,
+  col venditore che aspetta. L'ombra e' netta e senza sfocatura apposta: una
+  sfumata darebbe tre livelli distinguibili solo da vicino, cioe' nessuno.
+- **Un conto stampato due volte non e' trasparenza, e' un invito a non
+  fidarsi.** La pagina mostrava la sottrazione che porta al prezzo massimo e,
+  venti righe sotto, quella che porta al guadagno — stessa forma tipografica,
+  due domande diverse, e chi legge conclude che una delle due sbaglia.
+  Guardandole vicine si vede che le prime tre righe sono identiche: da
+  `valore atteso − commissioni − spedizione` in poi cambia solo cosa sottrai.
+  `Ledger` scrive il tronco una volta e ne fa uscire i due rami. Ogni volta
+  che due blocchi mostrano la stessa aritmetica con un termine diverso, e'
+  un blocco solo che non e' stato ancora scritto come tale.
+- **L'indirizzo di una pagina non cambia rotta con `replaceState`.** Il
+  risultato dell'analisi si riscriveva l'indirizzo in `/inventario/<id>`,
+  con un commento che spiegava che non era una navigazione. In App Router lo
+  e': `pushState` e `replaceState` sono agganciati al router
+  (`node_modules/next/dist/docs/01-app/01-getting-started/04-linking-and-navigating.md`),
+  e da quel momento il router crede di stare li'. Alla prima azione server
+  successiva — il primo carattere digitato nel prezzo — rigenerava *quella*
+  rotta: il risultato spariva dietro uno scheletro e il prezzo appena scritto
+  si perdeva nella corsa col salvataggio ritardato. Il bug e' rimasto
+  invisibile per settimane perche' non scattava subito. Si riscrivono solo i
+  **parametri di ricerca**, restando sulla stessa rotta: l'analisi vive a
+  `/analizza?oggetto=<id>`, e la scheda dell'oggetto si raggiunge con un
+  collegamento vero.
+- **Un numero che non varia mai non va mostrato.** Accanto a ogni comparabile
+  c'era «peso 1.00», su tutte le righe: sembrava una discriminazione e non ne
+  faceva nessuna. La ragione e' misurata — eBay dichiara la condizione su
+  **3 inserzioni su 20**, quindi uno dei due fattori del peso e' una costante
+  sulle altre 17 — e la cura e' mostrarlo solo quando cambia *dentro l'elenco
+  che si sta guardando*, non nell'insieme: le quattro righe aperte possono
+  valere tutte uguale mentre fra i settantaquattro piegati il peso varia.
+  Una colonna di numeri identici insegna a saltare la riga in cui sta, e la
+  lezione vale anche la volta in cui quel numero conta.
+- **Un comparabile si controlla con gli occhi, quindi porta la sua foto.** La
+  Browse API la restituisce su 20 inserzioni su 20 — misurato in produzione,
+  insieme a `itemLocation` e `shippingOptions` — e la buttavamo via, lasciando
+  quattro righe di titolo eBay scritto per un motore di ricerca. Distinguere
+  «questo e' il mio oggetto» da «questa e' un'altra cosa» e' l'unico controllo
+  sui comparabili che il nostro codice non sa fare, e senza immagine non lo
+  puo' fare nemmeno chi legge. `imageUrl` resta pero' fuori dallo schema che
+  vede il modello (`ModelMarketResearchSchema`): un campo in piu' li' non
+  costa token, costa attenzione tolta a marca e modello.
 - **Due utility di display sullo stesso elemento non si combinano.** `inline-block hidden` non
   nasconde niente: vince quella che nel CSS generato di Tailwind viene dopo, non quella scritta per
   ultima nella classe. Il punto d'attesa e' rimasto acceso su ogni bottone finche' una schermata non

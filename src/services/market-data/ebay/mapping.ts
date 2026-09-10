@@ -38,6 +38,17 @@ export const EbayItemSummarySchema = z.object({
   buyingOptions: z.array(z.string()).optional(),
   bidCount: z.number().optional(),
   currentBidPrice: z.object({ value: z.string(), currency: z.string() }).optional(),
+  /**
+   * La foto dell'inserzione. Misurata sulla Browse API in produzione: c'e'
+   * su 20 inserzioni su 20, e finora la scartavamo. `image` porta la
+   * miniatura (s-l225), `thumbnailImages` la versione grande — ci serve la
+   * prima, e' quella giusta per una riga di elenco.
+   *
+   * Facoltativa lo stesso: uno schema severo su un campo che potrebbe non
+   * arrivare non protegge, fa sparire l'inserzione senza una riga di log —
+   * gia' successo con `price` sulle aste.
+   */
+  image: z.object({ imageUrl: z.string() }).optional(),
 });
 
 export const EbaySearchResponseSchema = z.object({
@@ -393,6 +404,7 @@ export function toComparable(raw: unknown, context: ComparableContext): Comparab
     title: item.title,
     source: 'eBay',
     url: item.itemWebUrl,
+    imageUrl: item.image?.imageUrl ?? null,
     price,
     currency,
     kind: bidding ? 'bid' : 'asking',
