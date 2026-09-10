@@ -10,6 +10,7 @@ import { DecisionBlock } from './decision/DecisionBlock';
 import { ObjectEvidence } from './identity/ObjectEvidence';
 import { MarketScan } from './market/MarketScan';
 import { RiskList } from './risks/RiskList';
+import { FlipEconomics } from './flip/FlipEconomics';
 import {
   formatEur,
 } from '@/lib/format';
@@ -163,32 +164,11 @@ export function ResultView({
             </ul>
           </div>
 
-          {decision ? (
-            <dl className="mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-line p-4 text-sm">
-              <div>
-                <dt className="text-muted">Vendita attesa</dt>
-                <dd className="font-mono">{formatEur(decision.economics.expectedSalePrice)}</dd>
-              </div>
-              <div>
-                <dt className="text-muted">Commissioni</dt>
-                <dd className="font-mono">−{formatEur(decision.economics.marketplaceFees, { precise: true })}</dd>
-              </div>
-              <div>
-                <dt className="text-muted">Spedizione</dt>
-                <dd className="font-mono">−{formatEur(decision.economics.shipping)}</dd>
-              </div>
-              <div>
-                <dt className="text-muted">Margine atteso</dt>
-                <dd className="font-mono">
-                  {formatEur(decision.economics.expectedProfit, { precise: true })}
-                  {decision.economics.roi !== null
-                    ? ` · ROI ${Math.round(decision.economics.roi * 100)}%`
-                    : ''}
-                </dd>
-              </div>
-            </dl>
-          ) : null}
         </Card>
+      ) : null}
+
+      {decision && valuation.available ? (
+        <FlipEconomics economics={decision.economics} valuation={valuation} />
       ) : null}
 
       {valuation.available ? (

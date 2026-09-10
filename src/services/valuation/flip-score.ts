@@ -12,7 +12,13 @@ import { flipConfig } from './config';
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 
-function economicsAt(purchasePrice: number, expectedSalePrice: number): Economics {
+/**
+ * I conti a un prezzo di acquisto e a un prezzo di vendita. Esportata perche'
+ * l'interfaccia mostra gli stessi numeri anche agli estremi della fascia —
+ * quanto resta se vendi al minimo, quanto se vendi al massimo — e riscrivere
+ * la formula la' significherebbe avere due aritmetiche che possono divergere.
+ */
+export function economicsAt(purchasePrice: number, expectedSalePrice: number): Economics {
   const marketplaceFees = expectedSalePrice * flipConfig.marketplaceFeeRate;
   const shipping = flipConfig.defaultShippingCost;
   const expectedProfit = expectedSalePrice - purchasePrice - marketplaceFees - shipping;

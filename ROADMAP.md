@@ -18,15 +18,16 @@ falso — gia' successo una volta.
 
 ## Dove siamo
 
-**Fase E — P0, il motore decisionale.** 5 passi su 6 completati.
+**Fase E — P0, il motore decisionale.** 6 passi su 6. Manca solo E6, che e' il primo
+cambio di contratto.
 
 ```
 E1 ████████████████████ blocco decisione            fatto
 E2 ████████████████████ prove dell'identificazione  fatto
 E3 ████████████████████ mercato come prova          fatto
 E4 ████████████████████ rischi in una sezione sola   fatto
-E5 ░░░░░░░░░░░░░░░░░░░░ economia del flip            prossimo
-E6 ░░░░░░░░░░░░░░░░░░░░ prima di comprare + guida foto
+E5 ████████████████████ economia del flip            fatto
+E6 ░░░░░░░░░░░░░░░░░░░░ prima di comprare + guida foto  prossimo
 ```
 
 ---
@@ -98,14 +99,34 @@ E6 ░░░░░░░░░░░░░░░░░░░░ prima di comprar
   rilevato» da «nessun rischio».
 - Funzione pura, 10 test. `ResultView` a 209 righe.
 
+### E5 — economia del flip (commit successivo)
+- Il conto si legge dall'alto in basso come lo farebbe chi rivende: lo
+  rivendi a, meno commissioni, meno spedizione, meno quanto hai pagato, ti
+  resta. Prima erano quattro celle con «margine atteso» come etichetta di un
+  numero che nessuno aveva visto nascere.
+- Aggiunti i due estremi della fascia: quanto resta vendendo al minimo e al
+  massimo. Un margine che regge anche al minimo e' un'altra cosa rispetto a
+  uno che esiste solo vendendo al massimo.
+- `economicsAt` esportata da `flip-score`: l'interfaccia usa la stessa
+  aritmetica del motore invece di riscriverla e rischiare che divergano.
+- Dichiarato che commissioni e spedizione sono stime medie, non tariffe lette
+  dal marketplace di chi legge.
+- `ResultView` a 189 righe, da 471 all'inizio della fase.
+
+**Ordine finale della pagina risultato:** identita' → decisione → prove
+dell'identificazione → perche' quel verdetto → il conto → il mercato →
+i rischi → la storia.
+
 ---
 
 ## Prossimo
 
-### E5 — economia del flip
-Compri a / vendi a / costi / profitto / ROI come blocco leggibile invece che
-come tabella a quattro celle in fondo alla card del punteggio. I numeri ci
-sono gia' tutti in `decision.economics`.
+### E6 — prima di comprare, e guida fotografica
+Ultimo P0, e il primo cambio di contratto: serve un campo nuovo nello schema
+di identificazione per i controlli fisici da fare davanti all'oggetto
+(«guarda il fondo», «controlla le giunture»), che `missingShots` non copre —
+quello parla di foto, non di cosa toccare con le mani. Trascina prompt e le
+tre fixture registrate.
 
 ---
 
