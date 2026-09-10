@@ -105,7 +105,35 @@ const GENERIC_TOKENS = new Set([
   'vintage', 'anni', 'anno', 'style', 'stile', 'originale', 'original',
   'nuovo', 'nuova', 'new', 'usato', 'usata', 'used', 'con', 'per', 'with',
   'from', 'della', 'delle', 'dello', 'degli', 'del', 'the', 'and',
+  // Tipi di oggetto che non dicono che tipo di oggetto sia: quando il modello
+  // non sa dare di meglio, pretenderli nel titolo scarterebbe tutto.
+  'oggetto', 'articolo', 'item', 'pezzo', 'cosa',
 ]);
+
+/**
+ * Se il titolo dice che si tratta dello stesso tipo di oggetto.
+ *
+ * La marca da sola non basta a fare un comparabile: una polo Fred Perry e un
+ * maglione Fred Perry hanno la stessa marca, la stessa etichetta nel titolo, e
+ * due prezzi che non hanno niente da dirsi. Quando il modello non e' leggibile
+ * — che e' la norma sull'abbigliamento — la marca e' l'unica prova che eBay
+ * puo' confermare, e senza questo controllo il maglione entrerebbe nella
+ * stima della polo con lo stesso peso di un'altra polo.
+ *
+ * Basta una parola in comune: "lampada da tavolo" contro "lampada da terra"
+ * resta un comparabile ragionevole, "polo" contro "maglione" no.
+ */
+export function mentionsObjectType(title: string, objectType: string | null): boolean {
+  const tokens = normalize(objectType ?? '')
+    .split(' ')
+    .filter((token) => token.length >= 3 && !GENERIC_TOKENS.has(token));
+  // Nessun tipo utilizzabile: non si rifiuta alla cieca cio' che non si sa
+  // verificare, si lascia decidere al resto della catena.
+  if (tokens.length === 0) return true;
+
+  const haystack = normalize(title);
+  return tokens.some((token) => haystack.includes(token));
+}
 
 /**
  * Se il titolo di un'inserzione ha almeno una parola in comune con la query
@@ -143,12 +171,16 @@ function toCurrency(raw: string): Currency | null {
  * accesso separato. Dichiararli "sold" perche' vengono da eBay sarebbe la
  * bugia piu' facile e piu' costosa da fare qui.
  */
-export function toComparable(
-  raw: unknown,
-  brand: string | null,
-  model: string | null,
-  query: string,
-): Comparable | null {
+/** Cio' che si sa dell'oggetto cercato, per giudicare un'inserzione trovata. */
+export type ComparableContext = {
+  brand: string | null;
+  model: string | null;
+  objectType: string | null;
+  /** La query che ha trovato questa inserzione. */
+  query: string;
+};
+
+export function toComparable(raw: unknown, context: ComparableContext): Comparable | null {
   const parsed = EbayItemSummarySchema.safeParse(raw);
   if (!parsed.success) return null;
 
@@ -159,11 +191,18 @@ export function toComparable(
   const currency = toCurrency(item.price.currency);
   if (currency === null) return null;
 
-  const matchLevel = inferMatchLevel(item.title, brand, model);
-  // Sotto exact/family/brand marca e modello hanno gia' confermato qualcosa.
-  // Solo a similar_category non c'e' nessuna prova che il titolo c'entri
-  // con cio' che cercavamo: e' l'unico caso in cui vale la pena controllare.
-  if (matchLevel === 'similar_category' && !isRelevantTitle(item.title, query)) {
+  const matchLevel = inferMatchLevel(item.title, context.brand, context.model);
+
+  // A exact_model e same_family il modello e' nel titolo: e' la prova migliore
+  // che esista, e nessun controllo sul tipo la migliora.
+  //
+  // A same_brand c'e' solo la marca, che non dice che tipo di oggetto sia.
+  // A similar_category non c'e' nemmeno quella. Sono i due livelli in cui il
+  // titolo va guardato davvero, ciascuno contro cio' che si puo' verificare.
+  if (matchLevel === 'same_brand' && !mentionsObjectType(item.title, context.objectType)) {
+    return null;
+  }
+  if (matchLevel === 'similar_category' && !isRelevantTitle(item.title, context.query)) {
     return null;
   }
 

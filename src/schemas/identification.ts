@@ -28,6 +28,18 @@ export type MarketPace = z.infer<typeof MarketPaceSchema>;
  */
 export const IdentificationSchema = z.object({
   name: z.string().describe('Nome dell’oggetto, come lo scriveresti in un annuncio'),
+  /**
+   * Il discriminante della ricerca dei comparabili, e per questo un campo a
+   * se' invece di una sfumatura di `category`: la categoria merceologica e'
+   * troppo larga per restringere una ricerca ("abbigliamento" non toglie un
+   * solo maglione da una ricerca di polo), e il nome e' una frase intera, che
+   * come query non trova niente.
+   */
+  objectType: z
+    .string()
+    .describe(
+      'Che cosa e’ l’oggetto, in una o due parole, come lo scriverebbe un venditore nel titolo di un annuncio: "polo", "maglione", "vaso", "lampada da tavolo", "reflex 35mm". Senza marca e senza aggettivi.',
+    ),
   category: z.string().describe('Categoria merceologica, es. "illuminazione", "ceramica", "orologi"'),
   brand: z.string().nullable().describe('Marca o produttore, null se non identificabile'),
   model: z.string().nullable().describe('Modello o famiglia di prodotto, null se non identificabile'),

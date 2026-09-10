@@ -119,6 +119,15 @@ Il PRD di riferimento e' `PROJECT_PRD.md`.
   vero. `isRelevantTitle` in `market-data/ebay/mapping.ts` richiede almeno una parola vera in
   comune con la query prima di accettarlo; scatta solo a `similar_category`, perche' altrove marca
   o modello sono gia' una prova migliore del testo libero.
+- **La marca da sola non fa un comparabile: serve anche il tipo di oggetto.** Segnalato dal vivo su
+  una polo Fred Perry — senza cartellino leggibile il modello e' `null`, la ricerca era
+  `marca + category`, e `category` ("abbigliamento") non toglie un solo maglione. Maglioni e
+  cappotti della stessa marca finivano nella stima della polo con lo stesso peso di un'altra polo.
+  `objectType` in `schemas/identification.ts` e' la parola che un venditore mette nel titolo
+  ("polo", "vaso", "lampada da tavolo"): entra nella query al posto della categoria, e
+  `mentionsObjectType` lo pretende nel titolo quando il livello e' `same_brand`, l'unico in cui la
+  marca e' l'unica prova. Basta una parola in comune — "lampada da terra" resta un comparabile di
+  "lampada da tavolo", un maglione contro una polo no.
 - **Una ricerca riusata si dichiara.** La cache riusa i comparabili di un modello gia' cercato
   (30 giorni per il modernariato, 14 per il medio, 7 per l'elettronica, che si deprezza a gradini).
   L'interfaccia dice sempre quanti giorni ha la ricerca: un dato riusato che sembra fresco e'

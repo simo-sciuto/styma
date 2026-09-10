@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { inferMatchLevel, isRelevantTitle, toComparable } from './mapping';
+import { inferMatchLevel, isRelevantTitle, mentionsObjectType, toComparable } from './mapping';
 
 const item = (overrides: Record<string, unknown> = {}) => ({
   title: 'Canon AE-1 fotocamera 35mm con obiettivo 50mm',
@@ -12,6 +12,15 @@ const item = (overrides: Record<string, unknown> = {}) => ({
 });
 
 const QUERY = 'Canon AE-1';
+
+/** Il contesto della fotocamera usata in quasi tutti i casi qui sotto. */
+const canon = (overrides: Partial<Parameters<typeof toComparable>[1]> = {}) => ({
+  brand: 'Canon' as string | null,
+  model: 'AE-1' as string | null,
+  objectType: 'reflex 35mm' as string | null,
+  query: QUERY,
+  ...overrides,
+});
 
 describe('somiglianza dedotta dal titolo', () => {
   it('marca e modello presenti: stesso modello', () => {
@@ -60,7 +69,7 @@ describe('pertinenza del titolo rispetto alla query', () => {
 
 describe('da inserzione eBay a comparabile', () => {
   it('legge prezzo, valuta, stato e URL', () => {
-    const comparable = toComparable(item(), 'Canon', 'AE-1', QUERY);
+    const comparable = toComparable(item(), canon());
 
     expect(comparable).toMatchObject({
       source: 'eBay',
@@ -75,42 +84,85 @@ describe('da inserzione eBay a comparabile', () => {
   it('e’ sempre un prezzo richiesto, mai una vendita', () => {
     // La Browse API restituisce inserzioni attive. Chiamarle "sold" perche'
     // vengono da eBay sarebbe la bugia piu' facile da fare qui.
-    expect(toComparable(item(), 'Canon', 'AE-1', QUERY)?.kind).toBe('asking');
-    expect(toComparable(item(), 'Canon', 'AE-1', QUERY)?.soldAt).toBeNull();
+    expect(toComparable(item(), canon())?.kind).toBe('asking');
+    expect(toComparable(item(), canon())?.soldAt).toBeNull();
   });
 
   it('scarta un’inserzione senza prezzo utilizzabile', () => {
-    expect(toComparable(item({ price: { value: '0', currency: 'EUR' } }), 'Canon', 'AE-1', QUERY)).toBeNull();
-    expect(toComparable(item({ price: { value: 'n/d', currency: 'EUR' } }), 'Canon', 'AE-1', QUERY)).toBeNull();
+    expect(toComparable(item({ price: { value: '0', currency: 'EUR' } }), canon())).toBeNull();
+    expect(toComparable(item({ price: { value: 'n/d', currency: 'EUR' } }), canon())).toBeNull();
   });
 
   it('scarta una valuta che non sappiamo convertire', () => {
-    expect(toComparable(item({ price: { value: '100', currency: 'JPY' } }), 'Canon', 'AE-1', QUERY)).toBeNull();
+    expect(toComparable(item({ price: { value: '100', currency: 'JPY' } }), canon())).toBeNull();
   });
 
   it('scarta un oggetto che non ha la forma attesa', () => {
-    expect(toComparable({ titolo: 'sbagliato' }, 'Canon', 'AE-1', QUERY)).toBeNull();
-    expect(toComparable(null, 'Canon', 'AE-1', QUERY)).toBeNull();
+    expect(toComparable({ titolo: 'sbagliato' }, canon())).toBeNull();
+    expect(toComparable(null, canon())).toBeNull();
   });
 
   it('traduce gli stati eBay, e "per ricambi" resta il peggiore', () => {
-    expect(toComparable(item({ conditionId: '1000' }), 'Canon', 'AE-1', QUERY)?.condition).toBe('mint');
-    expect(toComparable(item({ conditionId: '2000' }), 'Canon', 'AE-1', QUERY)?.condition).toBe('excellent');
-    expect(toComparable(item({ conditionId: '7000' }), 'Canon', 'AE-1', QUERY)?.condition).toBe('poor');
-    expect(toComparable(item({ conditionId: undefined }), 'Canon', 'AE-1', QUERY)?.condition).toBe('unknown');
+    expect(toComparable(item({ conditionId: '1000' }), canon())?.condition).toBe('mint');
+    expect(toComparable(item({ conditionId: '2000' }), canon())?.condition).toBe('excellent');
+    expect(toComparable(item({ conditionId: '7000' }), canon())?.condition).toBe('poor');
+    expect(toComparable(item({ conditionId: undefined }), canon())?.condition).toBe('unknown');
   });
 
   it('scarta un’inserzione fuori tema quando non c’e’ marca ne’ modello a garantire', () => {
     // Il caso vero: senza marca ne' modello, "similar_category" era l'unico
     // livello possibile qualunque cosa eBay avesse restituito.
     const trolley = item({ title: 'Trolley da viaggio rigido 4 ruote nero' });
-    expect(toComparable(trolley, null, null, 'pochette perline bianche vintage')).toBeNull();
+    expect(toComparable(trolley, { brand: null, model: null, objectType: 'pochette', query: 'pochette perline bianche vintage' })).toBeNull();
+  });
+
+  it('scarta un altro tipo di oggetto della stessa marca: il caso vero della polo', () => {
+    // Segnalato dal vivo: fotografata una polo Fred Perry, senza cartellino
+    // leggibile il modello e' null e la marca e' l'unica prova che eBay puo'
+    // confermare. Maglioni e cappotti della stessa marca entravano nella
+    // stima con lo stesso peso di un'altra polo, e costano tutt'altro.
+    const context = {
+      brand: 'Fred Perry',
+      model: null,
+      objectType: 'polo',
+      query: 'Fred Perry polo',
+    };
+
+    const maglione = item({ title: 'Fred Perry maglione lana scollo a V blu M' });
+    expect(toComparable(maglione, context)).toBeNull();
+
+    const cappotto = item({ title: 'Fred Perry cappotto harrington nero taglia L' });
+    expect(toComparable(cappotto, context)).toBeNull();
+
+    const polo = item({ title: 'Polo Fred Perry M3600 bianca bordi neri taglia M' });
+    expect(toComparable(polo, context)?.matchLevel).toBe('same_brand');
+  });
+
+  it('non scarta un tipo vicino: lampada da terra contro lampada da tavolo', () => {
+    // Una parola in comune basta. Un lampadario della stessa marca resta un
+    // comparabile ragionevole; un maglione contro una polo no.
+    const context = {
+      brand: 'Artemide',
+      model: null,
+      objectType: 'lampada da tavolo',
+      query: 'Artemide lampada da tavolo',
+    };
+
+    const daTerra = item({ title: 'Artemide lampada da terra Tolomeo Mega' });
+    expect(toComparable(daTerra, context)).not.toBeNull();
+  });
+
+  it('senza un tipo utilizzabile non rifiuta alla cieca', () => {
+    // "oggetto" non dice che tipo di oggetto sia: pretenderlo nel titolo
+    // scarterebbe tutto invece di scartare cio' che c'entra poco.
+    expect(mentionsObjectType('Fred Perry maglione lana', 'oggetto')).toBe(true);
+    expect(mentionsObjectType('Fred Perry maglione lana', null)).toBe(true);
   });
 
   it('non scarta un’inserzione fuori tema se marca o modello la confermano comunque', () => {
     // Qui il titolo non c'entra con la query, ma marca e modello sono gia'
     // una prova migliore del testo libero: il filtro non deve toglierla.
-    const comparable = toComparable(item(), 'Canon', 'AE-1', 'tutt’altra cosa');
+    const comparable = toComparable(item(), canon({ query: 'tutt’altra cosa' }));
     expect(comparable).not.toBeNull();
   });
 });

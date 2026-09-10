@@ -47,9 +47,12 @@ export function buildQueries(identification: Identification): string[] {
   } else if (model) {
     queries.push(model);
   } else if (brand) {
-    // La sola marca e' troppo larga per essere una query: si accompagna a cio'
-    // che il modello ha capito dell'oggetto.
-    queries.push(`${brand} ${identification.category}`.trim());
+    // La sola marca e' troppo larga per essere una query, e la categoria
+    // merceologica non la restringe: "Fred Perry abbigliamento" restituisce
+    // polo, maglioni e cappotti, i cui prezzi non c'entrano niente fra loro.
+    // Il tipo di oggetto — la parola che il venditore mette nel titolo — e'
+    // l'unica cosa che separa una polo da un maglione della stessa marca.
+    queries.push(`${brand} ${identification.objectType || identification.category}`.trim());
   }
 
   queries.push(...identification.searchQueries.map((query) => query.trim()));
@@ -97,7 +100,14 @@ async function searchMarketplace(
   if (!parsed.success) return [];
 
   return (parsed.data.itemSummaries ?? [])
-    .map((item) => toComparable(item, identification.brand, identification.model, query))
+    .map((item) =>
+      toComparable(item, {
+        brand: identification.brand,
+        model: identification.model,
+        objectType: identification.objectType,
+        query,
+      }),
+    )
     .filter((comparable): comparable is Comparable => comparable !== null);
 }
 

@@ -6,6 +6,7 @@ import { describeRelease, looksLikeMusic, type DiscogsRelease } from './index';
 function identification(overrides: Partial<Identification> = {}): Identification {
   return {
     name: 'Oggetto',
+    objectType: 'oggetto',
     category: 'varie',
     brand: null,
     model: null,

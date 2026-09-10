@@ -7,6 +7,7 @@ import { assessFlip } from './flip-score';
 
 const identification: Identification = {
   name: 'Lampada da tavolo',
+  objectType: 'lampada da tavolo',
   category: 'illuminazione',
   brand: 'Artemide',
   model: 'Tolomeo',

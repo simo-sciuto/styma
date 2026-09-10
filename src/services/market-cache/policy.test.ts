@@ -14,6 +14,7 @@ import {
 function identification(overrides: Partial<Identification> = {}): Identification {
   return {
     name: 'Macchina da scrivere Olivetti Valentine',
+    objectType: 'macchina da scrivere',
     category: 'design industriale',
     brand: 'Olivetti',
     model: 'Valentine',
