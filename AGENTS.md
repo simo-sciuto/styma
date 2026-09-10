@@ -51,6 +51,16 @@ sono ancora aperte.
   l'avesse mai controllato: un'invenzione uguale a un colore sbagliato, solo piu' facile da
   scrivere senza accorgersene. Il prompt lo vieta esplicitamente ora; se si aggiungono altri
   compiti di scrittura, va verificato di nuovo con un test vero, non solo letto sulla carta.
+- **Sull'autenticita' non si emette un verdetto, si mostra l'evidenza.** Da una fotografia non si
+  stabilisce se un pezzo e' vero, e il danno peggiore che questo prodotto sa fare e' dare a chi sta
+  per pagare una sicurezza che nessuno ha guadagnato. `authenticity` porta quattro cose: quanta
+  evidenza c'e' (`level`), cosa la sostiene, cosa non torna, cosa guardare. Nessuna dice
+  «autentico» — vietato nel prompt anche come aggettivo di un dettaglio. Un `concerns` vuoto vuol
+  dire «non ho notato niente», non «e' vero». E il livello ha un tetto aritmetico in
+  `services/ai/grounding.ts`: senza nemmeno un marchio letto, «elementi verificabili» non e' una
+  risposta possibile, qualunque cosa il modello abbia scritto. Un divieto nel prompt e' una
+  speranza; il tetto e' la garanzia. La barra a quattro tacche non si riempie mai del tutto: piena
+  si leggerebbe come «certo», e la certezza qui non e' fra le risposte disponibili.
 - **Tutto cio' che arriva dal modello passa da uno schema Zod** prima di entrare nell'applicazione.
 - **Niente SDK inizializzati a livello di modulo**: `next build` valuta le route senza variabili
   d'ambiente e fallirebbe. Vedi `src/services/ai/anthropic/client.ts`.
@@ -85,12 +95,19 @@ sono ancora aperte.
   sarebbe la peggiore bugia possibile, visto che qui il numero *e'* il prodotto.
 - **Il costo di ogni analisi si misura**, non si stima a occhio: `src/services/ai/usage.ts` conta
   token, ricerche e dollari, e li scrive nei log del server. Il listino sta in `config.ts`.
-  Riferimento misurato: **~0,006 $ per analisi completa** (identificazione su Haiku + eBay).
-- **L'identificazione gira su Haiku**, verificato 5/5 sull'estrazione di marca e modello contro
-  Opus, a un settimo del prezzo e con stringhe piu' pulite. Se sbaglia la marca, le query eBay non
-  trovano nulla e l'analisi lo dichiara: degrada in silenzio, non in un prezzo sbagliato. Il
-  ripiego automatico su Opus scatta solo se il modello economico rifiuta una capacita' — se compare
-  nei log, il modello in `config.ts` va cambiato.
+  Riferimento misurato: **~0,015 $ per analisi completa** (identificazione su Sonnet + eBay).
+- **Un modello si misura contro lo schema vero, non contro un banco di prova piu' facile.**
+  L'identificazione girava su Haiku, scelto 5/5 contro Opus con `bench/compare-models.mjs` — che
+  chiede quattro campi. Lo schema dell'applicazione ne chiede venti, e li' Haiku ha letto il
+  modello giusto 2 volte su 9, rispondendo «Lettera 32» a una Olivetti che ha «valentine» scritto
+  in rilievo sul frontale, e una volta inventando la marca «Valentino». Sonnet, stesso schema e
+  stessa foto: 3 su 3. Dal 2026-09-10 l'identificazione gira su Sonnet, al triplo del prezzo. La
+  ragione non e' la qualita' in astratto: se marca e modello sono sbagliati le query eBay cercano
+  un altro oggetto, e la fascia che esce e' il prezzo di quell'altro oggetto. **Un'identificazione
+  sbagliata non degrada la stima, la sostituisce senza dirlo** — e' l'unico errore di questo
+  prodotto che non ha modo di dichiararsi. Ogni campo aggiunto allo schema va pagato con una
+  rimisura, perche' il costo di un campo non e' il suo token: e' l'attenzione che toglie ai due
+  campi da cui dipende tutto il resto.
 - **Non esiste una fonte gratuita di vendite concluse, quindi non fingiamo di stimarle.** Deciso
   il 2026-09-09: Marketplace Insights di eBay e' Limited Release e chiusa a nuovi utenti, la
   vecchia Finding API risponde 418, Discogs vuole un account venditore. La stima si basa sempre su

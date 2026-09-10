@@ -22,6 +22,43 @@ export const MarketPaceSchema = z.enum(MARKET_PACES);
 export type MarketPace = z.infer<typeof MarketPaceSchema>;
 
 /**
+ * Quanto le prove *visibili* sostengono l'attribuzione dichiarata. Non e' una
+ * scala da "falso" a "autentico": e' quanta evidenza c'e', e basta.
+ *
+ * La differenza non e' una sfumatura di linguaggio. Dalle fotografie di un
+ * banco nessuno puo' stabilire l'autenticita' di niente, e un prodotto che si
+ * pronunciasse comunque farebbe il danno peggiore che sa fare: dare a chi
+ * compra la sicurezza che non ha. Quello che si puo' dire e' cosa si vede,
+ * cosa non torna e cosa andrebbe guardato meglio.
+ */
+export const AUTHENTICITY_LEVELS = ['none', 'weak', 'consistent', 'strong'] as const;
+export const AuthenticityLevelSchema = z.enum(AUTHENTICITY_LEVELS);
+export type AuthenticityLevel = z.infer<typeof AuthenticityLevelSchema>;
+
+export const AuthenticitySchema = z.object({
+  level: AuthenticityLevelSchema.describe(
+    'Quanta evidenza visibile sostiene l’attribuzione: none (niente da cui partire), weak (qualche indizio, nulla di dirimente), consistent (tutto cio’ che si vede e’ coerente con l’originale, ma nulla lo prova), strong (elementi verificabili: marchio leggibile, numerazione, dettagli costruttivi giusti). Non e’ una scala da falso ad autentico.',
+  ),
+  supports: z
+    .array(z.string())
+    .describe(
+      'Elementi visibili che sostengono l’attribuzione. Solo cose che si vedono nelle foto: niente nomi di designer, anni o dettagli ricordati a memoria.',
+    ),
+  concerns: z
+    .array(z.string())
+    .describe(
+      'Elementi che non tornano, se ce ne sono: proporzioni sbagliate, marchio assente dove dovrebbe esserci, materiali o finiture incoerenti con l’epoca. Vuoto se non hai notato niente.',
+    ),
+  toVerify: z
+    .array(z.string())
+    .describe(
+      'Cosa guardare per sciogliere il dubbio: dove cercare un marchio, quale dettaglio confrontare, cosa misurare.',
+    ),
+});
+
+export type Authenticity = z.infer<typeof AuthenticitySchema>;
+
+/**
  * What the vision model is allowed to tell us about the object.
  * Deliberately excludes anything about price: market value comes from
  * comparables, never from the model's own guess.
@@ -54,6 +91,15 @@ export const IdentificationSchema = z.object({
   history: z.string().describe('2-4 frasi di contesto storico o culturale sull’oggetto'),
   confidence: z.number().describe('Quanto sei sicuro dell’identificazione, da 0 a 1'),
   confidenceReasons: z.array(z.string()).describe('Perché la confidenza è alta o bassa'),
+  /**
+   * Null quando non c'e' nessuna attribuzione da verificare: un vaso senza
+   * marca ne' autore non puo' essere ne' vero ne' falso, e riempire il campo
+   * comunque insegnerebbe a leggerlo come una formalita' invece che come un
+   * segnale.
+   */
+  authenticity: AuthenticitySchema.nullable().describe(
+    'Quanto le prove visibili sostengono marca, modello o attribuzione. Null se non c’e’ nessuna attribuzione da verificare.',
+  ),
   imageQuality: z.enum(['good', 'mixed', 'poor']).describe('Qualità complessiva delle foto ricevute'),
   marketPace: MarketPaceSchema.describe(
     'Quanto in fretta invecchia il prezzo di questa categoria: slow (modernariato, design, arte, mobili, libri, dischi), medium (abbigliamento, orologi, ceramiche, giocattoli, biciclette), fast (elettronica, telefoni, computer, console, fotocamere digitali, elettrodomestici). Nel dubbio scegli il piu’ veloce.',

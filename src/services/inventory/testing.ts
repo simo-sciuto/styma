@@ -24,6 +24,7 @@ export function item(overrides: Partial<ItemRow> = {}): ItemRow {
     characteristics: [],
     condition_notes: [],
     markings: [],
+    authenticity: null,
     asking_price: null,
     purchase_price: null,
     purchase_currency: 'EUR',

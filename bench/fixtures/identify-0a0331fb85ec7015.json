@@ -40,6 +40,18 @@
     "obiettivo identificato dalla scritta FD 50mm 1:1.8",
     "forma e comandi inconfondibili del modello"
   ],
+  "authenticity": {
+    "level": "strong",
+    "supports": [
+      "Il nome del modello e' inciso sulla calotta insieme al marchio Canon, nella grafia e nella posizione giuste per una AE-1.",
+      "L'obiettivo porta la dicitura completa CANON LENS FD 50mm 1:1.8 e MADE IN JAPAN, coerente con l'innesto FD di questo corpo."
+    ],
+    "concerns": [],
+    "toVerify": [
+      "Il numero di serie sulla calotta superiore, che qui non si legge.",
+      "Che l'innesto sia davvero FD e non un adattatore montato sopra."
+    ]
+  },
   "imageQuality": "good",
   "marketPace": "medium",
   "missingShots": [

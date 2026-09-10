@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Identification } from '@/schemas/identification';
 import type { Comparable, MarketResearch } from '@/schemas/market';
 import { valuate } from './valuate';
 import { assessFlip } from './flip-score';
+import type { Identification } from '@/schemas/identification';
+import { anIdentification } from '@/schemas/testing';
 
-const identification: Identification = {
+const identification = anIdentification({
   name: 'Lampada da tavolo',
   objectType: 'lampada da tavolo',
   category: 'illuminazione',
@@ -15,17 +16,10 @@ const identification: Identification = {
   materials: ['alluminio'],
   characteristics: ['braccio articolato'],
   markings: ['Artemide Made in Italy'],
-  condition: 'good',
-  conditionNotes: [],
   history: 'Classico del design italiano.',
-  confidence: 0.9,
   confidenceReasons: ['marchio leggibile'],
-  marketPace: 'slow',
-  imageQuality: 'good',
-  missingShots: [],
-  physicalChecks: [],
   searchQueries: ['artemide tolomeo usata'],
-};
+});
 
 /**
  * Default coerente con cio' che il prodotto trova davvero: un'inserzione

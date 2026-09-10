@@ -1,4 +1,5 @@
 import type { Recommendation } from '@/schemas/analysis';
+import type { Authenticity } from '@/schemas/identification';
 
 export type ItemStatus = 'found' | 'passed' | 'bought' | 'listed' | 'sold';
 
@@ -27,6 +28,11 @@ export type ItemRow = {
   characteristics: string[];
   condition_notes: string[];
   markings: string[];
+  /**
+   * Cosa reggeva l'attribuzione al momento dell'analisi. Mai un verdetto di
+   * autenticita': vedi `AuthenticitySchema`.
+   */
+  authenticity: Authenticity | null;
   /** Quanto chiedeva chi vendeva. Non e' quanto hai pagato: vedi `purchase_price`. */
   asking_price: number | null;
   purchase_price: number | null;

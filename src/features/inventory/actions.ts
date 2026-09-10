@@ -51,6 +51,11 @@ export async function saveAnalysis(
       characteristics: identification.characteristics,
       condition_notes: identification.conditionNotes,
       markings: identification.markings,
+      // Cosa reggeva l'attribuzione quel giorno. Riaprire l'oggetto fra sei
+      // mesi e trovare solo "Vitra" scritto nel titolo, senza sapere che
+      // sotto la seduta non c'era nessun marchio, sarebbe una promozione
+      // silenziosa da ipotesi a fatto.
+      authenticity: identification.authenticity,
       asking_price: askingPrice,
       status: 'found',
     })

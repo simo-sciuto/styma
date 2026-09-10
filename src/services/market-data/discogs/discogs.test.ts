@@ -1,32 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Identification } from '@/schemas/identification';
 import { describeRelease, looksLikeMusic, type DiscogsRelease } from './index';
+import { anIdentification } from '@/schemas/testing';
 
-function identification(overrides: Partial<Identification> = {}): Identification {
-  return {
-    name: 'Oggetto',
-    objectType: 'oggetto',
-    category: 'varie',
-    brand: null,
-    model: null,
-    period: null,
-    materials: [],
-    characteristics: [],
-    markings: [],
-    condition: 'good',
-    conditionNotes: [],
-    history: '',
-    confidence: 0.9,
-    confidenceReasons: [],
-    imageQuality: 'good',
-    marketPace: 'slow',
-    missingShots: [],
-  physicalChecks: [],
-    searchQueries: [],
-    ...overrides,
-  };
-}
+const identification = anIdentification;
 
 const release = (overrides: Partial<DiscogsRelease> = {}): DiscogsRelease => ({
   id: 249504,

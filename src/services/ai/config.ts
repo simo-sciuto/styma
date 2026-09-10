@@ -42,20 +42,33 @@ In notes segnala quali varianti valgono di piu' e se la spedizione dall'estero c
 export const aiConfig = {
   identification: {
     /**
-     * Haiku, per ora.
+     * Sonnet, dal 2026-09-10. Prima era Haiku, e la scommessa era che leggere
+     * "Canon" e "AE-1" su una foto decente non richiedesse il modello piu'
+     * capace.
      *
-     * Spente le corsie, l'identificazione e' rimasta l'unico costo, e su Haiku
-     * costa un quinto che su Opus. La scommessa e' che leggere "Canon" e "AE-1"
-     * su una foto decente non richieda il modello piu' capace: marca e modello
-     * sono i due campi che contano, perche' decidono se eBay trova cinquantasei
-     * comparabili esatti o diciannove di categoria.
+     * Quella scommessa era stata verificata su uno schema di quattro campi, e
+     * su quello regge ancora: `bench/compare-models.mjs` chiede nome, marca,
+     * modello e confidenza, e su una Olivetti Valentine Haiku risponde
+     * "Valentine" per 0,0035 $. Ma non e' lo schema che l'applicazione usa.
+     * Attraverso quello vero — objectType, difetti, controlli fisici,
+     * attribuzione, query di ricerca — Haiku ha letto il modello giusto 2
+     * volte su 9 sulla stessa foto: otto risposte "Lettera 32" o "Valentino"
+     * su una macchina che porta "valentine" scritto in rilievo sul frontale.
+     * Sonnet, stesso schema e stessa foto: 3 su 3, con le prove ancorate a
+     * cio' che si vede.
      *
-     * Non e' verificata: il tetto di spesa impostato sull'account impedisce di
-     * misurarla. Per questo c'e' `fallbackModel`, e per questo esiste
-     * `bench/compare-models.mjs` — la scelta va confermata coi dati, non con
-     * questo commento.
+     * Non e' una preferenza di modello, e' aritmetica del prodotto: se marca e
+     * modello sono sbagliati, le query eBay cercano un altro oggetto e tutto
+     * cio' che segue — comparabili, fascia, verdetto, prezzo massimo — e' il
+     * prezzo di quell'altro oggetto. Un'identificazione sbagliata non degrada
+     * la stima: la sostituisce, senza dirlo.
+     *
+     * Costa piu' del triplo: 0,0035 $ → 0,0128 $ misurati sulla stessa foto.
+     * Per tornare indietro basta rimettere 'claude-haiku-4-5-20251001' qui —
+     * ma se un giorno lo schema dimagrisse, la scelta andrebbe rimisurata
+     * contro lo schema vero, non ripristinata a memoria.
      */
-    model: 'claude-haiku-4-5-20251001',
+    model: 'claude-sonnet-5',
 
     /**
      * Il modello a cui si torna se quello economico rifiuta la richiesta per
@@ -67,8 +80,9 @@ export const aiConfig = {
 
     /**
      * low | medium | high | xhigh | max, oppure null per i modelli che non
-     * accettano il parametro: Haiku 4.5 risponde 400 se lo riceve. Va cambiato
-     * insieme al modello.
+     * accettano il parametro: Haiku 4.5 risponde 400 se lo riceve. Sonnet lo
+     * accetterebbe, ma resta null perche' l'identificazione misurata sopra e'
+     * stata fatta cosi': alzarlo e' un'altra scelta, con un'altra misura.
      */
     effort: null as 'low' | 'medium' | 'high' | null,
     maxTokens: 8000,

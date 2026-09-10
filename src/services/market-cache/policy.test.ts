@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { Identification } from '@/schemas/identification';
 import type { MarketResearch } from '@/schemas/market';
+import { anIdentification } from '@/schemas/testing';
 import {
   CACHE_TTL_DAYS,
   ageInDays,
@@ -12,28 +13,16 @@ import {
 } from './policy';
 
 function identification(overrides: Partial<Identification> = {}): Identification {
-  return {
+  return anIdentification({
     name: 'Macchina da scrivere Olivetti Valentine',
     objectType: 'macchina da scrivere',
     category: 'design industriale',
     brand: 'Olivetti',
     model: 'Valentine',
     period: '1969',
-    materials: [],
-    characteristics: [],
-    markings: [],
-    condition: 'good',
-    conditionNotes: [],
-    history: '',
     confidence: 0.96,
-    confidenceReasons: [],
-    imageQuality: 'good',
-    marketPace: 'slow',
-    missingShots: [],
-  physicalChecks: [],
-    searchQueries: [],
     ...overrides,
-  };
+  });
 }
 
 const research = (comparables: number): MarketResearch => ({

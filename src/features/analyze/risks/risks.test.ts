@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import type { AnalysisResult, Valuation } from '@/schemas/analysis';
-import type { Identification } from '@/schemas/identification';
 import { flipConfig } from '@/services/valuation/config';
 import { collectRisks } from './risks';
+import type { Identification } from '@/schemas/identification';
+import { anIdentification } from '@/schemas/testing';
 
-const identification: Identification = {
+const identification = anIdentification({
   name: 'Vaso',
   objectType: 'vaso',
   category: 'ceramica',
@@ -13,19 +14,9 @@ const identification: Identification = {
   model: 'Rimini Blu',
   period: 'anni 70',
   materials: ['ceramica'],
-  characteristics: [],
   markings: ['Bitossi'],
-  condition: 'good',
   conditionNotes: ['piccola sbeccatura sul bordo'],
-  history: '',
-  confidence: 0.9,
-  confidenceReasons: [],
-  marketPace: 'slow',
-  imageQuality: 'good',
-  missingShots: [],
-  physicalChecks: [],
-  searchQueries: [],
-};
+});
 
 const valuation: Extract<Valuation, { available: true }> = {
   available: true,
@@ -143,6 +134,36 @@ describe('rischi raccolti', () => {
     expect(ids(result({ conditionNotes: ['crepa'], missingShots: ['il fondo'] }))).not.toContain(
       'condition-unseen',
     );
+  });
+
+  it('un dubbio sull’attribuzione e’ un rischio grave, anche col resto solido', () => {
+    // Se il pezzo non e' quello che sembra, i comparabili sono di un altro
+    // oggetto: non c'e' niente di solido che tenga.
+    const risks = collectRisks(
+      result({
+        authenticity: {
+          level: 'weak',
+          supports: ['la forma corrisponde'],
+          concerns: ['nessun marchio dove dovrebbe esserci'],
+          toVerify: ['guarda sotto la base'],
+        },
+      }),
+    );
+
+    expect(risks).toHaveLength(1);
+    expect(risks[0].id).toBe('authenticity-concerns');
+    expect(risks[0].severity).toBe('high');
+  });
+
+  it('un’attribuzione senza dubbi non produce un rischio', () => {
+    // `concerns` vuoto vuol dire "non ho notato niente", non "e' autentico":
+    // in nessuno dei due casi c'e' qualcosa da segnalare qui.
+    const risks = collectRisks(
+      result({
+        authenticity: { level: 'strong', supports: ['marchio leggibile'], concerns: [], toVerify: [] },
+      }),
+    );
+    expect(risks).toEqual([]);
   });
 
   it('porta dentro anche gli avvisi della pipeline', () => {

@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Identification } from '@/schemas/identification';
 import type { Comparable, MarketResearch } from '@/schemas/market';
 import type { Valuation } from '@/schemas/analysis';
 import { valuate } from './valuate';
 import { assessFlip, effectiveWeights, priceThresholds, recommendationAt, riskBufferRate } from './flip-score';
 import { flipConfig } from './config';
+import { anIdentification } from '@/schemas/testing';
 
-const identification: Identification = {
+const identification = anIdentification({
   name: 'Lampada da tavolo',
   objectType: 'lampada da tavolo',
   category: 'illuminazione',
@@ -15,19 +15,7 @@ const identification: Identification = {
   model: 'Tolomeo',
   period: 'anni 90',
   materials: ['alluminio'],
-  characteristics: [],
-  markings: [],
-  condition: 'good',
-  conditionNotes: [],
-  history: '',
-  confidence: 0.9,
-  confidenceReasons: [],
-  marketPace: 'slow',
-  imageQuality: 'good',
-  missingShots: [],
-  physicalChecks: [],
-  searchQueries: [],
-};
+});
 
 function comparable(overrides: Partial<Comparable>): Comparable {
   return {

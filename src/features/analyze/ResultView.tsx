@@ -7,6 +7,7 @@ import type { AnalysisResult } from '@/schemas/analysis';
 import type { PreparedImage } from '@/lib/images';
 import { Card, Disclosure, Pill } from '@/components/ui';
 import { DecisionBlock } from './decision/DecisionBlock';
+import { Authenticity } from './identity/Authenticity';
 import { ObjectEvidence } from './identity/ObjectEvidence';
 import { MarketScan } from './market/MarketScan';
 import { RiskList } from './risks/RiskList';
@@ -103,6 +104,11 @@ export function ResultView({
       ) : null}
 
       <ObjectEvidence identification={identification} />
+
+      {/* Subito dopo le prove dell'identificazione, perche' e' la stessa
+          domanda portata un passo piu' in la': non «cos'e'» ma «quanto
+          regge il fatto che sia proprio quello». */}
+      <Authenticity authenticity={identification.authenticity} />
 
       {!valuation.available ? (
         <Card className="border-warn/40 bg-warn-soft">

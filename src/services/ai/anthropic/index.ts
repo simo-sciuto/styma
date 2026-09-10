@@ -3,6 +3,7 @@ import { APIError } from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 
 import { IdentificationSchema, type Identification } from '@/schemas/identification';
+import { groundAuthenticity } from '../grounding';
 import { MarketResearchSchema, type MarketResearch } from '@/schemas/market';
 import { ListingCopySchema } from '@/schemas/listing';
 import { toStrictToolSchema } from '@/lib/json-schema';
@@ -192,7 +193,12 @@ export class AnthropicProvider implements ObjectIntelligenceProvider {
       throw new ProviderError('Il modello non ha restituito un\u2019identificazione valida', 'invalid_response');
     }
 
-    return { identification: response.parsed_output, usage: meter.totals };
+    return {
+      // Il livello di attribuzione passa da un tetto aritmetico prima di
+      // entrare nell'applicazione: vedi `grounding.ts`.
+      identification: groundAuthenticity(response.parsed_output),
+      usage: meter.totals,
+    };
   }
 
   async generateListing(facts: ListingFacts): Promise<ListingOutcome> {

@@ -1,4 +1,5 @@
 import type { Recommendation } from '@/schemas/analysis';
+import type { AuthenticityLevel } from '@/schemas/identification';
 
 const eur = new Intl.NumberFormat('it-IT', {
   style: 'currency',
@@ -61,6 +62,30 @@ export const CONFIDENCE_LABELS: Record<string, string> = {
   high: 'Confidenza alta',
   medium: 'Confidenza media',
   low: 'Confidenza bassa',
+};
+
+/**
+ * Quanta evidenza sostiene l'attribuzione. Nessuna di queste parole dice
+ * "autentico" o "falso", e non e' una svista: da una foto non si stabilisce,
+ * e la scala misura l'evidenza, non il pezzo.
+ */
+export const AUTHENTICITY_LABELS: Record<AuthenticityLevel, string> = {
+  none: 'Niente da cui partire',
+  weak: 'Indizi deboli',
+  consistent: 'Coerente, ma niente lo prova',
+  strong: 'Elementi verificabili',
+};
+
+/**
+ * Tacche piene sulla barra a quattro passi. La quarta non si accende mai, ed
+ * e' voluto: una barra piena si legge come "certo", e la certezza qui non e'
+ * fra le risposte disponibili.
+ */
+export const AUTHENTICITY_METER: Record<AuthenticityLevel, number> = {
+  none: 0,
+  weak: 1,
+  consistent: 2,
+  strong: 3,
 };
 
 /** Condivisa fra la pagina di analisi e la scheda salvata in inventario:

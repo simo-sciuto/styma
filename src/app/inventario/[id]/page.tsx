@@ -20,6 +20,7 @@ import {
   describeSavedComparableTier,
   describeSavedMarketSource,
 } from '@/services/inventory/types';
+import { Authenticity } from '@/features/analyze/identity/Authenticity';
 import { describeOutcome } from '@/services/inventory/outcome';
 import { GenerateListing } from '@/features/listing/GenerateListing';
 import { OutcomeTracker } from '@/features/inventory/OutcomeTracker';
@@ -183,6 +184,11 @@ export default async function ItemPage({ params }: PageProps<'/inventario/[id]'>
           mondo invece che da noi.
         */}
         <OutcomeTracker item={item} outcome={describeOutcome(item, valuation)} />
+
+        {/* Quello che reggeva l'attribuzione il giorno dell'analisi. Senza,
+            un dubbio registrato allora diventerebbe col tempo un fatto solo
+            perche' nessuno lo ripete. */}
+        <Authenticity authenticity={item.authenticity} />
 
         {/*
           Il giudizio, spiegato con quello che era gia' salvato e non veniva

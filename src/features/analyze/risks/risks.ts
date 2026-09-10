@@ -53,6 +53,22 @@ export function collectRisks(result: AnalysisResult): Risk[] {
     );
   }
 
+  // Un dubbio sull'attribuzione non e' un dubbio come gli altri: se il pezzo
+  // non e' quello che sembra, i comparabili sono di un altro oggetto e la
+  // fascia intera non c'entra niente. Sale al livello grave anche quando
+  // tutto il resto e' solido.
+  const concerns = identification.authenticity?.concerns ?? [];
+  if (concerns.length > 0) {
+    add(
+      'authenticity-concerns',
+      'high',
+      concerns.length === 1
+        ? 'C’e’ un elemento che non torna sull’attribuzione'
+        : `Ci sono ${concerns.length} elementi che non tornano sull’attribuzione`,
+      'Se non e’ il pezzo che sembra, i comparabili sono di un altro oggetto e la stima non vale. Guarda cosa non torna prima di trattare.',
+    );
+  }
+
   if (identification.imageQuality === 'poor') {
     add(
       'photos-poor',

@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { IdentificationSchema, type Identification } from '@/schemas/identification';
+import { groundAuthenticity } from './grounding';
 import { MarketResearchSchema } from '@/schemas/market';
 import { ListingCopySchema } from '@/schemas/listing';
 import { aiConfig } from './config';
@@ -103,7 +104,7 @@ export class FixtureProvider implements ObjectIntelligenceProvider {
       );
     }
 
-    return { identification: parsed.data, usage: { ...NO_USAGE } };
+    return { identification: groundAuthenticity(parsed.data), usage: { ...NO_USAGE } };
   }
 
   async researchMarket(

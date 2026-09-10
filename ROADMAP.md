@@ -33,7 +33,7 @@ E5 ████████████████████ economia del fli
 E6 ████████████████████ prima di comprare + guida foto  fatto
 
 F1 ████████████████████ esito reale in inventario   fatto
-F2 ░░░░░░░░░░░░░░░░░░░░ autenticita' a livelli
+F2 ████████████████████ autenticita' a livelli      fatto
 F3 ░░░░░░░░░░░░░░░░░░░░ URL del risultato
 ```
 
@@ -170,13 +170,47 @@ i rischi → prima di pagare → la storia.
 - `recordOutcome` valida l'input con Zod: un'azione server e' un endpoint
   pubblico come tutti gli altri.
 
+### F2 — autenticita' a livelli (commit successivo)
+- Campo nuovo `authenticity`, nullable: quanta evidenza c'e' (`level`), cosa
+  la sostiene, cosa non torna, cosa guardare. Mai un verdetto. Null quando
+  non c'e' nessuna attribuzione da verificare — un oggetto anonimo non puo'
+  essere ne' vero ne' falso.
+- Barra a quattro tacche invece di una percentuale: una percentuale
+  sull'autenticita' si legge come probabilita' di essere originale, che e'
+  il numero che non abbiamo. La quarta tacca non si accende mai.
+- `concerns` entra nei rischi al livello grave: se il pezzo non e' quello
+  che sembra, i comparabili sono di un altro oggetto e la fascia non vale.
+- Salvato su `items.authenticity`: un dubbio registrato oggi non deve
+  diventare un fatto fra sei mesi solo perche' nessuno lo ripete.
+- **Un tetto aritmetico, non solo un divieto nel prompt**
+  (`services/ai/grounding.ts`): senza nemmeno un marchio letto nelle foto,
+  `strong` scende a `consistent`. Un divieto e' una speranza.
+
+### Il test vero che ha cambiato il modello (stesso commit)
+Provando `authenticity` su una foto reale — la Olivetti Valentine di
+`bench/photos` — sono uscite tre invenzioni scritte con la stessa sicurezza
+di un marchio letto: «finiture in ottone appropriate all'epoca», «tastiera
+QWERTY italiana» su una tastiera visibilmente **AZERTY**, e la parola
+«autentica» che il prompt vietava. Il prompt e' stato stretto, e le parole
+vietate sono sparite in 3 run su 3.
+
+Ma il problema vero era sotto. **Haiku ha letto il modello giusto 2 volte su
+9**, rispondendo «Lettera 32» a una macchina che ha «valentine» in rilievo
+sul frontale, e una volta inventando la marca «Valentino». Con
+`bench/compare-models.mjs` — quattro campi — la stessa foto dava «Valentine»
+senza sbagliare: la scelta di Haiku era stata verificata contro uno schema
+molto piu' leggero di quello che l'applicazione usa davvero.
+
+Sonnet, schema vero e stessa foto: **3 su 3**, con le prove ancorate a cio'
+che si vede. L'identificazione e' passata a Sonnet: 0,0035 $ → 0,0128 $ a
+foto, ~0,015 $ per analisi completa. Il motivo non e' la qualita' in
+astratto — se marca e modello sono sbagliati, eBay cerca un altro oggetto e
+la fascia che esce e' il prezzo di quell'altro oggetto. E' l'unico errore
+del prodotto che non ha modo di dichiararsi.
+
 ---
 
 ## Prossimo
-
-**F2 — autenticita' a livelli.** Campo nuovo, a livelli, mai un giudizio
-secco. Il modello puo' dire cosa supporta un'attribuzione e cosa
-controllare, non se e' autentico.
 
 **F3 — URL del risultato.** Senza, il Second Look non e' implementabile e
 ogni analisi si perde ricaricando la pagina.
@@ -204,6 +238,7 @@ Multi-oggetto · Scout · allerte · analytics personali · escalation a esperto
 | Domanda e tempi di vendita | Restano `unknown` dichiarato: la ricerca agentica costa 160× | piano |
 | Similarita' in percentuale | No: abbiamo 4 livelli e un peso, non una misura ottica | piano |
 | Prezzo del banco salvato come acquisto | Separato: `asking_price` e' la domanda, `purchase_price` lo dichiari tu | F1 |
+| Identificazione su Haiku | A Sonnet: 2/9 contro 3/3 sullo schema vero, non su quello del bench | F2 |
 
 ## Migliorie note, non ancora fatte
 

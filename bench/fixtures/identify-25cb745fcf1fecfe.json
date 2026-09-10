@@ -35,6 +35,18 @@
     "Marchio \"olivetti\" e nome \"valentine\" leggibili in rilievo sulla scocca",
     "Forma e cromie inconfondibili del modello disegnato da Sottsass"
   ],
+  "authenticity": {
+    "level": "consistent",
+    "supports": [
+      "Il logo olivetti e la scritta valentine sono in rilievo nella plastica, non applicati come adesivi.",
+      "Sagoma, colore e valigetta corrispondono al modello disegnato da Sottsass."
+    ],
+    "concerns": [],
+    "toVerify": [
+      "La dicitura del paese di produzione stampata sul fondo: le prime serie erano italiane, le successive spagnole, e cambia il valore.",
+      "Il numero di matricola sul telaio, per collocare l'anno."
+    ]
+  },
   "imageQuality": "good",
   "missingShots": [
     "Fondo con targhetta e numero di serie (per distinguere produzione Italia/Spagna)",

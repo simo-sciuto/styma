@@ -29,6 +29,20 @@
     "nessun marchio, etichetta o punzone leggibile",
     "foto d'insieme a grande distanza: impossibile distinguere originale Vitra da riproduzione o riedizione"
   ],
+  "authenticity": {
+    "level": "weak",
+    "supports": [
+      "La curva a S continua e le proporzioni corrispondono al disegno di Verner Panton."
+    ],
+    "concerns": [
+      "Sotto la seduta non si vede nessun marchio, ed e' esattamente dove Vitra imprime il proprio.",
+      "La forma da sola non distingue una Vitra da una delle molte riproduzioni in circolazione: e' uno dei pezzi piu' copiati del design del Novecento."
+    ],
+    "toVerify": [
+      "Cerca la scritta in rilievo sotto la seduta e sul retro della base.",
+      "Confronta lo spessore del bordo e la finitura della superficie con una Vitra: le copie tendono a essere piu' sottili e piu' lucide."
+    ]
+  },
   "imageQuality": "poor",
   "marketPace": "slow",
   "missingShots": [
