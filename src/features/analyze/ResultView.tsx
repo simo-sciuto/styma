@@ -36,6 +36,24 @@ export function ResultView({
   const { identification, market, marketSource, valuation, flip } = result;
   const decision = flip?.atPrice ?? null;
 
+  /*
+   * Il titolo e' marca e modello, non il nome lungo.
+   *
+   * `name` e' scritto per un annuncio — "Macchina da scrivere portatile
+   * Olivetti Valentine rossa - design Ettore Sottsass" — e in cima a uno
+   * schermo da telefono sono quattro righe che spingono il verdetto sotto la
+   * piega, con le due parole che contano in mezzo. Chi guarda ha l'oggetto in
+   * mano: non gli serve la descrizione, gli serve il nome.
+   */
+  const marcaModello = [identification.brand, identification.model].filter(Boolean).join(' ');
+  const titolo = marcaModello || identification.name;
+  const sottotitolo = [
+    marcaModello ? identification.objectType : identification.category,
+    identification.period,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
   return (
     <div className="mt-6 space-y-4">
       {/*
@@ -62,19 +80,10 @@ export function ResultView({
               <span className="h-1.5 w-1.5 rounded-full bg-tile-terracotta" aria-hidden />
               Identificato
             </p>
-            <h1 className="mt-1 text-[clamp(1.35rem,1.2rem+1vw,1.85rem)] font-semibold leading-[1.05] tracking-tight text-balance">
-              {identification.name}
+            <h1 className="mt-1 line-clamp-2 text-[clamp(1.35rem,1.2rem+1vw,1.85rem)] font-semibold leading-[1.05] tracking-tight text-balance">
+              {titolo}
             </h1>
-            <p className="mt-1 text-sm text-muted">
-              {[
-                identification.category,
-                identification.brand,
-                identification.model,
-                identification.period,
-              ]
-                .filter(Boolean)
-                .join(' · ')}
-            </p>
+            <p className="mt-1 text-sm text-muted">{sottotitolo}</p>
             <div className="mt-2">
               <Pill
                 tone={
@@ -103,19 +112,12 @@ export function ResultView({
         />
       ) : null}
 
-      <ObjectEvidence identification={identification} />
-
-      {/* Subito dopo le prove dell'identificazione, perche' e' la stessa
-          domanda portata un passo piu' in la': non «cos'e'» ma «quanto
-          regge il fatto che sia proprio quello». */}
-      <Authenticity authenticity={identification.authenticity} />
-
       {!valuation.available ? (
         <Card className="border-warn/40 bg-warn-soft">
-          <p className="text-sm font-medium text-warn">Valore non stimabile</p>
+          <p className="text-sm font-medium text-warn">Non sappiamo dirti quanto vale</p>
           <p className="mt-1 text-sm">
-            Riusciamo a identificare l’oggetto, ma non abbiamo dati di mercato abbastanza affidabili
-            per dire quanto vale. {valuation.reason}
+            L’oggetto lo riconosciamo, il suo mercato no: non abbiamo trovato abbastanza annunci
+            comparabili per tirarci fuori un prezzo di cui fidarsi. {valuation.reason}
           </p>
           {/*
             Anche senza stima si mostra cio' che si e' visto: un rifiuto secco
@@ -124,53 +126,17 @@ export function ResultView({
           */}
           {valuation.observed ? (
             <p className="mt-3 text-sm">
-              Quello che abbiamo visto:{' '}
+              Quello che abbiamo comunque visto:{' '}
               <strong>
                 {valuation.observed.count === 1
                   ? '1 annuncio'
                   : `${valuation.observed.count} annunci`}
               </strong>{' '}
               fra {formatEur(valuation.observed.lowEur)} e {formatEur(valuation.observed.highEur)}.
-              Sono prezzi richiesti, troppo pochi o troppo diversi fra loro per ricavarne una stima:
-              guardali tu prima di decidere.
+              Sono prezzi richiesti, troppo pochi o troppo diversi fra loro perche’ una media
+              significhi qualcosa. Guardali tu prima di decidere: e’ piu’ di quanto avresti senza.
             </p>
           ) : null}
-        </Card>
-      ) : null}
-
-      {flip ? (
-        <Card>
-          {/* Come e' nata la stima, prima di cosa muove il punteggio: sono
-              due domande diverse e finivano sempre in due posti lontani. */}
-          {valuation.available && valuation.reasons.length > 0 ? (
-            <div>
-              <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
-                Come e’ nata la stima
-              </p>
-              <ul className="mt-2 space-y-1 text-sm text-muted">
-                {valuation.reasons.map((reason) => (
-                  <li key={reason}>— {reason}</li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          <div className="mt-4">
-            <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
-              Cosa muove il punteggio
-            </p>
-            <ul className="mt-2 space-y-1 text-sm">
-              {flip.factors.map((factor) => (
-                <li
-                  key={factor.label}
-                  className={factor.direction === 'positive' ? 'text-accent' : 'text-danger'}
-                >
-                  {factor.direction === 'positive' ? '+' : '−'} {factor.label}
-                </li>
-              ))}
-            </ul>
-          </div>
-
         </Card>
       ) : null}
 
@@ -188,6 +154,40 @@ export function ResultView({
       ) : null}
 
       <RiskList result={result} />
+
+      {/*
+        Il punteggio e "cosa lo muove" stavano in una scheda propria, subito
+        sotto il verdetto: due numeri grandi uno accanto all'altro che
+        rispondono a domande diverse — "quanto pagarlo" e "quanto e' buona
+        l'occasione" — e chi legge deve capire da solo quale guardare. Ora e'
+        una riga sola, piegata: la domanda del prodotto resta una.
+      */}
+      {flip && flip.atPrice ? (
+        <Disclosure summary={`Quanto e’ buona l’occasione: ${flip.atPrice.score}/100`}>
+          <ul className="space-y-1">
+            {flip.factors.map((factor) => (
+              <li
+                key={factor.label}
+                className={factor.direction === 'positive' ? 'text-accent' : 'text-danger'}
+              >
+                {factor.direction === 'positive' ? '+' : '−'} {factor.label}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-xs text-muted">
+            Non e’ quanto vale l’oggetto ne’ quanto pagarlo: e’ quanto conviene questo affare
+            rispetto a un altro, a parita’ di soldi che hai in tasca.
+          </p>
+        </Disclosure>
+      ) : null}
+
+      <ObjectEvidence identification={identification} />
+
+      {/* Subito dopo le prove dell'identificazione, perche' e' la stessa
+          domanda portata un passo piu' in la': non «cos'e'» ma «quanto
+          regge il fatto che sia proprio quello». */}
+      <Authenticity authenticity={identification.authenticity} />
+
 
       <BeforeYouBuy identification={identification} />
 

@@ -38,6 +38,7 @@ F3 ████████████████████ URL del risultat
 
 G1 ████████████████████ aste: il segnale che buttavamo  fatto
 G2 ████████████████████ test end-to-end in un browser vero  fatto
+G3 ████████████████████ il prezzo massimo tornava incomprensibile  fatto
 ```
 
 ---
@@ -306,6 +307,45 @@ quindi un update bloccato dalla RLS sarebbe tornato `ok: true`. Come in
 Playwright pilota il Chrome installato (`channel: 'chrome'`): questa macchina
 gira su macOS 12 e i browser scaricati da Playwright non lo supportano piu'.
 
+### G3 — «vale 30–70 ma oltre i 20 e' troppo?» (commit successivo)
+Segnalato dal vivo, ed era un difetto vero, non un problema di parole.
+
+**Il guadagno obiettivo era una quota del venduto, e la spedizione costa
+uguale a ogni prezzo.** 9 € sono il 20% di un oggetto da 45 € e l'1,6% di uno
+da 550, e si toglievano prima della quota. Cosi' la stessa riga di
+configurazione pretendeva un ritorno del **163%** per dire «compralo» sotto i
+50 €, e del **95%** sopra i 500. Sui mercatini, che stanno tutti in fondo a
+quella scala, l'app diceva di lasciar stare affari buoni.
+
+Ora il guadagno si misura su quello che spendi (`dealRoi`, 50%): la richiesta
+e' la stessa a ogni livello di prezzo. Misurato: il ritorno preteso passa da
+95–163% a **88–110%** su tutta la scala, e su una fascia 30–70 € l'affare
+sale da 12 € a 15 €.
+
+**E la pagina non collegava i due numeri.** «Vale 30–70» accanto a «paga fino
+a 15» si legge come una contraddizione, e la spiegazione stava chiusa in un
+accordion. Ora c'e' una riga sempre visibile: *di 240 € che incassi
+vendendolo, in mano te ne restano 178 — il resto se ne va in commissioni,
+spedizione e in quello che teniamo da parte perche' la stima puo' sbagliare.*
+
+Il resto della pagina, sulla stessa segnalazione («troppe info dopo la
+valutazione»):
+- **Una scheda in meno.** Punteggio e «cosa lo muove» erano un blocco a se'
+  subito sotto il verdetto: due numeri grandi che rispondono a domande
+  diverse. Ora e' una riga piegata, piu' in basso.
+- **Ordine rifatto:** decisione → il conto → il mercato → i rischi → prove
+  dell'identita' → prima di pagare. Prima le prove dell'identificazione
+  arrivavano seconde, quando la domanda successiva e' ancora sui soldi.
+- **Il titolo e' marca e modello,** non il nome lungo scritto per un annuncio:
+  «Olivetti Valentine» invece di quattro righe che spingevano il verdetto
+  sotto la piega.
+- **Parole:** «Vale» → «Lo rivendi a» (non e' quanto vale in mano tua, e'
+  quanto lo paga chi lo comprera'); «troppo» → «niente margine» (sopra la
+  soglia non e' vietato comprare, e' che non ci resta niente); «trattabile» →
+  «margine sottile».
+- `e2e/schermata.spec.ts`: uno strumento per guardare la pagina su uno schermo
+  da telefono invece di immaginarla. Non gira con `npm run e2e`.
+
 ---
 
 ## Prossimo — da scegliere
@@ -346,8 +386,19 @@ Multi-oggetto · Scout · allerte · analytics personali · escalation a esperto
 | Salvare l'analisi era un pulsante | Automatico: ogni analisi ha un indirizzo, e si archivia invece di cancellarla | F3 |
 | Comprare l'accesso ai venduti | No: nessuna fonte lecita esiste, solo scraper. Verificato il mercato dei dati | G1 |
 | Offerte d'asta nella stima | No: 12–71% dei prezzi fissi, nessun fattore di correzione. Pavimento dichiarato | G1 |
+| Guadagno obiettivo come quota del venduto | Sul capitale speso: la stessa quota chiedeva il 163% sotto i 50 € e il 95% sopra i 500 | G3 |
 
 ## Migliorie note, non ancora fatte
+
+- **Gli accessori entrano fra i comparabili come se fossero l'oggetto.** Su
+  una Olivetti Valentine il comparabile piu' pesante era «Cinghie per custodia
+  Olivetti Valentine - Set da 2» a 55 €, classificato *stesso modello* con
+  peso 0,85. `inferMatchLevel` legge marca e modello nel titolo e non puo'
+  sapere che si tratta di un ricambio; il commento nel codice lo dice gia' e
+  si affida allo scarto dei prezzi fuori scala, che pero' prende solo quelli a
+  piu' di 5× dal mediano. Serve un filtro sulle parole degli accessori
+  (cinghia, custodia, manuale, ricambi, per parti…), misurato su quanti
+  comparabili veri toglie prima di accenderlo.
 
 - **`confidenceReasons` non ha polarita'.** Sono stringhe: non sappiamo quali
   sostengono l'attribuzione e quali la indeboliscono, quindi si mostrano

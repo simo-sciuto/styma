@@ -10,10 +10,15 @@ const FILL: Record<ZoneKey, string> = {
   pass: 'bg-danger',
 };
 
+/**
+ * Tre parole, tre cose diverse. "Troppo" per l'ultima fascia diceva una cosa
+ * che non sappiamo — troppo per chi? — e la faceva leggere come un muro: sopra
+ * la soglia non e' vietato comprare, e' che non ci resta margine.
+ */
 const LABEL: Record<ZoneKey, string> = {
-  buy: 'affare',
-  negotiate: 'trattabile',
-  pass: 'troppo',
+  buy: 'ci guadagni bene',
+  negotiate: 'margine sottile',
+  pass: 'niente margine',
 };
 
 /**
@@ -40,8 +45,8 @@ export function PriceZones({
         role="img"
         aria-label={
           thresholds.buyUpTo !== null
-            ? `Affare fino a ${formatEur(thresholds.buyUpTo)}, trattabile fino a ${formatEur(thresholds.maybeUpTo ?? thresholds.buyUpTo)}, oltre e' troppo caro`
-            : `Trattabile fino a ${formatEur(thresholds.maybeUpTo ?? 0)}, oltre e' troppo caro`
+            ? `Ci guadagni bene fino a ${formatEur(thresholds.buyUpTo)}, margine sottile fino a ${formatEur(thresholds.maybeUpTo ?? thresholds.buyUpTo)}, oltre non resta margine`
+            : `Margine sottile fino a ${formatEur(thresholds.maybeUpTo ?? 0)}, oltre non resta margine`
         }
       >
         <div className="flex h-2.5 overflow-hidden rounded-full">

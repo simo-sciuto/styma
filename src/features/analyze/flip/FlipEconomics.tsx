@@ -61,21 +61,21 @@ export function FlipEconomics({
   return (
     <Card>
       <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
-        Se lo compri a {formatEur(purchasePrice)}
+        Se lo prendi a {formatEur(purchasePrice)}
       </p>
 
       <dl className="mt-3 space-y-2 text-sm">
         <Row label="Lo rivendi a" value={formatEur(expectedSalePrice)} />
-        <Row label="Commissioni del marketplace" value={`−${formatEur(marketplaceFees, { precise: true })}`} tone="cost" />
-        <Row label="Spedizione e imballo" value={`−${formatEur(shipping)}`} tone="cost" />
-        <Row label="Quanto hai pagato" value={`−${formatEur(purchasePrice)}`} tone="cost" />
+        <Row label="− Commissioni" value={formatEur(marketplaceFees, { precise: true })} tone="cost" />
+        <Row label="− Spedizione e imballo" value={formatEur(shipping)} tone="cost" />
+        <Row label="− Quello che hai speso" value={formatEur(purchasePrice)} tone="cost" />
         <Row
           label={inPerdita ? 'Ci rimetti' : 'Ti resta'}
           value={`${expectedProfit >= 0 ? '+' : ''}${formatEur(expectedProfit, { precise: true })}`}
           tone="total"
         />
         {roi !== null ? (
-          <Row label="Ritorno sull’investimento" value={`${Math.round(roi * 100)}%`} tone="cost" />
+          <Row label="Su ogni euro speso" value={`+${Math.round(roi * 100)}%`} tone="cost" />
         ) : null}
       </dl>
 
@@ -85,7 +85,7 @@ export function FlipEconomics({
       <div className="mt-4 grid grid-cols-2 gap-3 border-t border-line pt-3">
         <div>
           <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
-            Se vendi a {formatEur(valuation.low)}
+            Se lo molli a {formatEur(valuation.low)}
           </p>
           <p
             className={`mt-0.5 font-mono text-lg font-semibold tabular-nums ${
@@ -98,7 +98,7 @@ export function FlipEconomics({
         </div>
         <div>
           <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
-            Se vendi a {formatEur(valuation.high)}
+            Se trovi chi paga {formatEur(valuation.high)}
           </p>
           <p
             className={`mt-0.5 font-mono text-lg font-semibold tabular-nums ${
@@ -112,8 +112,8 @@ export function FlipEconomics({
       </div>
 
       <p className="mt-3 text-xs text-muted">
-        Commissioni e spedizione sono stime medie, non tariffe lette dal tuo marketplace: cambiano
-        col peso, col servizio e con dove spedisci.
+        Commissioni e spedizione sono medie, non le tariffe del tuo marketplace: cambiano col peso,
+        col servizio e con dove spedisci. Se lo vendi di persona, la spedizione non la paghi.
       </p>
     </Card>
   );

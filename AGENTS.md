@@ -132,6 +132,16 @@ sono ancora aperte.
   `weak` (solo categoria, ultima spiaggia prima di "non lo so", tetto a "low"). Solo `identical`
   puo' arrivare a "high": e' l'unico caso in cui non resta un'incertezza sovrapposta fra "quanto
   vale l'oggetto" e "e' davvero lo stesso oggetto".
+- **Il guadagno si misura su quello che spendi, non sul prezzo di vendita.** Sembrano equivalenti e
+  non lo sono: la spedizione costa 9 € tanto su un oggetto da 45 € quanto su uno da 550, e si toglie
+  prima. Prendendo una quota del venduto (era il 25%), la stessa riga di configurazione pretendeva
+  un ritorno del 163% per dire «compralo» sotto i 50 € e del 95% sopra i 500 — e i mercatini stanno
+  tutti in fondo a quella scala. `dealRoi` e' sul capitale speso: la richiesta e' la stessa a ogni
+  livello di prezzo.
+- **Due numeri che sembrano contraddirsi vanno collegati in pagina, non in un accordion.** «Vale
+  30–70 €» accanto a «paga fino a 15 €» si legge come un errore, e la spiegazione — quei 70 non li
+  incassi — stava chiusa. Ogni volta che la pagina mostra due cifre che un lettore ragionevole
+  leggerebbe come incoerenti, il ponte fra le due e' contenuto obbligatorio, non approfondimento.
 - **Il prezzo massimo di acquisto e' una sottrazione, non una bisezione.** Nasceva cercando il
   prezzo a cui il flip score toccava settanta: coerente, ma impossibile da verificare per chi lo
   legge, e qui il numero *e'* il prodotto. Ora e' `valore atteso − commissioni − spedizione −

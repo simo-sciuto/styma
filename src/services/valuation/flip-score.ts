@@ -104,17 +104,17 @@ export function riskBufferRate(
 }
 
 /**
- * Il prezzo massimo di acquisto, come sottrazione leggibile riga per riga.
+ * Il prezzo massimo di acquisto, leggibile riga per riga.
  *
  *   valore atteso di vendita
  *   − commissioni
  *   − spedizione e imballo
  *   − cuscinetto di rischio
- *   − margine obiettivo
- *   = fin dove e' un affare
+ *   = quanto ti resta in mano
  *
- * Senza il margine obiettivo si ottiene la seconda soglia: fin dove i conti
- * tornano ma senza guadagno vero — la fascia in cui vale la pena trattare.
+ * Dentro quella cifra ci stanno due cose: il prezzo che paghi e il tuo
+ * guadagno. Fin dove arriva da sola e' la soglia della trattativa — i conti
+ * tornano, non ci guadagni. Divisa fra le due, e' la soglia dell'affare.
  *
  * Prima nasceva cercando per bisezione il prezzo a cui il punteggio toccava
  * settanta. Era coerente ma non si poteva mostrare: nessuno puo' verificare
@@ -129,23 +129,42 @@ export function priceThresholds(
   const fees = expectedSalePrice * flipConfig.marketplaceFeeRate;
   const shipping = flipConfig.defaultShippingCost;
   const riskBuffer = expectedSalePrice * riskBufferRate(valuation, identification);
-  const targetProfit = expectedSalePrice * flipConfig.targetMarginRate;
 
+  /** Quanto resta in mano dopo la vendita: dentro ci stanno il prezzo che paghi e il tuo guadagno. */
   const coversCosts = expectedSalePrice - fees - shipping - riskBuffer;
-  const hitsTarget = coversCosts - targetProfit;
+
+  /*
+   * Il guadagno si misura su quello che spendi, non sul prezzo di vendita.
+   *
+   * Prima era una quota del venduto — 25% — e sembrava equivalente. Non lo
+   * era: la spedizione costa 9 € sia su un oggetto da 45 € sia su uno da 550,
+   * e si toglie prima. Cosi' la stessa configurazione pretendeva il 163% di
+   * ritorno su un oggetto da 45 € e il 95% su uno da 550. Su una fascia
+   * 30–70 € l'affare partiva sotto i 12 €, e chi leggeva vedeva due numeri
+   * che sembravano darsi torto a vicenda — perche' in un certo senso se lo
+   * davano.
+   *
+   * Diviso invece che sottratto, la richiesta e' la stessa a ogni livello di
+   * prezzo: quello che resta deve coprire quanto paghi piu' il tuo guadagno.
+   */
+  const buyUpTo = coversCosts / (1 + flipConfig.dealRoi);
 
   // Sotto l'euro non e' un prezzo: e' un modo elegante di dire di no.
   const round2 = (value: number) => Math.round(value * 100) / 100;
+  const soglia = buyUpTo >= 1 ? Math.floor(buyUpTo) : null;
 
   return {
-    buyUpTo: hitsTarget >= 1 ? Math.floor(hitsTarget) : null,
+    buyUpTo: soglia,
     maybeUpTo: coversCosts >= 1 ? Math.floor(coversCosts) : null,
     breakdown: {
       expectedSalePrice: round2(expectedSalePrice),
       fees: round2(fees),
       shipping: round2(shipping),
       riskBuffer: round2(riskBuffer),
-      targetProfit: round2(targetProfit),
+      // Quanto ti resta davvero pagando la soglia. Le righe continuano a
+      // tornare a mente: venduto − commissioni − spedizione − cuscinetto −
+      // guadagno = prezzo massimo.
+      targetProfit: soglia === null ? round2(coversCosts) : round2(coversCosts - soglia),
     },
   };
 }

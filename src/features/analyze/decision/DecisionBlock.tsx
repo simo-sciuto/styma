@@ -1,7 +1,7 @@
 'use client';
 
 import type { FlipAssessment, Valuation } from '@/schemas/analysis';
-import { CONFIDENCE_LABELS, RECOMMENDATION_STYLES, formatEur, formatRange } from '@/lib/format';
+import { RECOMMENDATION_STYLES, formatEur, formatRange } from '@/lib/format';
 import { Disclosure } from '@/components/ui';
 import { PriceZones } from './PriceZones';
 
@@ -33,6 +33,12 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
  * Prima era in fondo alla pagina, dopo identita', stima e concorrenza: per
  * sapere se comprare bisognava scorrere tre schermate. Qui sopra c'e' solo
  * l'oggetto, e sotto tutto il resto — che serve a capire *perche'*, non *se*.
+ *
+ * Il pezzo piu' importante e' la frase che collega i due numeri. «Si rivende a
+ * 30–70 €» e «paga fino a 15 €» letti uno accanto all'altro sembrano darsi
+ * torto, e chi legge si ferma li': la domanda «perche' non posso pagarlo 40?»
+ * ha una risposta precisa — quei 70 non li incassi — e finche' stava chiusa in
+ * un accordion non la leggeva nessuno.
  */
 export function DecisionBlock({
   flip,
@@ -49,6 +55,7 @@ export function DecisionBlock({
   const { thresholds } = flip;
   const { breakdown } = thresholds;
   const asking = decision?.purchasePrice ?? null;
+  const restaInMano = thresholds.maybeUpTo;
 
   return (
     <section className="rounded-block border border-line bg-surface p-5 sm:p-6">
@@ -67,43 +74,37 @@ export function DecisionBlock({
             onChange={(event) => onPurchasePriceChange?.(event.target.value)}
             placeholder="18"
             aria-label="Prezzo richiesto dal venditore"
-            className="w-full bg-transparent text-2xl font-semibold tracking-tight outline-none"
+            className="w-full appearance-none bg-transparent text-2xl font-semibold tracking-tight outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
         </span>
       </label>
 
       {decision ? (
         <div
-          className={`mt-4 flex flex-wrap items-center justify-between gap-3 rounded-block px-5 py-4 ${
-            VERDICT_TONE[decision.recommendation]
-          }`}
+          className={`mt-4 rounded-block px-5 py-4 ${VERDICT_TONE[decision.recommendation]}`}
         >
           <p className="text-[clamp(1.75rem,1.5rem+1.4vw,2.5rem)] font-semibold leading-none tracking-tight">
             {RECOMMENDATION_STYLES[decision.recommendation].label}
           </p>
-          <p className="text-right font-mono text-sm">
-            <span className="text-2xl font-semibold">{decision.score}</span>
-            <span className="opacity-70">/100</span>
-            <br />
-            <span className="text-[0.65rem] uppercase tracking-[0.14em]">deal score</span>
-          </p>
         </div>
       ) : (
         <p className="mt-4 rounded-block bg-surface-warm px-5 py-4 text-sm text-muted">
-          Scrivi il prezzo del banco e il verdetto compare qui. La stima resta valida comunque.
+          Scrivi quanto te lo chiedono e qui sopra compare la risposta.
         </p>
       )}
 
       <div className="mt-5 grid grid-cols-2 gap-4">
+        {/* "Vale" era la parola sbagliata: sembrava quanto vale in mano tua,
+            mentre e' quanto lo paga chi lo comprera' da te. */}
         <Stat
-          label="Vale"
+          label="Lo rivendi a"
           value={formatRange(valuation.low, valuation.high)}
-          hint={CONFIDENCE_LABELS[valuation.confidence].toLowerCase()}
+          hint={`di solito ${formatEur(valuation.likely)}`}
         />
         <Stat
           label="Paga fino a"
           value={thresholds.buyUpTo !== null ? formatEur(thresholds.buyUpTo) : '—'}
-          hint={thresholds.buyUpTo === null ? 'nessun prezzo lo rende un affare' : undefined}
+          hint={thresholds.buyUpTo === null ? 'a nessun prezzo ci guadagni' : 'per farci un affare'}
         />
       </div>
 
@@ -112,16 +113,25 @@ export function DecisionBlock({
       </div>
 
       {/*
-        Il prezzo massimo si puo' controllare riga per riga. Un numero che
-        nessuno puo' verificare e' un numero da prendere per fede, e qui il
-        numero e' il prodotto — ma sta chiuso, perche' la prima domanda e'
-        "lo compro", non "come l'hai calcolato".
+        La riga che tiene insieme i due numeri. Senza, la pagina mostra una
+        fascia larga e un prezzo massimo basso e lascia a chi legge il compito
+        di indovinare il perche'.
       */}
-      <div className="mt-4">
-        <Disclosure summary="Come nasce il prezzo massimo">
+      {restaInMano !== null ? (
+        <p className="mt-4 border-t border-line pt-4 text-sm leading-relaxed">
+          Sembrano due numeri lontani, e c’e’ un motivo: di{' '}
+          {formatEur(breakdown.expectedSalePrice)} che incassi vendendolo, in mano te ne restano{' '}
+          <strong>{formatEur(restaInMano)}</strong> — il resto se ne va in commissioni, spedizione e
+          in quello che teniamo da parte perche’ la stima puo’ sbagliare. Dentro quei{' '}
+          {formatEur(restaInMano)} ci stanno sia quanto paghi sia quanto ci guadagni.
+        </p>
+      ) : null}
+
+      <div className="mt-3">
+        <Disclosure summary="Il conto, riga per riga">
           <dl className="space-y-1.5 font-mono text-sm">
             <div className="flex justify-between gap-3">
-              <dt>Vendita attesa</dt>
+              <dt>Lo rivendi a</dt>
               <dd>{formatEur(breakdown.expectedSalePrice, { precise: true })}</dd>
             </div>
             <div className="flex justify-between gap-3 text-muted">
@@ -133,11 +143,11 @@ export function DecisionBlock({
               <dd>{formatEur(breakdown.shipping, { precise: true })}</dd>
             </div>
             <div className="flex justify-between gap-3 text-muted">
-              <dt>− Cuscinetto di rischio</dt>
+              <dt>− Tenuto da parte per sicurezza</dt>
               <dd>{formatEur(breakdown.riskBuffer, { precise: true })}</dd>
             </div>
             <div className="flex justify-between gap-3 text-muted">
-              <dt>− Margine obiettivo</dt>
+              <dt>− Quanto ci guadagni</dt>
               <dd>{formatEur(breakdown.targetProfit, { precise: true })}</dd>
             </div>
             <div className="flex justify-between gap-3 border-t border-line pt-1.5 font-semibold">
@@ -146,9 +156,10 @@ export function DecisionBlock({
             </div>
           </dl>
           <p className="mt-3 font-sans text-xs text-muted">
-            Il cuscinetto e’ l’unica riga che dipende da quanto siamo sicuri: piu’ la stima e’
-            fragile, piu’ si tiene indietro. L’incertezza si paga in prezzo, non scaricandola su
-            di te.
+            Il guadagno e’ meta’ di quello che spendi, sempre: che l’oggetto costi dieci euro o
+            cinquecento, la richiesta e’ la stessa. Quello che teniamo da parte, invece, cambia con
+            quanto siamo sicuri — una stima fragile ti abbassa il prezzo massimo, cosi’ l’incertezza
+            la paghi in trattativa e non dopo.
           </p>
         </Disclosure>
       </div>

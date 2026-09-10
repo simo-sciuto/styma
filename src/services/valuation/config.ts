@@ -179,13 +179,27 @@ export const flipConfig = {
   },
 
   /**
-   * Margine obiettivo, in quota sul valore atteso di vendita.
+   * Quanto vuoi guadagnare su quello che spendi, perche' sia un affare e non
+   * solo una trattativa che regge.
    *
-   * In quota e non in euro: un obiettivo fisso renderebbe impossibile
-   * qualunque oggetto sotto quella cifra, e i mercatini sono fatti quasi tutti
-   * di oggetti sotto quella cifra.
+   * Sul **capitale investito**, non sul prezzo di vendita. Sembrava lo stesso
+   * ed era la differenza fra un prodotto usabile e uno no: la spedizione costa
+   * 9 € tanto su un oggetto da 45 € quanto su uno da 550, e si toglie prima
+   * della quota. Prendendo il 25% del venduto, la stessa riga di
+   * configurazione pretendeva un ritorno del 163% sotto i 50 € e del 95% sopra
+   * i 500. Su una fascia 30–70 € l'affare partiva sotto i 12 €: un numero che
+   * nessun rivenditore riconosce, accanto a una stima che ne diceva un altro.
+   *
+   * 0,5 vuol dire: a prezzo massimo ti resta in mano meta' di quello che hai
+   * speso, netta di commissioni, spedizione e cuscinetto di rischio. E' la
+   * soglia fra «compralo» e «tratta», non l'obiettivo di una vita: sopra
+   * quella cifra i conti tornano ancora, guadagni solo meno.
+   *
+   * Da non confondere con `targetRoi` qui sopra, che e' un'altra cosa: quello
+   * dice a che ritorno il *punteggio* smette di salire, questo dove finisce
+   * il «compralo».
    */
-  targetMarginRate: 0.25,
+  dealRoi: 0.5,
 
   demandScores: { high: 1, medium: 0.65, low: 0.3, unknown: 0.5 },
   liquidityScores: { fast: 1, average: 0.65, slow: 0.3, unknown: 0.5 },

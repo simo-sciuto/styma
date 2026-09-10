@@ -3,7 +3,13 @@ import { describe, expect, it } from 'vitest';
 import type { Comparable, MarketResearch } from '@/schemas/market';
 import type { Valuation } from '@/schemas/analysis';
 import { valuate } from './valuate';
-import { assessFlip, effectiveWeights, priceThresholds, recommendationAt, riskBufferRate } from './flip-score';
+import {
+  assessFlip,
+  effectiveWeights,
+  priceThresholds,
+  recommendationAt,
+  riskBufferRate,
+} from './flip-score';
 import { flipConfig } from './config';
 import { anIdentification } from '@/schemas/testing';
 
@@ -125,8 +131,8 @@ describe('cuscinetto di rischio', () => {
   });
 });
 
-describe('prezzo massimo come sottrazione', () => {
-  it('le righe tornano: la somma delle sottrazioni e’ la soglia', () => {
+describe('prezzo massimo, riga per riga', () => {
+  it('le righe tornano a mente', () => {
     // E' il punto di tutta la riscrittura. Prima il prezzo massimo usciva da
     // una bisezione su un punteggio composito: coerente, ma impossibile da
     // verificare per chi lo legge.
@@ -135,7 +141,39 @@ describe('prezzo massimo come sottrazione', () => {
 
     const copertura = b.expectedSalePrice - b.fees - b.shipping - b.riskBuffer;
     expect(thresholds.maybeUpTo).toBe(Math.floor(copertura));
-    expect(thresholds.buyUpTo).toBe(Math.floor(copertura - b.targetProfit));
+    // venduto − commissioni − spedizione − cuscinetto − guadagno = massimo
+    expect(thresholds.buyUpTo).toBe(Math.round(copertura - b.targetProfit));
+  });
+
+  it('chiede lo stesso ritorno su un oggetto da 40 € e su uno da 500', () => {
+    /*
+     * Il difetto che ha reso il prodotto incomprensibile: il guadagno era una
+     * quota del *venduto*, e la spedizione — 9 €, uguale a ogni prezzo — si
+     * toglieva prima. Risultato: su una fascia 30–70 € l'app chiedeva un
+     * ritorno del 163% per dire "compralo", su una 400–800 € il 95%. Chi
+     * leggeva vedeva "vale 30–70" e "paga fino a 12", e i due numeri
+     * sembravano darsi torto a vicenda.
+     */
+    const ritorno = (low: number, likely: number, high: number) => {
+      const valuation = { ...available(), low, likely, high, confidence: 'medium' as const };
+      const { buyUpTo, breakdown } = priceThresholds(valuation, identification);
+      // Il guadagno tenuto da parte a quel prezzo, sul prezzo stesso. Quello
+      // che incassi davvero e' di piu': il cuscinetto di rischio non e' un
+      // costo, e' una cifra che ti tieni indietro per sicurezza.
+      return breakdown.targetProfit / buyUpTo!;
+    };
+
+    const piccolo = ritorno(30, 45, 70);
+    const medio = ritorno(80, 110, 150);
+    const grande = ritorno(400, 550, 800);
+
+    for (const r of [piccolo, medio, grande]) {
+      expect(r).toBeGreaterThan(flipConfig.dealRoi * 0.9);
+      expect(r).toBeLessThan(flipConfig.dealRoi * 1.15);
+    }
+    // La distanza fra il piu' piccolo e il piu' grande e' quella
+    // dell'arrotondamento all'euro, non quella fra il 163% e il 95%.
+    expect(Math.abs(piccolo - grande)).toBeLessThan(0.06);
   });
 
   it('la soglia dell’affare sta sempre sotto quella della trattativa', () => {

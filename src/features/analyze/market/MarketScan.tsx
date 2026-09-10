@@ -131,7 +131,7 @@ export function MarketScan({
           Sul mercato
         </p>
         <p className="text-xs text-muted">
-          {used.length} {used.length === 1 ? 'inserzione usata' : 'inserzioni usate'}
+          {used.length} {used.length === 1 ? 'annuncio' : 'annunci'} usati
           {marketSource ? ` · ${describeSource(marketSource)}` : ''}
         </p>
       </div>
@@ -194,7 +194,7 @@ export function MarketScan({
 
       {rest.length > 0 ? (
         <div className="mt-3">
-          <Disclosure summary={`Le altre ${rest.length} usate`}>
+          <Disclosure summary={`Gli altri ${rest.length}`}>
             <ul>
               {rest.map((item) => (
                 <ComparableRow
@@ -208,11 +208,26 @@ export function MarketScan({
         </div>
       ) : null}
 
+      {/* Come si e' arrivati da queste inserzioni a quella fascia. Stava in
+          una scheda a se', staccata dagli annunci di cui parla. */}
+      {valuation.reasons.length > 0 ? (
+        <div className="mt-4 border-t border-line pt-3">
+          <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
+            Come siamo arrivati alla fascia
+          </p>
+          <ul className="mt-2 space-y-1 text-sm text-muted">
+            {valuation.reasons.map((reason) => (
+              <li key={reason}>— {reason}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       {/* Cosa e' stato buttato e perche'. E' la meta' meno vistosa della
           prova, e l'unica che dimostra che qualcuno ha guardato. */}
       {discarded.length > 0 ? (
         <div className="mt-3">
-          <Disclosure summary={`${discarded.length} scartate, e perche’`}>
+          <Disclosure summary={`${discarded.length} scartati, e perche’`}>
             <ul className="space-y-2 text-sm text-muted">
               {discarded.map(({ comparable, reason }) => (
                 <li key={`${comparable.url}-${comparable.price}`}>
