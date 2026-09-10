@@ -6,16 +6,14 @@ import type { ReactNode } from 'react';
 import type { AnalysisResult, MarketSource, WeightedComparable } from '@/schemas/analysis';
 import type { PreparedImage } from '@/lib/images';
 import { Card, Disclosure, Pill } from '@/components/ui';
+import { DecisionBlock } from './decision/DecisionBlock';
 import {
   CONDITION_LABELS,
-  CONFIDENCE_LABELS,
   DEMAND_LABELS,
   LIQUIDITY_LABELS,
   MATCH_LABELS,
-  RECOMMENDATION_STYLES,
   formatDate,
   formatEur,
-  formatRange,
 } from '@/lib/format';
 
 /**
@@ -103,36 +101,31 @@ export function ResultView({
 
   return (
     <div className="mt-6 space-y-4">
-      {cover ? (
-        // La foto vera, non un'illustrazione: e' l'oggetto che hai appena
-        // fotografato, la prima cosa che si vede del risultato.
-        <div className="overflow-hidden rounded-block">
-          <Image
-            src={cover.previewUrl}
-            alt=""
-            width={640}
-            height={480}
-            unoptimized
-            className="aspect-4/3 w-full object-cover"
-          />
-        </div>
-      ) : null}
-
       {/*
-        Il terracotta resta il segno dell'identificazione — lo stesso colore
-        del tile "Identifica" in home — ma come pallino, non come campo
-        pieno: a tutta larghezza era una parete arancione sopra ogni
-        risultato. Un solo blocco a colore pieno per pagina, e quello e' il
-        prezzo: e' l'unico colore che qui significa qualcosa.
+        Identita' e foto su una riga sola. La foto era a tutta larghezza in
+        4:3 — 257px del primo viewport su un telefono — e spingeva il
+        verdetto sotto la piega. L'oggetto lo hai appena fotografato: una
+        miniatura basta a confermare che abbiamo guardato il tuo.
       */}
       <Card>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.16em] text-muted">
+        <div className="flex gap-4">
+          {cover ? (
+            <Image
+              src={cover.previewUrl}
+              alt=""
+              width={200}
+              height={200}
+              unoptimized
+              className="h-20 w-20 shrink-0 rounded-2xl object-cover sm:h-24 sm:w-24"
+            />
+          ) : null}
+
+          <div className="min-w-0 flex-1">
+            <p className="flex items-center gap-2 font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
               <span className="h-1.5 w-1.5 rounded-full bg-tile-terracotta" aria-hidden />
               Identificato
             </p>
-            <h1 className="mt-2 text-[clamp(1.6rem,1.35rem+1.4vw,2.25rem)] font-semibold leading-[0.95] tracking-tight text-balance">
+            <h1 className="mt-1 text-[clamp(1.35rem,1.2rem+1vw,1.85rem)] font-semibold leading-[1.05] tracking-tight text-balance">
               {identification.name}
             </h1>
             <p className="mt-1 text-sm text-muted">
@@ -145,41 +138,35 @@ export function ResultView({
                 .filter(Boolean)
                 .join(' · ')}
             </p>
+            <div className="mt-2">
+              <Pill
+                tone={
+                  identification.confidence >= 0.75
+                    ? 'accent'
+                    : identification.confidence >= 0.5
+                      ? 'warn'
+                      : 'danger'
+                }
+              >
+                Identificazione {Math.round(identification.confidence * 100)}%
+              </Pill>
+            </div>
           </div>
-          <Pill
-            tone={
-              identification.confidence >= 0.75
-                ? 'accent'
-                : identification.confidence >= 0.5
-                  ? 'warn'
-                  : 'danger'
-            }
-          >
-            Identificazione {Math.round(identification.confidence * 100)}%
-          </Pill>
         </div>
       </Card>
 
-      {valuation.available ? (
-        // Il numero su cui si decide tutto prende la forma di un vero
-        // cartellino del prezzo — l'unico rischio visivo della pagina,
-        // speso qui e da nessun'altra parte.
-        <div className="price-tag rounded-block bg-accent-vivid p-5 text-accent-on-vivid sm:p-6">
-          <p className="text-sm font-medium">Valore di rivendita stimato</p>
-          <p className="mt-1 text-[clamp(2rem,1.6rem+2.4vw,3rem)] font-semibold leading-none tracking-tight">
-            {formatRange(valuation.low, valuation.high)}
-          </p>
-          <p className="mt-2 text-sm">
-            Piu’ probabile intorno a <strong>{formatEur(valuation.likely)}</strong> ·{' '}
-            {CONFIDENCE_LABELS[valuation.confidence]}
-          </p>
-          <ul className="mt-3 space-y-1 text-xs">
-            {valuation.reasons.map((reason) => (
-              <li key={reason}>— {reason}</li>
-            ))}
-          </ul>
-        </div>
-      ) : (
+      {/* La domanda del prodotto, subito. Tutto cio' che segue serve a
+          capire perche', non se. */}
+      {valuation.available && flip ? (
+        <DecisionBlock
+          flip={flip}
+          valuation={valuation}
+          purchasePrice={purchasePrice}
+          onPurchasePriceChange={onPurchasePriceChange}
+        />
+      ) : null}
+
+      {!valuation.available ? (
         <Card className="border-warn/40 bg-warn-soft">
           <p className="text-sm font-medium text-warn">Valore non stimabile</p>
           <p className="mt-1 text-sm">
@@ -187,7 +174,7 @@ export function ResultView({
             per dire quanto vale. {valuation.reason}
           </p>
           {/*
-            Anche senza fascia si mostra cio' che si e' visto: un rifiuto secco
+            Anche senza stima si mostra cio' che si e' visto: un rifiuto secco
             lascia chi e' davanti al banco esattamente dove stava, mentre due
             prezzi osservati — dichiarati come insufficienti — no.
           */}
@@ -205,7 +192,7 @@ export function ResultView({
             </p>
           ) : null}
         </Card>
-      )}
+      ) : null}
 
       {competition ? (
         <Card>
@@ -223,110 +210,25 @@ export function ResultView({
 
       {flip ? (
         <Card>
-          {/*
-            Il prezzo si chiede qui, non prima dell'analisi: davanti a un
-            banco la domanda nasce solo dopo aver visto quanto vale. Il
-            verdetto si ricalcola mentre digiti — assessFlip e' puro, non
-            serve tornare al server per un conto che dura microsecondi.
-          */}
-          <label className="block">
-            <span className="text-sm font-medium">Quanto te lo chiedono?</span>
-            <span className="mt-2 flex items-center gap-2 rounded-2xl border border-line bg-background px-4 py-2.5 focus-within:border-accent">
-              <span className="text-xl text-muted">€</span>
-              <input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                step={1}
-                value={purchasePrice}
-                onChange={(event) => onPurchasePriceChange?.(event.target.value)}
-                placeholder="25"
-                aria-label="Prezzo richiesto dal venditore"
-                className="w-full bg-transparent text-2xl font-semibold tracking-tight outline-none"
-              />
-            </span>
-          </label>
-
-          <div className="mt-4">
-          {decision ? (
-            decision.recommendation === 'BUY' ? (
-              // Il verdetto che conta di piu' si vede prima di leggerlo: stesso
-              // trattamento a blocco pieno del prezzo, non piu' una pillola fra
-              // le altre.
-              <div className="rounded-block bg-accent-vivid p-5 text-accent-on-vivid sm:p-6">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-medium">
-                      A {formatEur(decision.purchasePrice)} di prezzo di acquisto
-                    </p>
-                    <p className="mt-1 text-3xl font-semibold">
-                      {RECOMMENDATION_STYLES.BUY.label}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-mono text-3xl font-semibold">{decision.score}</p>
-                    <p className="text-xs">flip score / 100</p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm text-muted">
-                    A {formatEur(decision.purchasePrice)} di prezzo di acquisto
-                  </p>
-                  <p
-                    className={`mt-1 inline-flex rounded-full px-3 py-1.5 text-3xl font-semibold ${
-                      RECOMMENDATION_STYLES[decision.recommendation].tone
-                    }`}
-                  >
-                    {RECOMMENDATION_STYLES[decision.recommendation].label}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="font-mono text-3xl font-semibold">{decision.score}</p>
-                  <p className="text-xs text-muted">flip score / 100</p>
-                </div>
-              </div>
-            )
-          ) : (
-            <p className="text-sm text-muted">
-              Scrivi il prezzo del banco e il verdetto compare qui.
-            </p>
-          )}
-          </div>
-
-          <div className="mt-4 rounded-2xl border border-line p-4 text-sm">
-            <p className="font-medium">Fino a quanto conviene pagarlo</p>
-            {flip.thresholds.maybeUpTo === null ? (
-              <p className="mt-2 text-muted">
-                Nessun prezzo di acquisto rende questo oggetto un buon affare: il margine atteso non
-                copre i costi di rivendita.
+          {/* Come e' nata la stima, prima di cosa muove il punteggio: sono
+              due domande diverse e finivano sempre in due posti lontani. */}
+          {valuation.available && valuation.reasons.length > 0 ? (
+            <div>
+              <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
+                Come e’ nata la stima
               </p>
-            ) : (
-              <ul className="mt-2 space-y-1 text-muted">
-                {flip.thresholds.buyUpTo !== null ? (
-                  <li>
-                    Affare fino a{' '}
-                    <strong className="text-foreground">{formatEur(flip.thresholds.buyUpTo)}</strong>
-                  </li>
-                ) : (
-                  <li>
-                    Nessun prezzo lo rende un affare sicuro: la stima e’ troppo incerta per consigliarlo
-                    senza riserve.
-                  </li>
-                )}
-                <li>
-                  Ci puoi pensare fino a{' '}
-                  <strong className="text-foreground">{formatEur(flip.thresholds.maybeUpTo)}</strong>
-                </li>
-                <li>Sopra quella soglia, lascia stare.</li>
+              <ul className="mt-2 space-y-1 text-sm text-muted">
+                {valuation.reasons.map((reason) => (
+                  <li key={reason}>— {reason}</li>
+                ))}
               </ul>
-            )}
-          </div>
+            </div>
+          ) : null}
 
           <div className="mt-4">
-            <p className="text-sm font-medium">Perche’</p>
+            <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
+              Cosa muove il punteggio
+            </p>
             <ul className="mt-2 space-y-1 text-sm">
               {flip.factors.map((factor) => (
                 <li

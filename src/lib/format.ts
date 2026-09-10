@@ -67,7 +67,11 @@ export const CONFIDENCE_LABELS: Record<string, string> = {
  * lo stesso verdetto deve leggersi identico ovunque compaia. */
 export const RECOMMENDATION_STYLES: Record<Recommendation, { tone: string; label: string }> = {
   BUY: { tone: 'bg-accent-soft text-accent', label: 'Compralo' },
-  MAYBE: { tone: 'bg-warn-soft text-warn', label: 'Forse' },
+  // "Forse" non e' un'istruzione: descrive il nostro stato d'animo, non
+  // quello che dovresti fare. In quella fascia c'e' un'azione precisa, ed
+  // e' trattare sul prezzo. L'enum Postgres resta MAYBE: qui cambia solo
+  // la parola che legge chi e' davanti al banco.
+  MAYBE: { tone: 'bg-warn-soft text-warn', label: 'Tratta' },
   PASS: { tone: 'bg-danger-soft text-danger', label: 'Lascia stare' },
 };
 
@@ -77,6 +81,6 @@ export const RECOMMENDATION_STYLES: Record<Recommendation, { tone: string; label
  * invece di bg-background: fisso fra i temi, come il blocco che lo ospita. */
 export const RECOMMENDATION_STYLES_ON_VIVID: Record<Recommendation, { tone: string; label: string }> = {
   BUY: { tone: 'bg-tile-cream text-accent', label: 'Compralo' },
-  MAYBE: { tone: 'bg-tile-cream text-warn', label: 'Forse' },
+  MAYBE: { tone: 'bg-tile-cream text-warn', label: 'Tratta' },
   PASS: { tone: 'bg-tile-cream text-danger', label: 'Lascia stare' },
 };
