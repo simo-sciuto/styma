@@ -211,6 +211,19 @@ sono ancora aperte.
 - **La cache non si scrive dai client.** `market_research_cache` ha RLS attiva e zero policy: ci
   arriva solo il server con `SUPABASE_SERVICE_ROLE_KEY`. Una cache condivisa scrivibile dal browser
   si avvelena, e comparabili inventati sposterebbero le valutazioni di tutti.
+- **Le cuciture si provano in un browser vero.** `npm run e2e` percorre foto → analisi →
+  indirizzo → comprato → venduto → archiviato, con Chrome e Supabase veri (l'identificazione si
+  rigioca dalle risposte registrate, eBay no). Non e' ridondante coi test unitari: quelli coprono
+  l'aritmetica, questo copre i punti di giunzione — la sessione anonima che nasce al primo
+  salvataggio, l'indirizzo che cambia senza navigare, lo snapshot riletto da un altro processo,
+  un'azione server chiamata da un bottone. Al primo colpo ha trovato due bug che typecheck, lint,
+  build e 170 test unitari avevano lasciato passare. Il test cancella l'oggetto che crea: se lo si
+  interrompe a meta', resta in inventario.
+- **Un guardiano sulla «prima esecuzione» di un effetto non regge.** In sviluppo React monta ogni
+  effetto due volte: il primo giro consuma il guardiano e il secondo fa il lavoro che doveva
+  saltare. Era cosi' che il salvataggio del prezzo digitato scriveva `null` sopra il valore appena
+  registrato. La forma giusta e' confrontare col valore gia' scritto (`useAskingPrice.ts`): un
+  effetto idempotente si puo' rimontare quante volte si vuole.
 - **Le attese lunghe si raccontano mentre accadono.** `/api/valuate` risponde in SSE e riporta ogni
   corsia quando finisce davvero. Nessuna barra di avanzamento che si muove da sola.
 - Interfaccia in italiano, identificatori in inglese.
@@ -223,6 +236,7 @@ npm run build      # build di produzione
 npm run typecheck  # tsc --noEmit
 npm run lint       # eslint
 npm test           # vitest (valutazione, fusione delle corsie, lettura dello stream)
+npm run e2e        # playwright: il giro completo in un browser vero (~30s)
 
 node bench/research-bench.mjs [foto.jpg]   # cronometra e conta i costi di un'analisi contro `npm run dev`
 node bench/why-no-value.mjs foto.jpg ...   # segue l'imbuto quando non esce una stima

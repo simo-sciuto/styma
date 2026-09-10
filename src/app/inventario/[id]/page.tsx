@@ -81,24 +81,6 @@ export default async function ItemPage({ params }: PageProps<'/inventario/[id]'>
         </div>
       ) : null}
 
-      {/* Il terracotta resta il segno dell'identificazione — lo stesso
-          colore del tile "Identifica" in home — ma come pallino, non come
-          campo pieno: a tutta larghezza era una parete arancione sopra ogni
-          scheda. L'unico blocco a colore pieno qui e' il prezzo. */}
-      {snapshot ? (
-        // L'analisi come e' uscita quel giorno, ricostruita per intero:
-        // stessa pagina, stesso ordine, verdetto ricalcolato sul prezzo che
-        // stai digitando adesso. `coverUrl` e' null perche' la foto grande
-        // sta gia' sopra: la miniatura dell'intestazione sarebbe la terza
-        // copia della stessa immagine.
-        <SavedAnalysis
-          itemId={item.id}
-          snapshot={snapshot}
-          coverUrl={null}
-          initialAskingPrice={item.asking_price}
-        />
-      ) : null}
-
       {snapshot ? (
         // L'analisi come e' uscita quel giorno, per intero: stesso ordine,
         // stesse prove, verdetto ricalcolato sul prezzo che stai digitando

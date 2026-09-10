@@ -253,10 +253,22 @@ export async function setAskingPrice(itemId: string, price: number | null): Prom
   const supabase = await getServerSupabase();
   if (!supabase) return { ok: false, error: 'Persistenza non configurata.' };
 
-  const { error } = await supabase.from('items').update({ asking_price: price }).eq('id', itemId);
+  // Come in `recordOutcome`: la RLS non fa fallire un update su una riga
+  // altrui, la lascia semplicemente fuori. Senza chiedere indietro l'id, zero
+  // righe aggiornate sarebbero indistinguibili da un successo.
+  const { data, error } = await supabase
+    .from('items')
+    .update({ asking_price: price })
+    .eq('id', itemId)
+    .select('id');
+
   if (error) {
     console.error('[inventory] prezzo richiesto non aggiornato', error.message);
     return { ok: false, error: 'Prezzo non registrato.' };
+  }
+  if (!data || data.length === 0) {
+    console.error('[inventory] prezzo richiesto: nessuna riga aggiornata', itemId);
+    return { ok: false, error: 'Oggetto non trovato.' };
   }
   return { ok: true };
 }

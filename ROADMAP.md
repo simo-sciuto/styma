@@ -37,6 +37,7 @@ F2 ████████████████████ autenticita' a l
 F3 ████████████████████ URL del risultato           fatto
 
 G1 ████████████████████ aste: il segnale che buttavamo  fatto
+G2 ████████████████████ test end-to-end in un browser vero  fatto
 ```
 
 ---
@@ -277,6 +278,33 @@ il filtro «venduti» del sito eBay e' dietro login. Nessun acquisto fatto.
   mettiamo nella stima, ma li mettiamo a un tocco da chi sta al banco.
   Avvertenza in pagina: serve essere loggati.
 - `bench/auction-bids.mjs` rifa' la misura quando serve.
+
+### G2 — il giro completo, con un browser vero (commit successivo)
+Il buco che avevo dichiarato in F3 e non potevo chiudere da solo: nessuno
+aveva mai percorso il flusso cliccando. Ora `npm run e2e` lo fa in ~30
+secondi — foto, analisi, indirizzo, prezzo, comprato, venduto, archiviato —
+con Chrome e Supabase veri, e cancella l'oggetto che crea.
+
+**Al primo colpo ha trovato due bug che typecheck, lint, build e 170 test
+unitari avevano lasciato passare.**
+
+1. **`<SavedAnalysis>` era nella pagina due volte.** Un residuo della mia
+   chirurgia su `page.tsx` in F3: l'analisi salvata veniva renderizzata due
+   volte, con due campi prezzo e due schede identita'. Nessuno strumento
+   statico ha niente da ridire su un componente valido usato due volte.
+2. **Il prezzo digitato veniva azzerato subito dopo essere stato salvato.**
+   Il guardiano «salta la prima esecuzione dell'effetto» viene consumato dal
+   doppio montaggio di React in sviluppo, e il secondo giro scriveva il
+   valore iniziale — `null` — sopra quello appena registrato. Ora il
+   confronto e' col valore gia' scritto (`useAskingPrice.ts`), quindi
+   l'effetto e' idempotente.
+
+Piu' una svista mia: `setAskingPrice` non controllava le righe aggiornate,
+quindi un update bloccato dalla RLS sarebbe tornato `ok: true`. Come in
+`recordOutcome`, ora chiede indietro l'id.
+
+Playwright pilota il Chrome installato (`channel: 'chrome'`): questa macchina
+gira su macOS 12 e i browser scaricati da Playwright non lo supportano piu'.
 
 ---
 

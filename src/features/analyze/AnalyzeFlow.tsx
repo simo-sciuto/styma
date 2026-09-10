@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Button, Card, PageHeader } from '@/components/ui';
 import { readAnalysisEvents } from '@/lib/analysis-stream';
@@ -10,7 +10,7 @@ import type { AnalysisResult } from '@/schemas/analysis';
 import type { Identification } from '@/schemas/identification';
 import { ArchiveToggle } from '@/features/inventory/ArchiveToggle';
 import { AutoSave } from '@/features/inventory/AutoSave';
-import { setAskingPrice } from '@/features/inventory/actions';
+import { usePersistAskingPrice } from '@/features/inventory/useAskingPrice';
 import { PhotoPicker } from './PhotoPicker';
 import { ResultView } from './ResultView';
 
@@ -87,22 +87,10 @@ export function AnalyzeFlow() {
     if (itemId) window.history.replaceState(null, '', `/inventario/${itemId}`);
   }, [itemId]);
 
-  /**
-   * Il prezzo del banco si scrive dopo che l'analisi si e' salvata da sola,
-   * quindi va aggiornato mentre lo digiti — ma non a ogni tasto: per "18,50"
-   * sarebbero cinque scritture e quattro numeri sbagliati salvati per strada.
-   */
-  const primoPrezzo = useRef(true);
-  useEffect(() => {
-    if (!itemId) return;
-    if (primoPrezzo.current) {
-      primoPrezzo.current = false;
-      return;
-    }
-    const price = parsePurchasePrice(purchasePrice);
-    const timer = setTimeout(() => void setAskingPrice(itemId, price), 900);
-    return () => clearTimeout(timer);
-  }, [itemId, purchasePrice]);
+  // Il prezzo si scrive dopo il salvataggio automatico, quindi va portato
+  // all'oggetto man mano che lo digiti. Parte da vuoto: e' quello che
+  // `saveAnalysis` ha appena messo nel database.
+  usePersistAskingPrice(itemId, purchasePrice, '');
 
   /**
    * Il verdetto al prezzo digitato, ricalcolato qui invece che sul server.
@@ -207,7 +195,6 @@ export function AnalyzeFlow() {
     // e questa pagina ricomincia da capo.
     window.history.replaceState(null, '', '/analizza');
     setItemId(null);
-    primoPrezzo.current = true;
     setImages([]);
     setPurchasePrice('');
     setResult(null);
