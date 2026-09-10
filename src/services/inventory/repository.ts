@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { getServerSupabase } from '@/lib/supabase/server';
+import { AnalysisSnapshotSchema, type AnalysisSnapshot } from '@/schemas/snapshot';
 import type {
   ComparableRow,
   InventoryEntry,
@@ -29,11 +30,16 @@ async function signedUrl(
  * c'e' niente, e penserebbe di averli persi.
  */
 export type ListInventoryResult =
-  | { status: 'ok'; entries: InventoryEntry[] }
+  | { status: 'ok'; entries: InventoryEntry[]; archived: number }
   | { status: 'not_configured' }
   | { status: 'unreachable' };
 
-export async function listInventory(): Promise<ListInventoryResult> {
+/**
+ * Gli archiviati restano fuori dalla lista ma dentro i conti di quanti sono:
+ * nasconderli senza dire quanti sono farebbe sparire oggetti senza che
+ * nessuno sappia dove sono finiti.
+ */
+export async function listInventory(includeArchived = false): Promise<ListInventoryResult> {
   const supabase = await getServerSupabase();
   if (!supabase) return { status: 'not_configured' };
 
@@ -47,7 +53,7 @@ export async function listInventory(): Promise<ListInventoryResult> {
       console.error('[inventory] verifica sessione fallita', authError.message);
       return { status: 'unreachable' };
     }
-    if (!userData.user) return { status: 'ok', entries: [] };
+    if (!userData.user) return { status: 'ok', entries: [], archived: 0 };
 
     const { data: items, error } = await supabase
       .from('items')
@@ -59,8 +65,12 @@ export async function listInventory(): Promise<ListInventoryResult> {
       return { status: 'unreachable' };
     }
 
-    const itemRows = (items ?? []) as ItemRow[];
-    if (itemRows.length === 0) return { status: 'ok', entries: [] };
+    const allRows = (items ?? []) as ItemRow[];
+    const archived = allRows.filter((item) => item.archived_at !== null).length;
+    const itemRows = includeArchived
+      ? allRows
+      : allRows.filter((item) => item.archived_at === null);
+    if (itemRows.length === 0) return { status: 'ok', entries: [], archived };
 
     const ids = itemRows.map((item) => item.id);
 
@@ -87,7 +97,7 @@ export async function listInventory(): Promise<ListInventoryResult> {
       })),
     );
 
-    return { status: 'ok', entries };
+    return { status: 'ok', entries, archived };
   } catch (error) {
     // Un DNS che non risolve, una rete giu': qui la richiesta non arriva
     // nemmeno a Supabase, e supabase-js la fa fallire come eccezione, non
@@ -95,6 +105,28 @@ export async function listInventory(): Promise<ListInventoryResult> {
     console.error('[inventory] Supabase irraggiungibile', error);
     return { status: 'unreachable' };
   }
+}
+
+/**
+ * L'analisi salvata, riletta.
+ *
+ * Passa dallo schema come qualunque altro dato esterno: il JSON e' stato
+ * scritto da una versione del codice che non e' piu' questa, e un campo
+ * mancante deve diventare "non ho lo snapshot" — cioe' la scheda ridotta,
+ * che c'e' sempre — invece di un errore in pagina o, peggio, di una pagina
+ * incompleta che sembra completa.
+ *
+ * Gli oggetti salvati prima di questa versione non ce l'hanno affatto, ed e'
+ * lo stesso caso.
+ */
+function readSnapshot(valuation: ValuationRow | null): AnalysisSnapshot | null {
+  if (!valuation?.snapshot) return null;
+  const parsed = AnalysisSnapshotSchema.safeParse(valuation.snapshot);
+  if (!parsed.success) {
+    console.warn('[inventory] snapshot non rileggibile', parsed.error.issues[0]?.message);
+    return null;
+  }
+  return parsed.data;
 }
 
 export type GetItemDetailResult =
@@ -153,6 +185,7 @@ export async function getItemDetail(id: string): Promise<GetItemDetailResult> {
       detail: {
         item: item as ItemRow,
         valuation,
+        snapshot: readSnapshot(valuation),
         comparables: (comparables ?? []) as ComparableRow[],
         imageUrls,
       },

@@ -4,7 +4,6 @@ import Image from 'next/image';
 import type { ReactNode } from 'react';
 
 import type { AnalysisResult } from '@/schemas/analysis';
-import type { PreparedImage } from '@/lib/images';
 import { Card, Disclosure, Pill } from '@/components/ui';
 import { DecisionBlock } from './decision/DecisionBlock';
 import { Authenticity } from './identity/Authenticity';
@@ -19,13 +18,15 @@ import {
 
 export function ResultView({
   result,
-  images = [],
+  coverUrl = null,
   purchasePrice = '',
   onPurchasePriceChange,
   saveSlot,
 }: {
   result: AnalysisResult;
-  images?: PreparedImage[];
+  /** La prima foto: un'anteprima locale durante l'analisi, un URL firmato
+   *  quando la stessa pagina viene riaperta da salvata. */
+  coverUrl?: string | null;
   /** Testo grezzo del campo prezzo: lo stato vive nel chiamante, che deve
    *  passare lo stesso numero anche al salvataggio in inventario. */
   purchasePrice?: string;
@@ -34,7 +35,6 @@ export function ResultView({
 }) {
   const { identification, market, marketSource, valuation, flip } = result;
   const decision = flip?.atPrice ?? null;
-  const cover = images[0] ?? null;
 
   return (
     <div className="mt-6 space-y-4">
@@ -46,9 +46,9 @@ export function ResultView({
       */}
       <Card>
         <div className="flex gap-4">
-          {cover ? (
+          {coverUrl ? (
             <Image
-              src={cover.previewUrl}
+              src={coverUrl}
               alt=""
               width={200}
               height={200}

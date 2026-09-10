@@ -1,5 +1,6 @@
 import type { Recommendation } from '@/schemas/analysis';
 import type { Authenticity } from '@/schemas/identification';
+import type { AnalysisSnapshot } from '@/schemas/snapshot';
 
 export type ItemStatus = 'found' | 'passed' | 'bought' | 'listed' | 'sold';
 
@@ -28,6 +29,8 @@ export type ItemRow = {
   characteristics: string[];
   condition_notes: string[];
   markings: string[];
+  /** Fuori dalla lista, dentro i dati. Null = visibile. */
+  archived_at: string | null;
   /**
    * Cosa reggeva l'attribuzione al momento dell'analisi. Mai un verdetto di
    * autenticita': vedi `AuthenticitySchema`.
@@ -66,6 +69,12 @@ export type ValuationRow = {
   market_research_cached: boolean | null;
   /** Su cosa poggiava la fascia: solo stesso modello, anche simili, o solo debole evidenza. */
   comparable_tier: 'identical' | 'similar' | 'weak' | null;
+  /**
+   * L'analisi come e' stata mostrata, per rimostrarla identica. Null sugli
+   * oggetti salvati prima che esistesse, e su quelli il cui JSON non supera
+   * piu' lo schema: in entrambi i casi resta la scheda ridotta.
+   */
+  snapshot: unknown;
   reasoning: {
     factors?: { label: string; direction: 'positive' | 'negative' }[];
     reasons?: string[];
@@ -110,6 +119,7 @@ export type InventoryEntry = {
 export type ItemDetail = {
   item: ItemRow;
   valuation: ValuationRow | null;
+  snapshot: AnalysisSnapshot | null;
   comparables: ComparableRow[];
   imageUrls: string[];
 };

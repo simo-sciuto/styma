@@ -68,6 +68,13 @@ sono ancora aperte.
 - **Ogni tabella ha RLS attiva** e la proprieta' si verifica risalendo a `items.user_id`, mai
   duplicando `user_id` sulle tabelle figlie: due fonti di verita' divergono.
 - **Le valutazioni sono immutabili.** Una nuova analisi inserisce una riga, non aggiorna la vecchia.
+- **Ogni analisi si salva da sola e ha un indirizzo.** Il pulsante «Salva» buttava minuti di attesa
+  e qualche centesimo a ogni tocco sbagliato, e teneva solo cio' che valeva la pena tenere — cioe'
+  proprio la meta' del magazzino che non insegna niente. `valuations.snapshot` conserva l'analisi
+  come e' stata mostrata, **senza il verdetto**: quello e' funzione del prezzo che stai digitando
+  ora, e si ricalcola con `assessFlip`. Chi ricarica la pagina rivede la stessa pagina.
+  Corollario: non esiste un pulsante per cancellare, solo `archived_at`. Un oggetto scartato e' il
+  dato piu' difficile da raccogliere che questo prodotto abbia.
 - **Il prezzo del banco non e' un acquisto.** Il numero digitato per ottenere il verdetto e' quanto
   *chiedono* (`asking_price`): finiva in `purchase_price` con lo stato "comprato" dedotto dalla sua
   presenza, e l'inventario dichiarava acquisti mai fatti sommandoli fra le spese. Quanto hai pagato,

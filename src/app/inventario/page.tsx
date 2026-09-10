@@ -112,14 +112,16 @@ function InventorySummaryBlock({ summary }: { summary: InventorySummary }) {
 export const metadata = { title: 'Inventario — STYMA' };
 export const dynamic = 'force-dynamic';
 
-export default async function InventoryPage() {
-  const result = await listInventory();
+export default async function InventoryPage({ searchParams }: PageProps<'/inventario'>) {
+  const params = await searchParams;
+  const showArchived = params.archiviati === '1';
+  const result = await listInventory(showArchived);
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-20 pt-6 sm:px-5">
       <PageHeader
         title="Inventario"
-        subtitle="Ogni oggetto con la valutazione che aveva il giorno in cui l’hai salvato."
+        subtitle="Ogni oggetto che hai analizzato, con la valutazione che aveva quel giorno e com’e’ andata a finire."
       />
 
       {result.status === 'not_configured' ? (
@@ -141,10 +143,26 @@ export default async function InventoryPage() {
         </Card>
       ) : result.entries.length === 0 ? (
         <Card className="mt-6">
-          <p className="text-sm text-muted">
-            Ancora niente qui. Analizza un oggetto e salvalo: lo ritrovi in questa pagina con la
-            valutazione che aveva quel giorno.
-          </p>
+          {/* Una lista vuota con degli archiviati dentro non e' un inventario
+              vuoto, ed e' l'unico punto della pagina da cui si potrebbe
+              restare senza una strada per tornare a prenderli. */}
+          {result.archived > 0 ? (
+            <p className="text-sm text-muted">
+              Niente in lista:{' '}
+              {result.archived === 1
+                ? 'l’unico oggetto che hai e’ archiviato'
+                : `i tuoi ${result.archived} oggetti sono tutti archiviati`}
+              .{' '}
+              <Link href="/inventario?archiviati=1" className="underline decoration-line underline-offset-4">
+                Mostrali
+              </Link>
+            </p>
+          ) : (
+            <p className="text-sm text-muted">
+              Ancora niente qui. Analizza un oggetto: si salva da solo e lo ritrovi in questa
+              pagina, con la valutazione che aveva quel giorno.
+            </p>
+          )}
         </Card>
       ) : (
         <>
@@ -152,6 +170,22 @@ export default async function InventoryPage() {
               quanto e' costato, quanto ci puoi guadagnare. Dati gia' caricati
               per la lista, nessuna query in piu'. */}
           <InventorySummaryBlock summary={summarizeInventory(result.entries)} />
+
+          {result.archived > 0 ? (
+            // Nasconderli senza dire quanti sono farebbe sparire oggetti
+            // senza che nessuno sappia dove sono finiti.
+            <p className="mt-4 text-sm text-muted">
+              {showArchived
+                ? `Compresi ${result.archived} archiviati. `
+                : `${result.archived} ${result.archived === 1 ? 'oggetto archiviato' : 'oggetti archiviati'}, fuori da questa lista. `}
+              <Link
+                href={showArchived ? '/inventario' : '/inventario?archiviati=1'}
+                className="underline decoration-line underline-offset-4"
+              >
+                {showArchived ? 'Nascondili' : 'Mostrali'}
+              </Link>
+            </p>
+          ) : null}
 
           <ul className="mt-4 grid gap-4 sm:grid-cols-2">
             {result.entries.map(({ item, valuation, coverUrl }) => (
@@ -202,6 +236,7 @@ export default async function InventoryPage() {
                       <Pill tone={item.status === 'sold' ? 'accent' : 'neutral'}>
                         {ITEM_STATUS_LABELS[item.status]}
                       </Pill>
+                      {item.archived_at !== null ? <Pill>Archiviato</Pill> : null}
                       {/* Il prezzo che conta cambia col punto in cui sei: al
                           banco quanto chiedono, in magazzino quanto hai
                           pagato, dopo quanto hai incassato. Uno alla volta:

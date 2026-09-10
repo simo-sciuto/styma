@@ -21,7 +21,7 @@ falso — gia' successo una volta.
 **Fase E — P0, il motore decisionale: completa.** Tutti e dodici i P0 del brief
 sono in pagina.
 
-**Fase F — P1, in corso.** Si procede nell'ordine deciso: esito reale →
+**Fase F — P1, completa.** Nell'ordine deciso insieme: esito reale →
 autenticita' a livelli → URL del risultato.
 
 ```
@@ -34,7 +34,7 @@ E6 ████████████████████ prima di comprar
 
 F1 ████████████████████ esito reale in inventario   fatto
 F2 ████████████████████ autenticita' a livelli      fatto
-F3 ░░░░░░░░░░░░░░░░░░░░ URL del risultato
+F3 ████████████████████ URL del risultato           fatto
 ```
 
 ---
@@ -208,21 +208,63 @@ astratto — se marca e modello sono sbagliati, eBay cerca un altro oggetto e
 la fascia che esce e' il prezzo di quell'altro oggetto. E' l'unico errore
 del prodotto che non ha modo di dichiararsi.
 
+### F3 — ogni analisi ha un indirizzo (commit successivo)
+- **Il pulsante «Salva» non c'e' piu': l'analisi si salva da sola** appena
+  finisce. Prima un tocco sbagliato buttava minuti di attesa e qualche
+  centesimo, e restava salvato solo cio' che valeva la pena tenere — cioe'
+  proprio la meta' del magazzino che non insegna niente.
+- `valuations.snapshot`: l'analisi come e' stata mostrata, per rimostrarla
+  identica. Il verdetto non entra, ed e' il punto: e' funzione del prezzo che
+  stai digitando adesso, non di quello di ieri, e si ricalcola con
+  `assessFlip`. Congelarlo vorrebbe dire mostrare il verdetto di un prezzo
+  che nessuno sta piu' guardando.
+- `AnalysisSnapshotSchema`, con due controlli in compilazione: uno tiene
+  compatibili i tipi, l'altro confronta gli **insiemi di chiavi**. Senza il
+  secondo un campo aggiunto a `AnalysisResult` e dimenticato nello schema
+  passerebbe inosservato — TypeScript accetta i campi in piu' — e un'analisi
+  salvata perderebbe un pezzo in silenzio.
+- Un test costruisce l'analisi dalle risposte registrate e la fa rientrare
+  dallo schema: il controllo sui tipi garantisce che i campi ci siano, non
+  che i valori passino.
+- L'indirizzo cambia con `history.replaceState`, non navigando: una
+  navigazione rimonterebbe la pagina e butterebbe via il risultato appena
+  arrivato per rileggerlo dal database un istante dopo.
+- Il prezzo del banco si scrive dopo il salvataggio, quindi si aggiorna
+  mentre lo digiti — con 900 ms di attesa, perche' per «18,50» sarebbero
+  cinque scritture e quattro numeri sbagliati salvati per strada.
+- **Archiviare, mai cancellare** (`items.archived_at`). L'inventario ora
+  raccoglie anche quello che hai guardato di sfuggita, e senza un modo di
+  togliere di mezzo la lista diventa inservibile. Ma non c'e' nessun pulsante
+  per cancellare: un oggetto scartato e' il dato piu' difficile da
+  raccogliere che questo prodotto abbia. Quanti sono gli archiviati si dice
+  sempre, anche quando la lista e' vuota — e' l'unico punto da cui si
+  potrebbe restare senza una strada per tornare a prenderli.
+- Le schede salvate prima di oggi non hanno snapshot e continuano a
+  funzionare: `LegacyItemDetail` mostra quello che si ricostruisce dalle
+  colonne. Non e' codice di passaggio — ci finisce anche qualunque snapshot
+  il cui JSON non superi piu' lo schema.
+
 ---
 
-## Prossimo
+## Prossimo — da scegliere
 
-**F3 — URL del risultato.** Senza, il Second Look non e' implementabile e
-ogni analisi si perde ricaricando la pagina.
+La fase P1 concordata e' chiusa. Cosa resta, dal piano:
+
+- **Second Look** — ora e' implementabile: l'analisi ha un indirizzo e uno
+  snapshot da confrontare.
+- **Modalita' trattativa**, **analisi del marchio**, **sessione di mercato**,
+  **dati d'asta**.
+- **P2**: multi-oggetto, Scout, allerte, analytics personali, escalation a
+  esperto.
 
 ---
 
 ## Backlog
 
 ### P1
-Autenticita' a livelli · analisi del marchio · Second Look (richiede prima
-l'URL del risultato) · modalita' trattativa · sessione di mercato · dati
-d'asta.
+Second Look (ora implementabile: l'analisi ha un indirizzo e uno snapshot da
+confrontare) · analisi del marchio · modalita' trattativa · sessione di
+mercato · dati d'asta.
 
 ### P2
 Multi-oggetto · Scout · allerte · analytics personali · escalation a esperto.
@@ -239,6 +281,7 @@ Multi-oggetto · Scout · allerte · analytics personali · escalation a esperto
 | Similarita' in percentuale | No: abbiamo 4 livelli e un peso, non una misura ottica | piano |
 | Prezzo del banco salvato come acquisto | Separato: `asking_price` e' la domanda, `purchase_price` lo dichiari tu | F1 |
 | Identificazione su Haiku | A Sonnet: 2/9 contro 3/3 sullo schema vero, non su quello del bench | F2 |
+| Salvare l'analisi era un pulsante | Automatico: ogni analisi ha un indirizzo, e si archivia invece di cancellarla | F3 |
 
 ## Migliorie note, non ancora fatte
 
@@ -255,8 +298,12 @@ Multi-oggetto · Scout · allerte · analytics personali · escalation a esperto
   sono protette solo da rate limit per IP. Ogni chiamata costa denaro vero.
 - **Dati d'asta.** Unica via onesta ai prezzi realmente pagati: da verificare
   fattibilita' e termini d'uso prima di prometterla.
-- **URL del risultato.** Oggi l'analisi vive nello stato React. Senza
-  persistenza il Second Look non e' implementabile.
+- **Verdetto salvato sulle righe vecchie.** `valuations.recommendation`,
+  `flip_score` e `assessed_at_price` restano null sulle analisi salvate
+  automaticamente: il prezzo del banco arriva dopo. Il verdetto si ricalcola
+  in pagina dallo snapshot, che e' piu' onesto — ma il cruscotto non puo'
+  ancora contare quante volte STYMA aveva detto «lascia stare» su cose che
+  poi si sono rivelate affari. Serve per il punto 27 del piano.
 
 ---
 

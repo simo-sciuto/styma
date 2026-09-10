@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button, Card, PageHeader } from '@/components/ui';
 import { readAnalysisEvents } from '@/lib/analysis-stream';
@@ -8,7 +8,9 @@ import { assessFlip } from '@/services/valuation/flip-score';
 import type { PreparedImage } from '@/lib/images';
 import type { AnalysisResult } from '@/schemas/analysis';
 import type { Identification } from '@/schemas/identification';
-import { SaveToInventory } from '@/features/inventory/SaveToInventory';
+import { ArchiveToggle } from '@/features/inventory/ArchiveToggle';
+import { AutoSave } from '@/features/inventory/AutoSave';
+import { setAskingPrice } from '@/features/inventory/actions';
 import { PhotoPicker } from './PhotoPicker';
 import { ResultView } from './ResultView';
 
@@ -68,8 +70,39 @@ export function AnalyzeFlow() {
     comparables: number;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** L'id dell'oggetto salvato: e' l'indirizzo a cui questa analisi vive. */
+  const [itemId, setItemId] = useState<string | null>(null);
 
   const busy = stage === 'identifying' || stage === 'researching';
+
+  /**
+   * Appena l'oggetto esiste, l'indirizzo della pagina diventa il suo.
+   *
+   * `history.replaceState` e non una navigazione: navigare qui rimonterebbe
+   * la pagina e butterebbe via il risultato appena arrivato, per rileggerlo
+   * dal database un istante dopo. Cosi' la pagina resta quella che sta gia'
+   * leggendo, e ricaricando si riapre l'analisi salvata.
+   */
+  useEffect(() => {
+    if (itemId) window.history.replaceState(null, '', `/inventario/${itemId}`);
+  }, [itemId]);
+
+  /**
+   * Il prezzo del banco si scrive dopo che l'analisi si e' salvata da sola,
+   * quindi va aggiornato mentre lo digiti — ma non a ogni tasto: per "18,50"
+   * sarebbero cinque scritture e quattro numeri sbagliati salvati per strada.
+   */
+  const primoPrezzo = useRef(true);
+  useEffect(() => {
+    if (!itemId) return;
+    if (primoPrezzo.current) {
+      primoPrezzo.current = false;
+      return;
+    }
+    const price = parsePurchasePrice(purchasePrice);
+    const timer = setTimeout(() => void setAskingPrice(itemId, price), 900);
+    return () => clearTimeout(timer);
+  }, [itemId, purchasePrice]);
 
   /**
    * Il verdetto al prezzo digitato, ricalcolato qui invece che sul server.
@@ -170,6 +203,11 @@ export function AnalyzeFlow() {
 
   function reset() {
     for (const image of images) URL.revokeObjectURL(image.previewUrl);
+    // L'indirizzo torna quello dell'analisi: l'oggetto di prima resta dov'e',
+    // e questa pagina ricomincia da capo.
+    window.history.replaceState(null, '', '/analizza');
+    setItemId(null);
+    primoPrezzo.current = true;
     setImages([]);
     setPurchasePrice('');
     setResult(null);
@@ -186,17 +224,18 @@ export function AnalyzeFlow() {
       <>
         <ResultView
           result={liveResult}
-          images={images}
+          coverUrl={images[0]?.previewUrl ?? null}
           purchasePrice={purchasePrice}
           onPurchasePriceChange={setPurchasePrice}
-          saveSlot={
-            <SaveToInventory
-              result={liveResult}
-              askingPrice={parsePurchasePrice(purchasePrice)}
-              images={images}
-            />
-          }
+          saveSlot={<AutoSave result={liveResult} images={images} onSaved={setItemId} />}
         />
+        {/* Compare solo a salvataggio avvenuto: prima non c'e' niente da
+            togliere dalla lista. */}
+        {itemId ? (
+          <div className="mt-4 text-center">
+            <ArchiveToggle itemId={itemId} archived={false} />
+          </div>
+        ) : null}
         <Button variant="ghost" className="mt-6 w-full" onClick={reset}>
           Analizza un altro oggetto
         </Button>

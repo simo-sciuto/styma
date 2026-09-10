@@ -98,6 +98,10 @@ export async function saveAnalysis(
         unavailableReason: valuation.available ? undefined : valuation.reason,
         thresholds: flip?.thresholds,
       },
+      // L'analisi intera, per poterla rivedere identica invece che ridotta a
+      // una scheda. Il verdetto non entra: e' funzione del prezzo che si sta
+      // digitando, e si ricalcola.
+      snapshot: { identification, market, marketSource, valuation, warnings },
     })
     .select('id')
     .single();
@@ -227,6 +231,60 @@ export async function recordOutcome(itemId: string, raw: unknown): Promise<Outco
   if (!data || data.length === 0) {
     return { ok: false, error: 'Oggetto non trovato.' };
   }
+
+  revalidatePath('/inventario');
+  revalidatePath(`/inventario/${itemId}`);
+  return { ok: true };
+}
+
+/**
+ * Il prezzo del banco, aggiornato mentre lo digiti.
+ *
+ * L'analisi si salva da sola appena finisce, cioe' prima che tu abbia scritto
+ * quanto te lo chiedono: senza questo, l'unico numero che rende il verdetto
+ * utile non arriverebbe mai nel database, e riaprendo l'oggetto domani il
+ * campo sarebbe vuoto.
+ */
+export async function setAskingPrice(itemId: string, price: number | null): Promise<OutcomeResult> {
+  if (price !== null && (!Number.isFinite(price) || price < 0 || price > 1_000_000)) {
+    return { ok: false, error: 'Prezzo non valido.' };
+  }
+
+  const supabase = await getServerSupabase();
+  if (!supabase) return { ok: false, error: 'Persistenza non configurata.' };
+
+  const { error } = await supabase.from('items').update({ asking_price: price }).eq('id', itemId);
+  if (error) {
+    console.error('[inventory] prezzo richiesto non aggiornato', error.message);
+    return { ok: false, error: 'Prezzo non registrato.' };
+  }
+  return { ok: true };
+}
+
+/**
+ * Fuori dalla lista, dentro i dati.
+ *
+ * Ogni analisi diventa un oggetto salvato, quindi l'inventario raccoglie
+ * anche quello che hai solo guardato di sfuggita. Archiviare toglie di mezzo
+ * senza cancellare: un oggetto scartato e' il dato che dice se un «lascia
+ * stare» era giusto, e buttarlo per fare ordine sarebbe buttare la meta' piu'
+ * difficile da raccogliere.
+ */
+export async function setArchived(itemId: string, archived: boolean): Promise<OutcomeResult> {
+  const supabase = await getServerSupabase();
+  if (!supabase) return { ok: false, error: 'Persistenza non configurata.' };
+
+  const { data, error } = await supabase
+    .from('items')
+    .update({ archived_at: archived ? new Date().toISOString() : null })
+    .eq('id', itemId)
+    .select('id');
+
+  if (error) {
+    console.error('[inventory] archiviazione fallita', error.message);
+    return { ok: false, error: 'Non siamo riusciti ad archiviarlo.' };
+  }
+  if (!data || data.length === 0) return { ok: false, error: 'Oggetto non trovato.' };
 
   revalidatePath('/inventario');
   revalidatePath(`/inventario/${itemId}`);
