@@ -8,6 +8,7 @@ import { Card, Disclosure, Pill } from '@/components/ui';
 import { DecisionBlock } from './decision/DecisionBlock';
 import { Authenticity } from './identity/Authenticity';
 import { ObjectEvidence } from './identity/ObjectEvidence';
+import { Deals } from './market/Deals';
 import { MarketScan } from './market/MarketScan';
 import { RiskList } from './risks/RiskList';
 import { Ledger } from './flip/Ledger';
@@ -146,6 +147,16 @@ export function ResultView({
         l'oggetto in mano e il venditore che aspetta.
       */}
       <BeforeYouBuy identification={identification} />
+
+      {/*
+        Le stesse inserzioni che hanno fatto la stima, lette per quello che
+        sono anche state tutto il tempo: cose comprabili. Sta qui, subito dopo
+        il verdetto, perche' e' l'unica cosa in pagina che puo' cambiare la
+        risposta — non «quanto pagarlo» ma «forse non e' questo da comprare».
+      */}
+      {valuation.available && flip ? (
+        <Deals valuation={valuation} thresholds={flip.thresholds} />
+      ) : null}
 
       {valuation.available && flip ? (
         <Ledger

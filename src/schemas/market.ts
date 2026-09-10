@@ -62,6 +62,22 @@ export const ComparableSchema = z.object({
    * vorrebbe dire invitarlo a inventare un URL.
    */
   imageUrl: z.string().nullable().optional(),
+  /**
+   * Da dove spedisce chi vende. Presente su 100 inserzioni su 100 (misurato
+   * sui cinque mercati), e sono nove paesi, non cinque: interrogando eBay IT,
+   * DE, GB, ES e FR rispondono anche venditori giapponesi, olandesi, danesi e
+   * austriaci. Serve a dire quanto lontano sta un'occasione.
+   */
+  country: z.string().nullable().optional(),
+  /**
+   * Quanto costa farselo mandare **in Italia**, e solo quando lo sappiamo
+   * davvero: eBay dichiara la spedizione verso il paese del mercato che stai
+   * interrogando, quindi su un'inserzione trovata su eBay.de quella cifra e'
+   * il costo per un tedesco. Si valorizza solo dal mercato italiano, dove la
+   * domanda e la risposta coincidono; altrove resta null e la pagina lo dice,
+   * invece di sommare un numero che parla di un altro destinatario.
+   */
+  shippingToItalyEur: z.number().nullable().optional(),
 });
 
 export type Comparable = z.infer<typeof ComparableSchema>;
@@ -92,6 +108,6 @@ export type MarketResearch = z.infer<typeof MarketResearchSchema>;
  */
 export const ModelMarketResearchSchema = MarketResearchSchema.extend({
   comparables: z
-    .array(ComparableSchema.omit({ imageUrl: true }))
+    .array(ComparableSchema.omit({ imageUrl: true, country: true, shippingToItalyEur: true }))
     .describe('Comparabili realmente trovati. Vuoto se non ne esistono.'),
 });

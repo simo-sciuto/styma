@@ -49,6 +49,12 @@ export const EbayItemSummarySchema = z.object({
    * gia' successo con `price` sulle aste.
    */
   image: z.object({ imageUrl: z.string() }).optional(),
+  /** Presente su 100 inserzioni su 100, misurato sui cinque mercati. */
+  itemLocation: z.object({ country: z.string().optional() }).optional(),
+  /** Presente su 99 su 100, e nessuna e' a costo «da calcolare». */
+  shippingOptions: z
+    .array(z.object({ shippingCost: z.object({ value: z.string(), currency: z.string() }).optional() }))
+    .optional(),
 });
 
 export const EbaySearchResponseSchema = z.object({
@@ -354,12 +360,74 @@ function describeBidding(bidding: Bidding | null): string {
  * la base d'asta e' esattamente quello: quanto chiede il venditore.
  */
 /** Cio' che si sa dell'oggetto cercato, per giudicare un'inserzione trovata. */
+/**
+ * Parole con cui un venditore dichiara che l'oggetto e' rotto o e' un donatore
+ * di pezzi.
+ *
+ * Sono frasi intere, non parole singole, e non e' un dettaglio: «funzionante»
+ * e «non funzionante» condividono la parola che conta, e su eBay le due
+ * compaiono con la stessa frequenza. Ogni voce di questo elenco e' stata
+ * tenuta o tolta guardando `bench/rotti.mjs` su inserzioni vere.
+ *
+ * Nessuna sigla ambigua: «hs», «as is», «ko» tornerebbero dentro titoli che
+ * non parlano di guasti, e qui il falso positivo costa un comparabile buono.
+ *
+ * Misurato su **751 inserzioni** vere, otto oggetti, cinque mercati: ne toglie
+ * **5, cioe' lo 0,7%, e tutte e cinque sono davvero rotte** — «Typewriter For
+ * Parts», «Pour Pièces», «Reparatur / Werkstatt / Ersatzteile», «Ersatzteil
+ * Tonarm», «Rolleiflex 3.5F Defekt!». Zero falsi positivi, contro il 30% del
+ * primo tentativo sugli accessori. Stavano fra il 29% e il 76% sotto il
+ * mediano, quindi lo scarto dei prezzi fuori scala non ne prendeva nessuna.
+ *
+ * Delle 33 frasi, 5 hanno pescato qualcosa e 28 no: le altre restano perche'
+ * quegli otto oggetti non erano italiani ne' spagnoli, non perche' siano
+ * inutili. `bench/rotti.mjs` rifa' la misura su qualunque query.
+ */
+const BROKEN_PHRASES = [
+  // Italiano
+  'per ricambi', 'per pezzi', 'per parti', 'non funzionante', 'non funziona',
+  'da riparare', 'da revisionare', 'da restaurare', 'difettoso', 'guasta', 'guasto',
+  // «con difetto», non «difetto»: il titolo opposto — «senza difetti» — porta
+  // la stessa parola, ed e' la stessa trappola di «non funzionante».
+  'con difetto', 'con difetti', 'con problemi', 'da sistemare',
+  // Francese
+  'pour pieces', 'pour piece', 'en panne', 'ne fonctionne pas', 'a reparer',
+  // Tedesco
+  'defekt', 'ersatzteil', 'ersatzteiltrager', 'bastler', 'zum basteln',
+  // Inglese
+  'for parts', 'not working', 'spares or repair', 'spares repair',
+  'spare parts', 'faulty', 'as spares',
+  // Spagnolo
+  'para piezas', 'no funciona', 'averiado', 'para reparar', 'para restaurar',
+];
+
+/**
+ * Se il titolo dichiara che l'oggetto e' rotto o serve solo per pezzi.
+ *
+ * Un'inserzione cosi' non e' lo stesso oggetto in senso commerciale — nessuno
+ * la compra per rivenderla funzionante — e nel campione tira la stima verso il
+ * basso senza dichiararsi. Su eBay lo `conditionId` 7000 direbbe la stessa
+ * cosa, ma la condizione arriva su 3 inserzioni su 20: il titolo e' l'unico
+ * posto dove il venditore lo scrive quasi sempre.
+ */
+export function looksBroken(title: string): boolean {
+  const haystack = normalize(title);
+  return BROKEN_PHRASES.some((phrase) => haystack.includes(phrase));
+}
+
 export type ComparableContext = {
   brand: string | null;
   model: string | null;
   objectType: string | null;
   /** La query che ha trovato questa inserzione. */
   query: string;
+  /**
+   * Il mercato interrogato. Serve a una cosa sola: sapere se il costo di
+   * spedizione che eBay dichiara e' quello verso l'Italia o verso un altro
+   * paese. Su eBay.de quella cifra e' il costo per un tedesco, e sommarla al
+   * prezzo per un compratore italiano darebbe un totale falso.
+   */
+  marketplace?: string;
 };
 
 export function toComparable(raw: unknown, context: ComparableContext): Comparable | null {
@@ -387,6 +455,14 @@ export function toComparable(raw: unknown, context: ComparableContext): Comparab
   // livello con il peso piu' alto e nessun filtro sopra.
   if (looksLikeAccessory(item.title, context)) return null;
 
+  // Stessa ragione, direzione opposta: una macchina «per ricambi» porta marca
+  // e modello come una funzionante, e sta molto sotto il mediano senza essere
+  // abbastanza in basso perche' lo scarto dei prezzi fuori scala la prenda.
+  // Nel campione tirava giu' la stima; nell'elenco delle occasioni ci mandava
+  // a comprare un oggetto rotto, che e' il modo piu' concreto in cui questo
+  // prodotto puo' far perdere dei soldi a qualcuno.
+  if (looksBroken(item.title)) return null;
+
   // A exact_model e same_family il modello e' nel titolo: e' la prova migliore
   // che esista, e nessun controllo sul tipo la migliora.
   //
@@ -400,11 +476,23 @@ export function toComparable(raw: unknown, context: ComparableContext): Comparab
     return null;
   }
 
+  const spedizione = item.shippingOptions?.[0]?.shippingCost;
+  const spedizioneVerso = spedizione === undefined ? null : Number(spedizione.value);
+
   return {
     title: item.title,
     source: 'eBay',
     url: item.itemWebUrl,
     imageUrl: item.image?.imageUrl ?? null,
+    country: item.itemLocation?.country ?? null,
+    shippingToItalyEur:
+      context.marketplace === 'EBAY_IT' &&
+      spedizioneVerso !== null &&
+      Number.isFinite(spedizioneVerso) &&
+      spedizioneVerso >= 0 &&
+      spedizione?.currency === 'EUR'
+        ? spedizioneVerso
+        : null,
     price,
     currency,
     kind: bidding ? 'bid' : 'asking',

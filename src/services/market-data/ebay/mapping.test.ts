@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   inferMatchLevel,
   isRelevantTitle,
+  looksBroken,
   looksLikeAccessory,
   mentionsObjectType,
   readBidding,
@@ -305,5 +306,45 @@ describe('accessori scambiati per l’oggetto', () => {
     expect(
       toComparable(item({ title: 'Cinghie per custodia Canon AE-1 - Set da 2' }), canon()),
     ).toBeNull();
+  });
+});
+
+describe('inserzioni dichiarate rotte o da ricambi', () => {
+  /*
+   * Le cinque che il filtro ha davvero pescato in `bench/rotti.mjs`, su 751
+   * inserzioni reali. Stavano fra il 29% e il 76% sotto il mediano: troppo
+   * poco perche' lo scarto dei prezzi fuori scala le prendesse, abbastanza
+   * per tirare giu' la stima — e per finire in cima all'elenco delle
+   * occasioni, dove mandavano a comprare un oggetto rotto.
+   */
+  it('riconosce le cinque trovate sul mercato vero', () => {
+    expect(looksBroken('Olivetti Valentine Typewriter For Parts')).toBe(true);
+    expect(looksBroken('Machine à écrire Olivetti Valentine Pour Pièces')).toBe(true);
+    expect(
+      looksBroken('Nikon FM2 Spiegelreflexkamera Gehäuse - Reparatur / Werkstatt / Ersatzteile FM'),
+    ).toBe(true);
+    expect(looksBroken('Ersatzteil Tonarm für Braun Schneewittchensarg SK61')).toBe(true);
+    expect(looksBroken('Rollei F&H Rolleiflex 3.5F TLR Defekt! Twin Lens Reflex')).toBe(true);
+  });
+
+  it('prende «con difetto», che era finito fra le occasioni', () => {
+    expect(
+      looksBroken('Macchina da scrivere Olivetti Valentine con numero 1 raro con difetto'),
+    ).toBe(true);
+    // E non prende il suo contrario, che porta la stessa parola.
+    expect(looksBroken('Olivetti Valentine perfetta, senza difetti')).toBe(false);
+  });
+
+  it('non scambia un oggetto funzionante per uno rotto', () => {
+    // Il caso che rende obbligatorie le frasi intere: la parola che conta e'
+    // la stessa, e sono due inserzioni opposte.
+    expect(looksBroken('Macchina da scrivere Olivetti Valentine funzionante')).toBe(false);
+    expect(looksBroken('OLIVETTI VALENTINE Schreibmaschine funktionstüchtig mit Koffer')).toBe(false);
+    expect(looksBroken('Canon AE-1 fully working with 50mm lens')).toBe(false);
+    expect(looksBroken('Nikon FM2 revisionata di recente, perfetta')).toBe(false);
+  });
+
+  it('l’inserzione rotta non diventa un comparabile', () => {
+    expect(toComparable(item({ title: 'Canon AE-1 For Parts Not Working' }), canon())).toBeNull();
   });
 });

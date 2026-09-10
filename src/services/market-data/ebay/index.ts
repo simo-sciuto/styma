@@ -65,6 +65,7 @@ async function searchMarketplace(
         model: identification.model,
         objectType: identification.objectType,
         query,
+        marketplace,
       }),
     )
     .filter((comparable): comparable is Comparable => comparable !== null);
