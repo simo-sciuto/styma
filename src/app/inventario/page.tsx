@@ -54,11 +54,15 @@ export default async function InventoryPage() {
             // larghezza intera. Con un titolo lungo la traccia diventava piu'
             // larga della colonna e la pagina sbordava di lato sul telefono.
             <li key={item.id} className="min-w-0">
+              {/* Riga compatta sul telefono, scheda con foto grande da sm in
+                  su. Una card 4:3 a tutta larghezza e' alta ~360px: su uno
+                  schermo da 667px se ne vedevano meno di due, e un inventario
+                  si scorre per trovare qualcosa, non si contempla. */}
               <Link
                 href={`/inventario/${item.id}`}
-                className="group block overflow-hidden rounded-block border border-line bg-surface transition hover:border-tile-teal hover:shadow-sm"
+                className="group flex gap-3 overflow-hidden rounded-block border border-line bg-surface p-3 transition hover:border-tile-teal hover:shadow-sm sm:block sm:p-0"
               >
-                <div className="aspect-4/3 overflow-hidden bg-surface-warm">
+                <div className="aspect-square w-24 shrink-0 overflow-hidden rounded-xl bg-surface-warm sm:aspect-4/3 sm:w-full sm:rounded-none">
                   {coverUrl ? (
                     <Image
                       src={coverUrl}
@@ -66,26 +70,22 @@ export default async function InventoryPage() {
                       width={400}
                       height={300}
                       unoptimized
-                      className="h-full w-full object-cover transition duration-600 ease-out group-hover:scale-105 group-hover:rotate-1"
+                      className="h-full w-full object-cover transition duration-600 ease-out group-hover:scale-105 sm:group-hover:rotate-1"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-muted">
+                    <div className="flex h-full w-full items-center justify-center px-2 text-center text-xs text-muted">
                       Nessuna foto
                     </div>
                   )}
                 </div>
 
-                <div className="p-4">
+                <div className="flex min-w-0 flex-1 flex-col justify-center sm:block sm:p-4">
                   <p className="truncate font-medium">{item.title}</p>
                   <p className="mt-0.5 truncate text-sm text-muted">
                     {[item.brand, item.estimated_period].filter(Boolean).join(' · ') || item.category}
                   </p>
 
                   <div className="mt-2 flex flex-wrap gap-1.5">
-                    <Pill>{ITEM_STATUS_LABELS[item.status]}</Pill>
-                    {item.purchase_price !== null ? (
-                      <Pill>Pagato {formatEur(item.purchase_price)}</Pill>
-                    ) : null}
                     {valuation?.low_value !== null && valuation?.high_value != null ? (
                       <Pill tone="accent">
                         {formatRange(valuation.low_value!, valuation.high_value)}
@@ -93,6 +93,14 @@ export default async function InventoryPage() {
                     ) : (
                       <Pill tone="warn">Valore non stimato</Pill>
                     )}
+                    <Pill>{ITEM_STATUS_LABELS[item.status]}</Pill>
+                    {/* Quanto e' costato serve quando confronti, non quando
+                        cerchi: sul telefono ruberebbe la riga al valore. */}
+                    {item.purchase_price !== null ? (
+                      <span className="hidden sm:inline-flex">
+                        <Pill>Pagato {formatEur(item.purchase_price)}</Pill>
+                      </span>
+                    ) : null}
                   </div>
                 </div>
               </Link>
