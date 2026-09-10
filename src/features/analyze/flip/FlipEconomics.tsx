@@ -85,7 +85,7 @@ export function FlipEconomics({
       <div className="mt-4 grid grid-cols-2 gap-3 border-t border-line pt-3">
         <div>
           <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
-            Se lo molli a {formatEur(valuation.low)}
+            Se scendi a {formatEur(valuation.low)}
           </p>
           <p
             className={`mt-0.5 font-mono text-lg font-semibold tabular-nums ${

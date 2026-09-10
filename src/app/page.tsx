@@ -1,6 +1,10 @@
 import Link from 'next/link';
 import { Footer } from '@/components/Footer';
 import { Reveal } from '@/components/Reveal';
+import { PriceZones } from '@/features/analyze/decision/PriceZones';
+import { RECOMMENDATION_STYLES, formatEur, formatRange } from '@/lib/format';
+import type { Identification } from '@/schemas/identification';
+import { priceThresholds, recommendationAt } from '@/services/valuation/flip-score';
 
 // Icone lineari, disegnate a mano nel file invece che prese da una libreria:
 // tre gesti veri (inquadrare, ispezionare, spuntare) non tre astrazioni.
@@ -54,13 +58,67 @@ const STEPS = [
   },
 ] as const;
 
-// Numeri veri, misurati altrove nel progetto (bench/, AGENTS.md) — non
-// piazzati per fare colpo.
-const NUMBERS = [
-  { value: '5', label: 'mercati eBay interrogati a ogni ricerca' },
-  { value: '€0,006', label: 'costo medio di un’analisi completa' },
-  { value: '3', label: 'livelli di comparabili, dal piu’ sicuro al piu’ cauto' },
-] as const;
+/**
+ * L'esempio non e' scritto a mano: lo calcola il motore.
+ *
+ * Qui c'era un blocco di numeri sul funzionamento — quanti mercati eBay,
+ * quanto costa un'analisi, quanti livelli di comparabili — cioe' fatti da
+ * manuale d'officina, che a chi arriva non dicono niente di cosa ottiene. Uno
+ * dei tre era anche diventato falso da solo: 0,006 € era il costo con
+ * l'identificazione su Haiku, e da mesi giriamo su Sonnet a piu' del doppio.
+ *
+ * Un numero sulla home che invecchia senza che nessuno se ne accorga e' il
+ * modo piu' silenzioso di mentire. Quelli qui sotto passano da
+ * `priceThresholds` e `recommendationAt`, le stesse funzioni che rispondono
+ * davanti al banco: se un giorno cambiamo l'aritmetica, l'esempio cambia con
+ * lei invece di restare indietro.
+ */
+const ESEMPIO_OGGETTO: Identification = {
+  name: 'Vaso in ceramica',
+  objectType: 'vaso',
+  category: 'ceramica',
+  brand: null,
+  model: null,
+  period: 'anni 70',
+  materials: ['ceramica'],
+  characteristics: [],
+  markings: [],
+  condition: 'good',
+  conditionNotes: [],
+  history: '',
+  confidence: 0.9,
+  confidenceReasons: [],
+  authenticity: null,
+  marketPace: 'slow',
+  imageQuality: 'good',
+  missingShots: [],
+  physicalChecks: [],
+  searchQueries: [],
+};
+
+const ESEMPIO_FASCIA = { low: 55, high: 70, likely: 62 };
+
+const ESEMPIO_SOGLIE = priceThresholds(
+  {
+    available: true,
+    currency: 'EUR',
+    ...ESEMPIO_FASCIA,
+    confidence: 'high',
+    confidenceScore: 0.85,
+    used: [],
+    discarded: [],
+    strongCount: 6,
+    identicalCount: 6,
+    comparableTier: 'identical',
+    dispersion: 0.2,
+    reasons: [],
+  },
+  ESEMPIO_OGGETTO,
+);
+
+/** Quanto te lo chiedono, nell'esempio. */
+const ESEMPIO_RICHIESTO = 18;
+const ESEMPIO_VERDETTO = recommendationAt(ESEMPIO_RICHIESTO, ESEMPIO_SOGLIE);
 
 export default function HomePage() {
   return (
@@ -105,18 +163,60 @@ export default function HomePage() {
       </section>
 
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-16 pt-10 sm:px-5">
-        <Reveal className="rounded-block bg-surface-warm p-6 sm:p-8">
-          <p className="text-sm font-medium text-muted">Misurato, non tirato a indovinare.</p>
-          <div className="mt-5 grid gap-4 sm:grid-cols-3">
-            {NUMBERS.map((stat) => (
-              <div key={stat.label} className="flex items-baseline gap-3 sm:block">
-                <p className="shrink-0 text-3xl font-semibold tracking-tighter sm:text-4xl">
-                  {stat.value}
-                </p>
-                <p className="text-xs leading-snug text-muted sm:mt-1.5">{stat.label}</p>
-              </div>
-            ))}
+        {/*
+          La risposta, com'e' fatta davvero: stessi blocchi, stessi colori,
+          stessa barra della pagina che vedrai. Un esempio disegnato a parte
+          avrebbe promesso una cosa e consegnato un'altra.
+        */}
+        <Reveal className="rounded-block border border-line bg-surface p-6 sm:p-8">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
+              Cosa vedi alla fine
+            </p>
+            <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
+              esempio
+            </p>
           </div>
+
+          <p className="mt-4 text-lg">
+            Un vaso al mercatino. Costa{' '}
+            <strong className="font-semibold">{formatEur(ESEMPIO_RICHIESTO)}</strong>.
+          </p>
+
+          <div className="mt-3 rounded-block bg-accent-vivid px-5 py-4 text-accent-on-vivid">
+            <p className="text-[clamp(1.75rem,1.5rem+1.4vw,2.5rem)] font-semibold leading-none tracking-tight">
+              {RECOMMENDATION_STYLES[ESEMPIO_VERDETTO].label}
+            </p>
+          </div>
+
+          <div className="mt-5 grid grid-cols-2 gap-4">
+            <div>
+              <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
+                Lo rivendi a
+              </p>
+              <p className="mt-0.5 text-2xl font-semibold tracking-tight">
+                {formatRange(ESEMPIO_FASCIA.low, ESEMPIO_FASCIA.high)}
+              </p>
+            </div>
+            <div>
+              <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
+                Paga fino a
+              </p>
+              <p className="mt-0.5 text-2xl font-semibold tracking-tight">
+                {ESEMPIO_SOGLIE.buyUpTo !== null ? formatEur(ESEMPIO_SOGLIE.buyUpTo) : '—'}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <PriceZones thresholds={ESEMPIO_SOGLIE} askingPrice={ESEMPIO_RICHIESTO} />
+          </div>
+
+          <p className="mt-5 border-t border-line pt-4 text-sm text-muted">
+            Il prezzo massimo e’ una sottrazione che puoi rifare a mente: quanto lo rivendi, meno
+            commissioni, spedizione e quello che teniamo da parte perche’ la stima puo’ sbagliare.
+            Nell’analisi trovi il conto, riga per riga.
+          </p>
         </Reveal>
 
         <ol className="mt-6 grid gap-4 sm:grid-cols-3">
@@ -141,8 +241,9 @@ export default function HomePage() {
 
         <p className="mt-10 text-sm text-muted">
           La stima nasce da annunci comparabili trovati sul mercato, non dall’intuito di un modello.
-          Sono prezzi richiesti, non vendite concluse — nessuna fonte gratuita ci dice a quanto si
-          sono vendute davvero. Quando i dati non bastano, lo diciamo invece di inventare un numero.
+          Sono prezzi richiesti, non vendite concluse: le vendite vere nessuno le vende a condizioni
+          che possiamo accettare, e fingere di stimarle sarebbe la bugia piu’ comoda. Quando i dati
+          non bastano, te lo diciamo invece di riempire il vuoto con un numero.
         </p>
       </main>
 

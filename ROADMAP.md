@@ -40,6 +40,7 @@ G1 ████████████████████ aste: il segnale
 G2 ████████████████████ test end-to-end in un browser vero  fatto
 G3 ████████████████████ il prezzo massimo tornava incomprensibile  fatto
 G4 ████████████████████ accessori scambiati per l'oggetto  fatto
+G5 ████████████████████ home: un esempio vero al posto delle statistiche  fatto
 ```
 
 ---
@@ -385,6 +386,29 @@ non lo tirano piu' giu' i nastri e le cinghie.
 
 `bench/accessories.mjs` rifa' la misura. Ogni parola dell'elenco e' stata
 tenuta o tolta guardando quel comando su inserzioni reali.
+
+### G5 — la home mostrava le sue statistiche, non la sua risposta (commit successivo)
+Il blocco «5 mercati eBay · 0,006 € per analisi · 3 livelli di comparabili»
+era fatto da manuale d'officina: dice come funziona il motore a chi non sa
+ancora cosa ottiene. **E una delle tre cifre era diventata falsa da sola** —
+0,006 € era il costo con l'identificazione su Haiku, e da G2 giriamo su
+Sonnet a piu' del doppio. Nessuno se n'era accorto perche' niente la
+ricalcolava.
+
+Al suo posto c'e' la risposta, com'e' fatta davvero: *Un vaso al mercatino.
+Costa 18 € → COMPRALO → lo rivendi a 55–70 € → paga fino a 28 €*, con la
+stessa barra a tre fasce della pagina vera. **I numeri li calcola il motore**
+(`priceThresholds`, `recommendationAt`) e i componenti sono quelli veri
+(`PriceZones`): se cambia l'aritmetica cambia anche la vetrina, invece di
+restare indietro.
+
+E un passaggio sulle etichette opache, dalla stessa segnalazione:
+- «Quanto te lo chiedono» → **«Quanto costa»**. Era gergo da mercatino: la
+  nuova e' la domanda che fai al venditore, con le stesse parole.
+- «Quanto regge l'attribuzione» → «Quanto e' sicuro che sia questo».
+- «86 annunci usati» → «86 annunci nella stima». Voleva dire *usati per la
+  stima* e si leggeva *annunci di roba usata*, che qui sono tutti.
+- «Se lo molli a 135 €» → «Se scendi a 135 €».
 
 ---
 

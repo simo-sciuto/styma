@@ -11,6 +11,17 @@ import { test } from '@playwright/test';
  */
 test.use({ viewport: { width: 390, height: 844 } });
 
+test('@istantanea la home', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: 'e2e/schermate/home.png', fullPage: true });
+  for (let i = 0; i < 3; i += 1) {
+    await page.evaluate((n) => window.scrollTo(0, n * 700), i);
+    await page.waitForTimeout(250);
+    await page.screenshot({ path: `e2e/schermate/home-${i}.png` });
+  }
+});
+
 test('@istantanea la pagina risultato', async ({ page }) => {
   await page.goto('/analizza');
   await page.locator('input[type="file"]').setInputFiles(

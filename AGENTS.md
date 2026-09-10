@@ -138,6 +138,19 @@ sono ancora aperte.
   un ritorno del 163% per dire «compralo» sotto i 50 € e del 95% sopra i 500 — e i mercatini stanno
   tutti in fondo a quella scala. `dealRoi` e' sul capitale speso: la richiesta e' la stessa a ogni
   livello di prezzo.
+- **I numeri della home escono dal motore, non da un elenco scritto a mano.** C'era un blocco di
+  cifre sul funzionamento — quanti mercati eBay, quanto costa un'analisi, quanti livelli di
+  comparabili — e una era diventata falsa da sola: «0,006 € per analisi» era il costo con
+  l'identificazione su Haiku, e da settembre giriamo su Sonnet a piu' del doppio. Nessuno se n'era
+  accorto perche' niente la ricalcolava. Al suo posto c'e' un esempio che passa da
+  `priceThresholds` e `recommendationAt`, le stesse funzioni che rispondono davanti al banco, e usa
+  gli stessi componenti della pagina risultato: se cambia l'aritmetica, cambia anche la home. Un
+  numero in vetrina che invecchia senza che nessuno lo tocchi e' il modo piu' silenzioso di mentire.
+- **Le etichette usano le parole che diresti a voce.** «Quanto te lo chiedono» era gergo da
+  mercatino: limpido per chi ci sta dentro, opaco per tutti gli altri. «Quanto costa» e' la domanda
+  che fai al venditore. Stessa ragione per «attribuzione» → «quanto e' sicuro che sia questo», e per
+  «annunci usati», che voleva dire «usati per la stima» e si leggeva «annunci di roba usata» — che
+  qui sono tutti.
 - **Due numeri che sembrano contraddirsi vanno collegati in pagina, non in un accordion.** «Vale
   30–70 €» accanto a «paga fino a 15 €» si legge come un errore, e la spiegazione — quei 70 non li
   incassi — stava chiusa. Ogni volta che la pagina mostra due cifre che un lettore ragionevole

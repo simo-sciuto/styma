@@ -60,8 +60,11 @@ export function DecisionBlock({
   return (
     <section className="rounded-block border border-line bg-surface p-5 sm:p-6">
       <label className="block">
+        {/* "Quanto te lo chiedono" era gergo da mercatino: chiarissimo per
+            chi ci sta dentro, opaco per tutti gli altri. "Quanto costa" e' la
+            domanda che fai al venditore a voce, con le stesse parole. */}
         <span className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
-          Quanto te lo chiedono
+          Quanto costa
         </span>
         <span className="mt-1.5 flex items-center gap-2 rounded-2xl border border-line bg-background px-4 py-2.5 focus-within:border-accent">
           <span className="text-xl text-muted">€</span>
@@ -89,7 +92,7 @@ export function DecisionBlock({
         </div>
       ) : (
         <p className="mt-4 rounded-block bg-surface-warm px-5 py-4 text-sm text-muted">
-          Scrivi quanto te lo chiedono e qui sopra compare la risposta.
+          Scrivi quanto costa e qui sopra ti diciamo se conviene.
         </p>
       )}
 

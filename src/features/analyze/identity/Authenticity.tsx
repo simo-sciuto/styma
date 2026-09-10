@@ -30,7 +30,7 @@ export function Authenticity({ authenticity }: { authenticity: AuthenticityData 
     <Card>
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
-          Quanto regge l’attribuzione
+          Quanto e’ sicuro che sia questo
         </p>
         <p className={`text-sm font-medium ${hasConcerns ? 'text-warn' : ''}`}>
           {AUTHENTICITY_LABELS[level]}

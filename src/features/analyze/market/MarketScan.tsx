@@ -131,7 +131,7 @@ export function MarketScan({
           Sul mercato
         </p>
         <p className="text-xs text-muted">
-          {used.length} {used.length === 1 ? 'annuncio' : 'annunci'} usati
+          {used.length === 1 ? '1 annuncio nella stima' : `${used.length} annunci nella stima`}
           {marketSource ? ` · ${describeSource(marketSource)}` : ''}
         </p>
       </div>
