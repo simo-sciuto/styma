@@ -10,6 +10,10 @@ Specifica originale: `PROJECT_PRD.md`.
 **Questo file si aggiorna a ogni passo.** Se una riga qui non corrisponde al
 codice, e' questo file a essere sbagliato.
 
+I riferimenti ai commit si scrivono nel passo *successivo*: un commit non puo'
+contenere il proprio hash, e scriverlo prima di un amend lo rende subito
+falso — gia' successo una volta.
+
 ---
 
 ## Dove siamo
@@ -50,7 +54,7 @@ E6 ░░░░░░░░░░░░░░░░░░░░ prima di comprar
 - «Forse» → «Tratta».
 - `zones.ts` puro, 11 test. `ResultView` da 471 a 373 righe.
 
-### E2 — prove dell'identificazione (`b01031a`)
+### E2 — prove dell'identificazione (`e6d36e7`)
 - `confidenceReasons` finalmente in pagina: il modello scriveva gia' perche'
   la confidenza e' alta o bassa, e l'interfaccia mostrava solo la percentuale
   nuda. Una percentuale senza motivi si puo' solo credere; con i motivi si
