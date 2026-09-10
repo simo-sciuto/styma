@@ -7,8 +7,8 @@ import type { AnalysisResult, MarketSource, WeightedComparable } from '@/schemas
 import type { PreparedImage } from '@/lib/images';
 import { Card, Disclosure, Pill } from '@/components/ui';
 import { DecisionBlock } from './decision/DecisionBlock';
+import { ObjectEvidence } from './identity/ObjectEvidence';
 import {
-  CONDITION_LABELS,
   DEMAND_LABELS,
   LIQUIDITY_LABELS,
   MATCH_LABELS,
@@ -166,6 +166,8 @@ export function ResultView({
         />
       ) : null}
 
+      <ObjectEvidence identification={identification} />
+
       {!valuation.available ? (
         <Card className="border-warn/40 bg-warn-soft">
           <p className="text-sm font-medium text-warn">Valore non stimabile</p>
@@ -280,44 +282,6 @@ export function ResultView({
         </Card>
       ) : null}
 
-      <Disclosure summary="Dettagli dell’oggetto">
-        <dl className="space-y-3">
-          <div>
-            <dt className="text-muted">Stato</dt>
-            <dd>{CONDITION_LABELS[identification.condition] ?? identification.condition}</dd>
-          </div>
-          {identification.conditionNotes.length > 0 ? (
-            <div>
-              <dt className="text-muted">Difetti rilevati</dt>
-              <dd>{identification.conditionNotes.join(' · ')}</dd>
-            </div>
-          ) : null}
-          {identification.materials.length > 0 ? (
-            <div>
-              <dt className="text-muted">Materiali</dt>
-              <dd>{identification.materials.join(' · ')}</dd>
-            </div>
-          ) : null}
-          {identification.characteristics.length > 0 ? (
-            <div>
-              <dt className="text-muted">Caratteristiche</dt>
-              <dd>{identification.characteristics.join(' · ')}</dd>
-            </div>
-          ) : null}
-          {identification.markings.length > 0 ? (
-            <div>
-              <dt className="text-muted">Marchi e punzoni letti</dt>
-              <dd className="font-mono text-xs">{identification.markings.join(' · ')}</dd>
-            </div>
-          ) : null}
-          {identification.missingShots.length > 0 ? (
-            <div>
-              <dt className="text-muted">Foto che aiuterebbero</dt>
-              <dd>{identification.missingShots.join(' · ')}</dd>
-            </div>
-          ) : null}
-        </dl>
-      </Disclosure>
 
       {identification.history ? (
         <Disclosure summary="Cos’e’, in breve">

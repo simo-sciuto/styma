@@ -13,6 +13,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 Applicazione per chi compra oggetti usati e vuole sapere, sul posto, se conviene comprarli.
 Il PRD di riferimento e' `PROJECT_PRD.md`.
 
+**A che punto siamo:** `ROADMAP.md` — stato dei lavori di STYMA 2.0, aggiornato a ogni passo.
+Leggilo prima di iniziare qualcosa: dice cosa e' fatto, cosa viene dopo e quali decisioni
+sono ancora aperte.
+
 ## Come e' organizzato
 
 - `src/app` — route e API. Le route orchestrano, non contengono logica di business.
