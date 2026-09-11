@@ -49,6 +49,12 @@ H3 ████████████████████ le occasioni dai
 H4 ████████████████████ otto correzioni dal vivo                      fatto
 H5 ████████████████████ il cruscotto: sto guadagnando?                fatto
 H6 ████████████████████ il conto a tre righe, il retro del cartellino  fatto
+
+I1 ████████████████████ ci sei gia' passato                           fatto
+I2 ████████████████████ il tuo metro: la calibrazione personale       fatto
+I3 ████████████████████ quello che ci hai speso sopra                 fatto
+I4 ████████████████████ l'email al terzo oggetto                      fatto
+I5 ████████████████████ l'identificazione a eventi                    fatto
 ```
 
 ---
@@ -580,6 +586,24 @@ Multi-oggetto · Scout · allerte · analytics personali · escalation a esperto
 - Dalle inserzioni eBay arrivano anche paese, spedizione e voto del venditore.
   Le occasioni si confrontano ora anche col prezzo che ti chiedono al banco, e
   gli oggetti simili in vendita hanno un elenco a parte.
+
+### I1-I5 — le cinque cose che mancavano a chi lo usa davvero (commit successivi)
+- **Ci sei gia' passato**: lo stesso modello ricapita, e l'app non se ne
+  accorgeva. Ora lo dice appena c'e' l'identificazione, prima della stima.
+- **Il tuo metro**: dopo cinque vendite vere, `calibrate` misura a che quota
+  della stima chiudono. Mediana e non media. E' il solo numero del prodotto
+  che descrive chi lo usa invece del mercato.
+- **Quello che ci hai speso sopra**: pulizia, ricambi, trasporto. Escono dalla
+  stessa tasca del prezzo e non stavano da nessuna parte, quindi ogni margine
+  del magazzino era piu' alto di quello vero.
+- **L'email al terzo oggetto**: l'avviso c'era, ma in /account, cioe' nella
+  sola pagina che nessuno apre.
+- **L'identificazione a eventi**: misurato che il tempo sta li' e non nella
+  ricerca (21 s contro 2,5 s). Il primo dato utile arriva ora dopo 3,4 s
+  invece di 22,9. L'attesa dura uguale, e non si finge il contrario.
+- Corretto in AGENTS il costo per analisi: 0,042 $ con una foto e ~0,10 $ con
+  otto, non 0,015 $. Era la cifra di Haiku, mai aggiornata al passaggio a
+  Sonnet.
 
 ## Decisioni aperte
 

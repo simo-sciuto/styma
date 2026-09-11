@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
-import { errorResponse, providerErrorResponse } from '@/lib/api';
+import { describeProviderError, errorResponse } from '@/lib/api';
+import type { IdentifyEvent } from '@/lib/analysis-stream';
 import { checkRateLimit, clientKey } from '@/lib/rate-limit';
 import {
   MAX_FILE_BYTES,
@@ -67,13 +68,56 @@ export async function POST(request: Request) {
     images.push({ mediaType: file.type, data: buffer.toString('base64') });
   }
 
-  try {
-    const { identification, usage } = await getProvider().identify(images);
-    // Il costo si mostra solo in sviluppo: e' un dato sulla nostra infrastruttura.
-    return NextResponse.json(
-      process.env.NODE_ENV === 'production' ? { identification } : { identification, usage },
-    );
-  } catch (error) {
-    return providerErrorResponse(error);
-  }
+  /*
+   * Risposta a eventi, non JSON in blocco.
+   *
+   * L'identificazione dura ventuno secondi misurati su una foto sola, e sono
+   * millecinquecento token di prosa generati uno dopo l'altro. Ma i campi che
+   * servono a chi aspetta stanno in cima allo schema e sono pronti dopo due o
+   * tre secondi. Mandarli avanti non accorcia l'attesa di un millisecondo:
+   * accorcia il tempo in cui chi guarda non sa ancora niente, che e' l'unica
+   * cosa che possiamo davvero cambiare qui.
+   */
+  const encoder = new TextEncoder();
+
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      let open = true;
+      const send = (event: IdentifyEvent) => {
+        if (!open) return;
+        try {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+        } catch {
+          open = false;
+        }
+      };
+
+      try {
+        const { identification, usage } = await getProvider().identify(images, {
+          onPartial: (partial) => send({ type: 'partial', partial }),
+        });
+        // Il costo si mostra solo in sviluppo: e' un dato sulla nostra
+        // infrastruttura.
+        send({
+          type: 'identification',
+          identification,
+          ...(process.env.NODE_ENV === 'production' ? {} : { usage }),
+        });
+      } catch (error) {
+        const { message, code } = describeProviderError(error);
+        send({ type: 'error', error: message, code });
+      } finally {
+        open = false;
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+    },
+  });
 }

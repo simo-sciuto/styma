@@ -5,6 +5,13 @@ import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { IdentificationSchema, type Identification } from '@/schemas/identification';
 import { groundAuthenticity } from '../grounding';
 import {
+  NOTHING_YET,
+  readPartialIdentification,
+  samePartial,
+  worthShowing,
+  type PartialIdentification,
+} from '../partial';
+import {
   MarketResearchSchema,
   ModelMarketResearchSchema,
   type MarketResearch,
@@ -113,13 +120,16 @@ function listingFactsBrief(facts: ListingFacts): string {
 }
 
 export class AnthropicProvider implements ObjectIntelligenceProvider {
-  async identify(images: ImageInput[]): Promise<IdentificationOutcome> {
+  async identify(
+    images: ImageInput[],
+    options: { onPartial?: (partial: PartialIdentification) => void } = {},
+  ): Promise<IdentificationOutcome> {
     if (images.length === 0) {
       throw new ProviderError('Nessuna immagine da analizzare', 'invalid_response');
     }
 
     try {
-      return await this.#identifyWith(aiConfig.identification.model, images);
+      return await this.#identifyWith(aiConfig.identification.model, images, options);
     } catch (error) {
       /**
        * Il modello economico non e' stato verificato — il tetto di spesa
@@ -136,17 +146,21 @@ export class AnthropicProvider implements ObjectIntelligenceProvider {
         error instanceof APIError ? error.message : error,
       );
       try {
-        return await this.#identifyWith(aiConfig.identification.fallbackModel, images);
+        return await this.#identifyWith(aiConfig.identification.fallbackModel, images, options);
       } catch (fallbackError) {
         throw toProviderError(fallbackError);
       }
     }
   }
 
-  async #identifyWith(model: string, images: ImageInput[]): Promise<IdentificationOutcome> {
+  async #identifyWith(
+    model: string,
+    images: ImageInput[],
+    options: { onPartial?: (partial: PartialIdentification) => void } = {},
+  ): Promise<IdentificationOutcome> {
     const client = getAnthropicClient();
 
-    const response = await client.messages.parse({
+    const stream = client.messages.stream({
       model,
       max_tokens: aiConfig.identification.maxTokens,
       /**
@@ -185,6 +199,28 @@ export class AnthropicProvider implements ObjectIntelligenceProvider {
         },
       ],
     });
+
+    /*
+     * Marca e modello escono per primi, perche' stanno in cima allo schema, e
+     * sono gia' leggibili dopo due o tre secondi dei ventuno che dura l'intera
+     * identificazione. Si mandano avanti appena ci sono: chi aspetta smette di
+     * guardare uno schermo fermo, e i primi due passi della pagina di attesa
+     * diventano veri invece che decorativi.
+     *
+     * Un parziale uguale al precedente non si rimanda: il modello scrive
+     * carattere per carattere e ogni delta rileggerebbe gli stessi campi.
+     */
+    if (options.onPartial) {
+      let ultimo = NOTHING_YET;
+      stream.on('text', (_delta, snapshot) => {
+        const letto = readPartialIdentification(snapshot);
+        if (!worthShowing(letto) || samePartial(letto, ultimo)) return;
+        ultimo = letto;
+        options.onPartial?.(letto);
+      });
+    }
+
+    const response = await stream.finalMessage();
 
     const meter = new UsageMeter();
     meter.add(model, response.usage);

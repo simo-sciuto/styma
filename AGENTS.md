@@ -103,7 +103,12 @@ sono ancora aperte.
   sarebbe la peggiore bugia possibile, visto che qui il numero *e'* il prodotto.
 - **Il costo di ogni analisi si misura**, non si stima a occhio: `src/services/ai/usage.ts` conta
   token, ricerche e dollari, e li scrive nei log del server. Il listino sta in `config.ts`.
-  Riferimento misurato: **~0,015 $ per analisi completa** (identificazione su Sonnet + eBay).
+  Riferimento **rimisurato il 2026-09-11**: **0,042 $ con una foto sola**, e circa **0,10 $ con
+  otto** — ogni foto da 1600px vale ~2.560 token in ingresso, e l'ingresso e' la voce che cresce.
+  La cifra che stava qui prima, 0,015 $, era quella dell'identificazione su Haiku e non e' mai
+  stata aggiornata quando siamo passati a Sonnet: e' esattamente il numero invecchiato da solo
+  contro cui questo file mette in guardia due righe piu' sotto. Rimisurare fa parte del cambio di
+  modello, non e' un lavoro separato.
 - **Un modello si misura contro lo schema vero, non contro un banco di prova piu' facile.**
   L'identificazione girava su Haiku, scelto 5/5 contro Opus con `bench/compare-models.mjs` — che
   chiede quattro campi. Lo schema dell'applicazione ne chiede venti, e li' Haiku ha letto il
@@ -382,6 +387,23 @@ sono ancora aperte.
   di schermo e non in unita' di viewBox (0,7 spariva), e l'asse dello zero non sta a meta' altezza
   ma dove lo mettono i dati, altrimenti meta' riquadro resta vuoto e le etichette dei mesi finiscono
   lontane dalle barre che nominano.
+- **L'attesa lunga e' l'identificazione, non la ricerca.** Misurato: eBay risponde in **2,5
+  secondi** su cinque mercati, l'identificazione ne prende **21** con una foto sola. Non e' il
+  modello a essere lento: sono millecinquecento token di prosa generati uno dopo l'altro, e la
+  maggior parte (storia, controlli fisici, motivi della confidenza) serve alla pagina del
+  risultato, non a chi sta aspettando. Qualunque idea di «rispondere prima» che non tocchi quei
+  ventun secondi sta ottimizzando il 10% del problema.
+- **Quello che si puo' accorciare e' il tempo in cui chi guarda non sa niente.** I campi che
+  contano stanno in cima allo schema — `name`, `objectType`, `category`, `brand`, `model` — e sono
+  scritti per primi: `/api/identify` risponde a eventi e li manda avanti appena sono chiusi.
+  Misurato: **primo dato utile dopo 3,4 secondi invece di 22,9**. L'attesa dura uguale, e non si
+  finge il contrario: la barra resta indeterminata e nessun passo si accende per un timer.
+  `services/ai/partial.ts` legge solo valori gia' chiusi dalle virgolette — un nome che si completa
+  sotto gli occhi sfarfalla, ed e' peggio del vuoto — ed e' puro e testato.
+- **Una registrazione non si rigioca a pezzi.** `FixtureProvider` restituisce l'identificazione
+  tutta insieme e non manda parziali: spezzettarla con dei timer per simulare il modello che scrive
+  mostrerebbe un'attesa inventata al posto di una vera, che e' la cosa piu' vicina a una bugia che
+  quel componente sa fare.
 - Interfaccia in italiano, identificatori in inglese.
 
 ## Comandi

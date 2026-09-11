@@ -90,6 +90,14 @@ function missingFixtureError(kind: FixtureKind, key: string, label: string): Pro
  * fixture invecchiato fallisce invece di far finta di andare bene.
  */
 export class FixtureProvider implements ObjectIntelligenceProvider {
+  /*
+   * I parziali non si rigiocano. Una registrazione e' gia' completa quando
+   * viene letta, e spezzettarla con dei timer per far sembrare che il modello
+   * stia scrivendo sarebbe la cosa piu' vicina a una bugia che questo
+   * componente sa fare: mostrerebbe un'attesa inventata al posto di una vera.
+   * Chi rigioca un fixture riceve l'identificazione tutta insieme, che e'
+   * esattamente quello che e' successo.
+   */
   async identify(images: ImageInput[]): Promise<IdentificationOutcome> {
     const key = identifyKey(images);
     const raw = readFixture('identify', key);
@@ -165,8 +173,11 @@ export class FixtureProvider implements ObjectIntelligenceProvider {
 export class RecordingProvider implements ObjectIntelligenceProvider {
   constructor(private readonly inner: ObjectIntelligenceProvider) {}
 
-  async identify(images: ImageInput[]): Promise<IdentificationOutcome> {
-    const outcome = await this.inner.identify(images);
+  async identify(
+    images: ImageInput[],
+    options: Parameters<ObjectIntelligenceProvider['identify']>[1] = {},
+  ): Promise<IdentificationOutcome> {
+    const outcome = await this.inner.identify(images, options);
     const key = identifyKey(images);
     writeFixture('identify', key, outcome.identification);
     console.info(`[fixtures] registrato identify-${key}.json`);

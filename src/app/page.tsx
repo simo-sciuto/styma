@@ -214,7 +214,8 @@ export default function HomePage() {
 
           <p className="mt-5 border-t-2 border-line pt-4 text-sm text-muted">
             Il prezzo massimo e’ una sottrazione che puoi rifare a mente: quanto lo rivendi, meno
-            commissioni, spedizione e quello che teniamo da parte perche’ la stima puo’ sbagliare.
+            il margine che ti tieni, compreso quello che teniamo da parte perche’ la stima puo’
+            sbagliare.
             Nell’analisi trovi il conto, riga per riga.
           </p>
         </Reveal>

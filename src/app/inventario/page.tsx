@@ -71,7 +71,7 @@ function InventorySummaryBlock({ summary }: { summary: InventorySummary }) {
           value={potentialMarginEur !== null ? formatEur(potentialMarginEur) : 'n.d.'}
           hint={
             withBoth > 0
-              ? `su ${withBoth} ${withBoth === 1 ? 'oggetto' : 'oggetti'} ancora in mano, al netto delle commissioni`
+              ? `su ${withBoth} ${withBoth === 1 ? 'oggetto' : 'oggetti'} ancora in mano, al netto di quello che hai speso`
               : 'serve sia il prezzo pagato sia una stima'
           }
         />

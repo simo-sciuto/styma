@@ -5,12 +5,13 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 import { Button, Card, PageHeader } from '@/components/ui';
-import { readAnalysisEvents } from '@/lib/analysis-stream';
+import { readAnalysisEvents, type IdentifyEvent } from '@/lib/analysis-stream';
 import { assessFlip } from '@/services/valuation/flip-score';
 import type { PreparedImage } from '@/lib/images';
 import type { AnalysisResult } from '@/schemas/analysis';
 import type { AnalysisSnapshot } from '@/schemas/snapshot';
 import type { Identification } from '@/schemas/identification';
+import { NOTHING_YET, type PartialIdentification } from '@/services/ai/partial';
 import { ArchiveToggle } from '@/features/inventory/ArchiveToggle';
 import { AutoSave } from '@/features/inventory/AutoSave';
 import { LinkAccountNudge } from '@/features/auth/LinkAccountNudge';
@@ -93,6 +94,12 @@ export function AnalyzeFlow({
     comparables: number;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * Quel poco che si sa mentre il modello sta ancora scrivendo: nome, tipo,
+   * marca, modello. Vale solo durante l'attesa, e viene sostituito
+   * dall'identificazione vera appena arriva.
+   */
+  const [partial, setPartial] = useState<PartialIdentification>(NOTHING_YET);
   /**
    * Lo stesso modello, gia' passato per le nostre mani. Tiene con se' la
    * chiave per cui e' stato cercato: cosi' un risultato che arriva in ritardo
@@ -185,10 +192,19 @@ export function AnalyzeFlow({
    * raccontano un lavoro che non stiamo facendo.
    */
   const mercatoRisposto = structuredSource !== null || reusedResearch !== null;
+
+  /** Il nome piu' preciso che si sappia adesso, anche a identificazione aperta. */
+  const nomeParziale =
+    [partial.brand, partial.model].filter(Boolean).join(' ') || partial.name || partial.objectType;
   const passi: Passo[] = [
     {
       titolo: 'Riconosco l’oggetto',
-      durante: 'Leggo forma, materiali, marchi e punzoni.',
+      /*
+       * Mentre il modello scrive, il passo dice gia' cosa ha in mano invece
+       * di raccontare cosa sta facendo: «Olivetti Valentine» comparso al
+       * terzo secondo vale piu' di venti secondi di «leggo i marchi».
+       */
+      durante: nomeParziale ?? 'Leggo forma, materiali, marchi e punzoni.',
       esito: identification ? identification.name : null,
       stato: identification ? 'fatto' : 'corso',
     },
@@ -216,6 +232,7 @@ export function AnalyzeFlow({
     setError(null);
     setResult(null);
     setIdentification(null);
+    setPartial(NOTHING_YET);
     setSightings({ chiave: '', trovati: [] });
     setLanes([]);
     setReusedResearch(null);
@@ -227,13 +244,27 @@ export function AnalyzeFlow({
       for (const image of images) formData.append('images', image.file);
 
       const identifyResponse = await fetch('/api/identify', { method: 'POST', body: formData });
-      if (!identifyResponse.ok) {
+      if (!identifyResponse.ok || !identifyResponse.body) {
         throw new Error(await readError(identifyResponse, 'Identificazione non riuscita.'));
       }
 
-      const { identification: identified } = (await identifyResponse.json()) as {
-        identification: Identification;
-      };
+      /*
+       * L'identificazione arriva a eventi: i campi in cima allo schema (nome,
+       * tipo, marca, modello) sono pronti dopo due o tre secondi, il resto
+       * dopo venti. Non accorcia l'attesa di un millisecondo, accorcia il
+       * tempo in cui chi guarda non sa ancora niente.
+       */
+      let identified: Identification | null = null;
+      for await (const event of readAnalysisEvents<IdentifyEvent>(identifyResponse.body)) {
+        if (event.type === 'partial') {
+          setPartial(event.partial);
+        } else if (event.type === 'identification') {
+          identified = event.identification;
+        } else {
+          throw new Error(event.error);
+        }
+      }
+      if (!identified) throw new Error('L’identificazione si e’ interrotta. Riprova.');
       setIdentification(identified);
       setStage('researching');
 
@@ -304,6 +335,7 @@ export function AnalyzeFlow({
     setPurchasePrice('');
     setResult(null);
     setIdentification(null);
+    setPartial(NOTHING_YET);
     setSightings({ chiave: '', trovati: [] });
     setLanes([]);
     setReusedResearch(null);

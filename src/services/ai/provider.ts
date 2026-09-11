@@ -2,6 +2,7 @@ import type { Identification } from '@/schemas/identification';
 import type { MarketResearch } from '@/schemas/market';
 import type { ListingCopy } from '@/schemas/listing';
 import type { UsageTotals } from './usage';
+import type { PartialIdentification } from './partial';
 
 export type ImageInput = {
   mediaType: 'image/jpeg' | 'image/png' | 'image/webp';
@@ -79,7 +80,16 @@ export type MarketResearchOutcome = {
  * quale provider stia rispondendo: si puo' sostituire senza toccare i servizi.
  */
 export interface ObjectIntelligenceProvider {
-  identify(images: ImageInput[]): Promise<IdentificationOutcome>;
+  /**
+   * `onPartial` riceve marca, modello e nome appena il modello li ha scritti,
+   * cioe' due o tre secondi dopo l'inizio invece dei ventuno che serve per
+   * l'intera identificazione. Chi lo ignora ottiene il comportamento di
+   * prima: e' un canale in piu', non un contratto nuovo.
+   */
+  identify(
+    images: ImageInput[],
+    options?: { onPartial?: (partial: PartialIdentification) => void },
+  ): Promise<IdentificationOutcome>;
   researchMarket(
     identification: Identification,
     options?: ResearchOptions,

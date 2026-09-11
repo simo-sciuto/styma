@@ -163,9 +163,9 @@ export function DecisionBlock({
       */}
       {restaInMano !== null ? (
         <p className="mt-4 border-t-2 border-line pt-4 text-sm leading-relaxed">
-          Perche’ non di piu’: dei {formatEur(breakdown.expectedSalePrice)} che incassi, dopo
-          commissioni e margine di sicurezza ti restano {formatEur(restaInMano)}. Dentro ci sta
-          quanto paghi <em>e</em> quanto ci guadagni.
+          Perche’ non di piu’: dei {formatEur(breakdown.expectedSalePrice)} che incassi, tolto il
+          margine che ti tieni, restano {formatEur(restaInMano)}. Dentro ci sta quanto paghi{' '}
+          <em>e</em> quanto ci guadagni.
         </p>
       ) : null}
     </section>
