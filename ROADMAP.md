@@ -56,6 +56,7 @@ I3 ████████████████████ quello che ci ha
 I4 ████████████████████ l'email al terzo oggetto                      fatto
 I5 ████████████████████ l'identificazione a eventi                    fatto
 I6 ████████████████████ revisione dei testi                            fatto
+I7 ████████████████████ il cruscotto prende il suo spazio               fatto
 ```
 
 ---
@@ -612,6 +613,18 @@ Multi-oggetto · Scout · allerte · analytics personali · escalation a esperto
 - Quattro regole in AGENTS perche' il tic non ricresca: una frase un punto,
   «X, non Y» si spende una volta sola, un'etichetta non si difende da
   obiezioni che nessuno ha fatto, e il prodotto non parla di se'.
+
+### I7 — il cruscotto prende il suo spazio (commit successivo)
+- Voce sua nel menu. E il menu, sul telefono, scende in basso: quattro voci
+  con icona ed etichetta, dove arriva il pollice. In alto resta da `sm` in su.
+- Tre letture nuove, tutte da dati che c'erano gia': **su cosa guadagni**
+  (classifica per categoria, margine solo sui venduti), **quanto gira**
+  (quota di venduti e tempo mediano), **da quanto e' fermo** (tre fasce).
+- Il margine cumulato come curva sopra le barre mensili, su scala propria e
+  col valore finale scritto in legenda.
+- `ledger.ts` cresce di `byCategory`, `aging`, `sellThrough` e
+  `cumulativeMarginEur`. Sei test nuovi, fra cui quello che verifica che il
+  margine non conti mai la roba non ancora venduta.
 
 ## Decisioni aperte
 

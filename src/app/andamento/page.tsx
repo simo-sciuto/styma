@@ -2,10 +2,12 @@ import Link from 'next/link';
 
 import { Card, PageHeader } from '@/components/ui';
 import { CashflowChart } from '@/features/dashboard/CashflowChart';
+import { RankingBars } from '@/features/dashboard/RankingBars';
 import { formatEur } from '@/lib/format';
 import { calibrate } from '@/services/inventory/calibration';
 import { buildLedger } from '@/services/inventory/ledger';
 import { listInventory } from '@/services/inventory/repository';
+import { summarizeInventory } from '@/services/inventory/summary';
 
 export const metadata = { title: 'Andamento · STYMA' };
 export const dynamic = 'force-dynamic';
@@ -83,6 +85,7 @@ export default async function AndamentoPage() {
 
   const ledger = buildLedger(result.entries.map((entry) => entry.item));
   const calibration = calibrate(result.entries);
+  const summary = summarizeInventory(result.entries);
   const { totals, months } = ledger;
   const inUtile = totals.marginEur >= 0;
 
@@ -139,6 +142,80 @@ export default async function AndamentoPage() {
           </Card>
 
           {/*
+            «Sto guadagnando» ha una risposta sola e sta in cima. «Su cosa»
+            e' la seconda domanda, ed e' quella che cambia cosa comprerai
+            domenica prossima.
+          */}
+          {ledger.byCategory.length > 0 && totals.sold > 0 ? (
+            <Card className="mt-4">
+              <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
+                Su cosa guadagni
+              </p>
+              <div className="mt-4">
+                <RankingBars
+                  rows={ledger.byCategory.slice(0, 6).map((riga) => ({
+                    label: riga.category,
+                    valueEur: riga.marginEur,
+                    note: [
+                      riga.sold > 0
+                        ? `${riga.sold} ${riga.sold === 1 ? 'venduto' : 'venduti'}`
+                        : 'nessuna vendita',
+                      riga.inStock > 0 ? `${riga.inStock} in casa` : null,
+                      riga.roi !== null ? `${Math.round(riga.roi * 100)}% su ${formatEur(riga.spentEur)}` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · '),
+                  }))}
+                />
+              </div>
+              <p className="mt-4 border-t-2 border-line pt-3 text-xs text-muted">
+                Il margine conta solo i venduti. Su quello che hai ancora in casa non e’ ancora
+                successo.
+              </p>
+            </Card>
+          ) : null}
+
+          {/*
+            Quanti di quelli che compri escono davvero, e in quanto tempo.
+            Per chi rivende il vincolo non e' il margine: e' la velocita' con
+            cui il capitale torna libero.
+          */}
+          {ledger.sellThrough.rate !== null ? (
+            <Card className="mt-4">
+              <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
+                Quanto gira
+              </p>
+              <div className="mt-3 grid grid-cols-2 gap-4">
+                <Numero
+                  label="Venduti"
+                  value={`${Math.round(ledger.sellThrough.rate * 100)}%`}
+                  hint={`${ledger.sellThrough.sold} su ${ledger.sellThrough.bought} comprati`}
+                />
+                <Numero
+                  label="Tempo medio"
+                  value={
+                    ledger.medianDaysToSell !== null ? `${ledger.medianDaysToSell} gg` : 'n.d.'
+                  }
+                  hint={
+                    ledger.medianDaysToSell !== null
+                      ? 'dall’acquisto alla vendita'
+                      : 'nessuna vendita con una data d’acquisto'
+                  }
+                />
+              </div>
+
+              {/* La barra dice la stessa cosa del numero, e la dice a colpo
+                  d'occhio: quanta parte del magazzino e' uscita. */}
+              <div className="mt-4 flex h-4 overflow-hidden rounded-[0.3rem] border-2 border-line bg-background">
+                <div
+                  className="bg-verdict-buy"
+                  style={{ width: `${ledger.sellThrough.rate * 100}%` }}
+                />
+              </div>
+            </Card>
+          ) : null}
+
+          {/*
             Il capitale fermo non e' ne' un guadagno ne' una perdita, e per
             questo si legge male dentro il conto economico: e' il soldo che non
             puoi spendere di nuovo finche' non vendi. Per chi rivende e' il
@@ -169,6 +246,30 @@ export default async function AndamentoPage() {
                   }
                 />
               </div>
+
+              {/*
+                Un solo numero di capitale fermo non distingue un magazzino
+                che gira da un ripostiglio. Tre fasce si', e la terza e'
+                quella da guardare.
+              */}
+              <ul className="mt-4 space-y-2 border-t-2 border-line pt-3">
+                {ledger.aging.map((fascia, indice) => (
+                  <li key={fascia.label} className="flex items-baseline gap-3">
+                    <span className="w-32 shrink-0 text-xs text-muted">{fascia.label}</span>
+                    <span className="flex h-3 flex-1 overflow-hidden rounded-[0.25rem] border-2 border-line bg-background">
+                      <span
+                        className={indice === 2 ? 'bg-verdict-pass' : 'bg-tile-teal'}
+                        style={{
+                          width: `${(fascia.items / Math.max(1, ledger.itemsInStock)) * 100}%`,
+                        }}
+                      />
+                    </span>
+                    <span className="w-24 shrink-0 text-right font-mono text-xs tabular-nums">
+                      {fascia.items} · {formatEur(fascia.lockedEur)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </Card>
           ) : null}
 
@@ -195,6 +296,12 @@ export default async function AndamentoPage() {
                 <p className="mt-3 border-t-2 border-line pt-3 text-sm">
                   Da adesso ogni analisi ti mostra anche la stima al tuo metro.
                 </p>
+                {summary.checkedAgainstEstimate > 0 ? (
+                  <p className="mt-2 text-sm text-muted">
+                    {summary.insideEstimate} vendite su {summary.checkedAgainstEstimate} sono
+                    finite dentro la fascia che avevamo dato.
+                  </p>
+                ) : null}
               </>
             ) : (
               <p className="mt-2 text-sm text-muted">

@@ -58,6 +58,26 @@ export function CashflowChart({ months }: { months: MonthlyLedger[] }) {
   // sembrerebbe un blocco di colore invece che una misura.
   const larghezzaBarra = Math.min(larghezzaColonna * 0.55, 16);
 
+  /*
+   * La curva del cumulato vive su una scala sua, non su quella delle barre:
+   * un totale che cresce di mese in mese schiaccerebbe le barre a niente se
+   * condividessero l'asse, e le barre sono la lettura principale.
+   */
+  const cumulati = months.map((m) => m.cumulativeMarginEur);
+  const cumMax = Math.max(...cumulati, 0);
+  const cumMin = Math.min(...cumulati, 0);
+  const cumSpan = cumMax - cumMin || 1;
+  const linea =
+    months.length < 2
+      ? null
+      : months
+          .map((m, i) => {
+            const x = i * larghezzaColonna + larghezzaColonna / 2;
+            const y = H - PAD - ((m.cumulativeMarginEur - cumMin) / cumSpan) * (H - 2 * PAD);
+            return `${x.toFixed(2)},${y.toFixed(2)}`;
+          })
+          .join(' ');
+
   return (
     <div>
       <svg
@@ -112,6 +132,27 @@ export function CashflowChart({ months }: { months: MonthlyLedger[] }) {
           strokeWidth={2}
           vectorEffect="non-scaling-stroke"
         />
+
+        {/*
+          Il margine sommato da sempre, sopra le barre.
+          La domanda vera non e' «come e' andato marzo» ma «sto andando avanti
+          o indietro», e le barre mensili da sole non la distinguono: un mese
+          storto dentro una curva che sale e' un mese storto, lo stesso mese
+          dentro una curva che scende e' un problema.
+          Passa da due mesi in su: con un mese solo non e' una curva, e' un
+          punto.
+        */}
+        {linea ? (
+          <polyline
+            points={linea}
+            fill="none"
+            className="stroke-foreground"
+            strokeWidth={2.5}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
+          />
+        ) : null}
       </svg>
 
       {/* Le etichette stanno fuori dall'SVG: dentro, con
@@ -143,6 +184,18 @@ export function CashflowChart({ months }: { months: MonthlyLedger[] }) {
           />
           Speso
         </span>
+        {/* La curva non ha assi, quindi il suo valore finale va scritto:
+            senza, si legge la forma e non si legge la cifra. */}
+        {linea ? (
+          <span className="flex items-center gap-1.5">
+            <span aria-hidden className="h-0.5 w-4 shrink-0 bg-foreground" />
+            Totale da sempre{' '}
+            <strong className="font-mono text-foreground">
+              {cumulati[cumulati.length - 1]! >= 0 ? '+' : ''}
+              {formatEur(cumulati[cumulati.length - 1]!)}
+            </strong>
+          </span>
+        ) : null}
         <span className="font-mono">picco {formatEur(picco)}</span>
       </div>
     </div>

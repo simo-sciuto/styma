@@ -31,6 +31,7 @@ function LinkPending() {
 const LINKS = [
   { href: '/analizza', label: 'Analizza' },
   { href: '/inventario', label: 'Inventario' },
+  { href: '/andamento', label: 'Andamento' },
 ] as const;
 
 /**
@@ -46,7 +47,7 @@ export function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-3 z-40 px-4 sm:px-5">
+    <header className="sticky top-3 z-40 hidden px-4 sm:block sm:px-5">
       <nav className="mx-auto flex w-full max-w-2xl items-center justify-between gap-1 rounded-block border-2 border-line bg-surface/95 px-1.5 py-1.5 shadow-pop-sm backdrop-blur sm:px-2 sm:py-2">
         <Link
           href="/"

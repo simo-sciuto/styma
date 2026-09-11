@@ -33,8 +33,58 @@ export type MonthlyLedger = {
   earnedEur: number;
   /** Incassato meno quanto erano costati davvero gli oggetti venduti. */
   marginEur: number;
+  /**
+   * Il margine sommato da sempre fino a questo mese incluso.
+   *
+   * E' la riga che risponde alla domanda vera, che non e' «come e' andato
+   * marzo» ma «sto andando avanti o indietro». Un mese storto dentro una
+   * curva che sale e' un mese storto; lo stesso mese dentro una curva che
+   * scende e' un problema, e le barre mensili da sole non lo distinguono.
+   */
+  cumulativeMarginEur: number;
   bought: number;
   sold: number;
+};
+
+/**
+ * Su cosa guadagni davvero.
+ *
+ * «Sto guadagnando» e' la prima domanda e ha una risposta sola; «su cosa» e'
+ * la seconda e cambia cosa comprerai domenica prossima. La categoria la
+ * scrive il modello a ogni identificazione, e finora non la leggeva nessuno.
+ *
+ * Il margine conta solo i venduti: su quello che hai ancora in casa il
+ * margine non e' ancora successo, ed e' esattamente l'errore che rende
+ * inutili quasi tutti i cruscotti di magazzino.
+ */
+export type CategoryLine = {
+  category: string;
+  sold: number;
+  inStock: number;
+  spentEur: number;
+  marginEur: number;
+  /** Margine sul capitale speso per quella categoria. Null senza vendite. */
+  roi: number | null;
+};
+
+/**
+ * Da quanto sta fermo quello che hai in casa.
+ *
+ * Il capitale fermo come numero unico non dice se e' un magazzino che gira o
+ * un ripostiglio. Tre fasce si', e la terza e' quella da guardare.
+ */
+export type AgingBucket = {
+  label: string;
+  items: number;
+  lockedEur: number;
+};
+
+/** Quanti di quelli che hai comprato sono poi usciti davvero. */
+export type SellThrough = {
+  bought: number;
+  sold: number;
+  /** Null finche' non hai comprato niente: una quota su zero non esiste. */
+  rate: number | null;
 };
 
 export type Ledger = {
@@ -56,6 +106,9 @@ export type Ledger = {
   itemsInStock: number;
   /** Quanto ci mette, in media, un oggetto a passare da comprato a venduto. */
   medianDaysToSell: number | null;
+  byCategory: CategoryLine[];
+  aging: AgingBucket[];
+  sellThrough: SellThrough;
   /**
    * Il piu' vecchio ancora in magazzino, in giorni. Un solo numero, ma e' la
    * riga che dice se il magazzino sta diventando un ripostiglio.
@@ -115,6 +168,7 @@ export function buildLedger(items: ItemRow[], now: Date = new Date()): Ledger {
       spentEur: 0,
       earnedEur: 0,
       marginEur: 0,
+      cumulativeMarginEur: 0,
       bought: 0,
       sold: 0,
     };
@@ -126,6 +180,32 @@ export function buildLedger(items: ItemRow[], now: Date = new Date()): Ledger {
   let itemsInStock = 0;
   const daysToSell: number[] = [];
   let oldestInStockDays: number | null = null;
+
+  /** Categoria → conto. Senza categoria l'oggetto finisce in «senza categoria». */
+  const perCategoria = new Map<string, CategoryLine>();
+  const categoria = (nome: string | null): CategoryLine => {
+    const chiave = nome?.trim() || 'senza categoria';
+    const esistente = perCategoria.get(chiave);
+    if (esistente) return esistente;
+    const creata: CategoryLine = {
+      category: chiave,
+      sold: 0,
+      inStock: 0,
+      spentEur: 0,
+      marginEur: 0,
+      roi: null,
+    };
+    perCategoria.set(chiave, creata);
+    return creata;
+  };
+
+  const aging: AgingBucket[] = [
+    { label: 'meno di un mese', items: 0, lockedEur: 0 },
+    { label: 'uno-tre mesi', items: 0, lockedEur: 0 },
+    { label: 'oltre tre mesi', items: 0, lockedEur: 0 },
+  ];
+  let comprati = 0;
+  let venduti = 0;
 
   for (const item of items) {
     /*
@@ -149,6 +229,11 @@ export function buildLedger(items: ItemRow[], now: Date = new Date()): Ledger {
       month.bought += 1;
     }
 
+    if (costoTotale !== null) {
+      comprati += 1;
+      categoria(item.category).spentEur += costoTotale;
+    }
+
     if (sold && item.sale_price !== null && item.sale_date) {
       const month = bucket(monthOf(item.sale_date));
       month.earnedEur += item.sale_price;
@@ -160,6 +245,11 @@ export function buildLedger(items: ItemRow[], now: Date = new Date()): Ledger {
       if (item.purchase_date) {
         daysToSell.push(daysBetween(item.purchase_date, new Date(item.sale_date)));
       }
+
+      venduti += 1;
+      const riga = categoria(item.category);
+      riga.sold += 1;
+      riga.marginEur += item.sale_price - (costoTotale ?? 0);
     }
 
     // In magazzino: comprato e non ancora venduto. `found` e `passed` non ci
@@ -167,9 +257,13 @@ export function buildLedger(items: ItemRow[], now: Date = new Date()): Ledger {
     if (!sold && costoTotale !== null && (item.status === 'bought' || item.status === 'listed')) {
       lockedUpEur += costoTotale;
       itemsInStock += 1;
+      categoria(item.category).inStock += 1;
       if (item.purchase_date) {
         const days = daysBetween(item.purchase_date, now);
         if (oldestInStockDays === null || days > oldestInStockDays) oldestInStockDays = days;
+        const fascia = days < 30 ? 0 : days < 90 ? 1 : 2;
+        aging[fascia]!.items += 1;
+        aging[fascia]!.lockedEur += costoTotale;
       }
     }
   }
@@ -185,15 +279,19 @@ export function buildLedger(items: ItemRow[], now: Date = new Date()): Ledger {
               spentEur: 0,
               earnedEur: 0,
               marginEur: 0,
+              cumulativeMarginEur: 0,
               bought: 0,
               sold: 0,
             },
         );
 
+  let corrente = 0;
   for (const month of months) {
     month.spentEur = round(month.spentEur);
     month.earnedEur = round(month.earnedEur);
     month.marginEur = round(month.marginEur);
+    corrente += month.marginEur;
+    month.cumulativeMarginEur = round(corrente);
   }
 
   return {
@@ -209,5 +307,21 @@ export function buildLedger(items: ItemRow[], now: Date = new Date()): Ledger {
     itemsInStock,
     medianDaysToSell: median(daysToSell),
     oldestInStockDays,
+    // Ordinate per margine: la domanda e' «su cosa guadagno», e la risposta
+    // si legge dall'alto senza cercare.
+    byCategory: [...perCategoria.values()]
+      .map((riga) => ({
+        ...riga,
+        spentEur: round(riga.spentEur),
+        marginEur: round(riga.marginEur),
+        roi: riga.sold > 0 && riga.spentEur > 0 ? round(riga.marginEur / riga.spentEur) : null,
+      }))
+      .sort((a, b) => b.marginEur - a.marginEur || b.spentEur - a.spentEur),
+    aging: aging.map((fascia) => ({ ...fascia, lockedEur: round(fascia.lockedEur) })),
+    sellThrough: {
+      bought: comprati,
+      sold: venduti,
+      rate: comprati > 0 ? round(venduti / comprati) : null,
+    },
   };
 }

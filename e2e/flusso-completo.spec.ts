@@ -147,12 +147,22 @@ test('dall’analisi all’archivio, passando per la vendita', async ({ page }) 
   // Comprato a 25, venduto a 90: incassi 90, spendi 25, margine 65. Se questa
   // cifra un giorno divergesse da quella della scheda oggetto, due schermate
   // dello stesso prodotto direbbero due cose diverse sullo stesso oggetto.
-  await page.getByRole('link', { name: /Come sta andando/ }).click();
+  // Dal menu, che e' dove l'andamento vive adesso: prima era un collegamento
+  // in fondo all'inventario, cioe' una pagina di passaggio obbligata.
+  await page.getByRole('link', { name: 'Andamento' }).first().click();
   await expect(page).toHaveURL(/\/andamento$/);
   await expect(page.getByText('Hai guadagnato')).toBeVisible();
-  await expect(page.getByText('+65 €', { exact: true })).toBeVisible();
+  // `.first()`: lo stesso margine compare anche nella classifica per
+  // categoria qui sotto, che e' esattamente il blocco che deve esserci.
+  await expect(page.getByText('+65 €', { exact: true }).first()).toBeVisible();
   await expect(page.getByText('90 €', { exact: true })).toBeVisible();
   await expect(page.getByText('25 €', { exact: true })).toBeVisible();
+
+  // — E le letture nuove: su cosa guadagni, e quanto gira ——————————
+  await expect(page.getByText('Su cosa guadagni')).toBeVisible();
+  await expect(page.getByText('Quanto gira')).toBeVisible();
+  // Comprato uno, venduto uno: il magazzino e' girato tutto.
+  await expect(page.getByText('100%', { exact: true })).toBeVisible();
   await page.screenshot({ path: 'e2e/schermate/andamento.png', fullPage: true });
 
   // — Toglierlo dalla lista non lo cancella ————————————————————————

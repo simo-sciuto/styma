@@ -397,6 +397,25 @@ sono ancora aperte.
   legarlo all'oggetto giusto. `services/inventory/ledger.ts` e' puro e testato, e usa le stesse
   commissioni di `flipConfig`: se qui uscisse da un'altra aritmetica, due schermate dello stesso
   prodotto direbbero due cose diverse sullo stesso oggetto.
+- **La navigazione del telefono sta in basso.** Le voci erano tre in una barra in alto e ci
+  stavano appena; la quarta non ci sarebbe entrata. Ma il vincolo vero non era lo spazio: questa
+  app si usa in piedi con una mano sola, e il bordo alto di uno schermo da sei pollici e' il punto
+  piu' lontano dal pollice che ci sia. `BottomNav` su telefono, `Header` da `sm` in su, e il
+  `<body>` porta `pb-24` sotto quel breakpoint perche' una barra fissa senza spazio copre l'ultima
+  riga di ogni pagina.
+- **Il cruscotto risponde a due domande, non a una.** «Sto guadagnando» ne ha una sola e sta in
+  cima. «Su cosa» cambia cosa comprerai domenica prossima, e la categoria la scrive il modello a
+  ogni identificazione — ce l'avevamo da sempre e non la leggeva nessuno. Il margine per categoria
+  conta **solo i venduti**: su quello che hai ancora in casa il margine non e' ancora successo, ed
+  e' l'errore che rende inutili quasi tutti i cruscotti di magazzino.
+- **Il margine cumulato va sopra le barre mensili.** Un mese storto dentro una curva che sale e' un
+  mese storto; lo stesso mese dentro una curva che scende e' un problema, e le barre da sole non lo
+  distinguono. La curva ha una scala sua — condividere l'asse con le barre le schiaccerebbe a
+  niente — e siccome non ha assi, il suo valore finale si scrive nella legenda: senza, si legge la
+  forma e non si legge la cifra.
+- **Il capitale fermo si divide in tre fasce.** Un solo numero non distingue un magazzino che gira
+  da un ripostiglio. Tre si', e la terza (oltre tre mesi) prende il rosso del verdetto: e' quella
+  da guardare.
 - **I grafici si disegnano a mano, in SVG.** Sono rettangoli su una scala lineare, e una libreria da
   centinaia di kilobyte per disegnarli la pagherebbe chi apre la pagina da un telefono in giro. Due
   cose che sembrano dettagli: con `vectorEffect="non-scaling-stroke"` lo spessore si legge in pixel

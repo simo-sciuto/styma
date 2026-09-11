@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
+import { BottomNav } from '@/components/BottomNav';
 import { Header } from '@/components/Header';
 import './globals.css';
 
@@ -18,9 +19,12 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
       lang="it"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      {/* `pb-24` su telefono: la barra in basso e' fissa, e senza spazio
+          coprirebbe l'ultima riga di ogni pagina. */}
+      <body className="min-h-full flex flex-col pb-24 sm:pb-0">
         <Header />
         {children}
+        <BottomNav />
       </body>
     </html>
   );
