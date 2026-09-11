@@ -23,7 +23,7 @@ import type { Calibration } from '@/services/inventory/calibration';
 import { AnalysisProgress, type Passo } from './AnalysisProgress';
 import { ListingCard } from './ListingCard';
 import { ListingInput } from './ListingInput';
-import { PhotoPicker } from './PhotoPicker';
+import { PhotoGuidance, PhotoPicker } from './PhotoPicker';
 import { ResultView } from './ResultView';
 
 type Stage = 'idle' | 'identifying' | 'researching' | 'done';
@@ -503,7 +503,7 @@ export function AnalyzeFlow({
     <div className="mt-6 space-y-5">
       <PageHeader
         title="Da dove partiamo"
-        subtitle="Fotografa quello che hai in mano, oppure incolla il link di un annuncio."
+        subtitle="Stesso risultato da una foto o da un link. Cambia solo dove hai trovato l’oggetto."
       />
 
       {error ? (
@@ -513,30 +513,27 @@ export function AnalyzeFlow({
       ) : null}
 
       {/*
-        Il link sta in cima, non in fondo.
-
-        Stava sotto il selettore delle foto e sotto tutto il blocco «cosa
-        fotografare», con la motivazione che fotografare e' il caso al banco e
-        il link quello sul divano. Guardata su un telefono, quella motivazione
-        cadeva: chi arriva per incollare un link deve scorrere tre schermate di
-        istruzioni su come scattare, cioe' il contenuto dell'altro caso d'uso.
-        Sono due strade, e le due strade stanno affiancate.
+        Due schede gemelle, non una strada e un ripiego.
+        Il link era prima in fondo alla pagina, poi in cima con la fotografia
+        sotto: in tutte e due le versioni una delle due pesava piu' dell'altra,
+        e la guida «cosa fotografare» da sola aggiungeva tre schermate a un
+        lato solo della bilancia. Sono lo stesso mezzo per lo stesso scopo, uno
+        dal vivo e uno virtuale: stessa forma, stessa altezza, stesso peso.
       */}
-      <ListingInput onSubmit={(url) => void analyzeLink(url)} />
-
-      <div className="flex items-center gap-3" aria-hidden>
-        <span className="h-0.5 flex-1 bg-line" />
-        <span className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
-          oppure
-        </span>
-        <span className="h-0.5 flex-1 bg-line" />
+      <div className="grid items-stretch gap-4 sm:grid-cols-2">
+        <PhotoPicker images={images} onChange={setImages} />
+        <ListingInput onSubmit={(url) => void analyzeLink(url)} />
       </div>
 
-      <PhotoPicker images={images} onChange={setImages} />
+      {/* Compare solo quando c'e' qualcosa da analizzare: un pulsante spento
+          sotto due schede vuote non dice a nessuno da dove cominciare. */}
+      {images.length > 0 ? (
+        <Button className="w-full" onClick={() => void analyze()}>
+          {images.length === 1 ? 'Analizza la foto' : `Analizza le ${images.length} foto`}
+        </Button>
+      ) : null}
 
-      <Button className="w-full" disabled={images.length === 0} onClick={() => void analyze()}>
-        Analizza le foto
-      </Button>
+      <PhotoGuidance />
     </div>
   );
 }

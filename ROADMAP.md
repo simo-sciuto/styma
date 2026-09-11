@@ -659,6 +659,9 @@ Multi-oggetto · Scout · allerte · analytics personali · escalation a esperto
   che non lo sono.
 - La voce attiva passa da teal a inchiostro: due blocchi teal accanto non
   dicevano piu' quale dei due fosse l'azione.
+- E le due porte d'ingresso diventano gemelle: stessa forma, stessa altezza,
+  stesso peso. «Cosa fotografare» esce dalla scheda delle foto e sta chiusa
+  sotto tutte e due, perche' da sola aggiungeva tre schermate a un lato solo.
 
 ## Decisioni aperte
 

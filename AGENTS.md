@@ -465,6 +465,13 @@ sono ancora aperte.
   pollice di entrambe le mani, e la home rientra fra le voci per chiudere la simmetria attorno a
   lui. Su schermo grande non c'e' una barra da cui sporgere, e la stessa cosa si dice con un
   pulsante pieno accanto a voci che non lo sono.
+- **Le due porte pesano uguale.** Fotografare e incollare un link sono lo stesso mezzo per lo
+  stesso scopo, uno dal vivo e uno virtuale, e la pagina deve dirlo con la forma: due schede
+  gemelle, stessa altezza, stessa struttura (occhiello, una riga, l'azione in fondo). Ci sono
+  volute tre versioni per arrivarci — il link in fondo, poi in cima con la fotografia sotto — e in
+  tutte e due le precedenti una delle due pesava di piu'. Il colpevole piu' grosso era «Cosa
+  fotografare»: da sola aggiungeva tre schermate a un lato solo della bilancia, e ora sta chiusa
+  sotto tutte e due.
 - **La voce attiva e' inchiostro, l'azione e' teal.** Erano tutte e due teal piene, e su uno schermo
   grande «+ Analizza» e la pagina in cui ti trovi diventavano due blocchi identici: il colore
   smetteva di dire quale dei due fosse l'azione. Il nero non e' riservato a niente, si distingue dal

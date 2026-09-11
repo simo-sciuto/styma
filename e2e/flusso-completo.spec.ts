@@ -66,7 +66,7 @@ test('dall’analisi all’archivio, passando per la vendita', async ({ page }) 
   await expect(page.getByRole('heading', { name: /Da dove partiamo/ })).toBeVisible();
 
   await page.locator('input[type="file"]').setInputFiles(FOTO);
-  const analizza = page.getByRole('button', { name: 'Analizza le foto', exact: true });
+  const analizza = page.getByRole('button', { name: /^Analizza (la|le) / });
   await expect(analizza).toBeEnabled();
   await analizza.click();
 

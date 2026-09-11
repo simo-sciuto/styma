@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useRef, useState, type DragEvent } from 'react';
 import { MAX_IMAGES } from '@/lib/uploads';
 import { prepareImages, type PreparedImage } from '@/lib/images';
-import { Button, Pill } from '@/components/ui';
+import { Button, Disclosure, Pill } from '@/components/ui';
 
 /**
  * Non un elenco di scatti ma tre gruppi con un motivo ciascuno.
@@ -82,10 +82,16 @@ export function PhotoPicker({ images, onChange }: Props) {
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
-        className={`rounded-block border-[3px] border-dashed p-6 text-center transition sm:p-8 ${
+        className={`flex h-full flex-col rounded-block border-2 p-4 transition sm:p-5 ${
           dragging ? 'border-tile-teal bg-accent-soft' : 'border-line bg-surface'
         }`}
       >
+        <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
+          Ce l’hai davanti
+        </p>
+        <p className="mt-1.5 text-sm text-muted">
+          Fotografa l’oggetto. Da quattro a otto scatti, meno se e’ evidente.
+        </p>
         <input
           ref={inputRef}
           type="file"
@@ -98,29 +104,21 @@ export function PhotoPicker({ images, onChange }: Props) {
           }}
         />
 
-        <div
-          aria-hidden
-          className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-tile-teal text-tile-cream"
-        >
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" />
-            <circle cx="12" cy="13" r="3.4" />
-          </svg>
+        <div className="mt-3 flex flex-1 flex-col justify-end gap-2">
+          <Button
+            type="button"
+            className="w-full"
+            pending={busy}
+            disabled={full}
+            onClick={() => inputRef.current?.click()}
+          >
+            {images.length === 0 ? 'Scatta o scegli le foto' : 'Aggiungi foto'}
+          </Button>
+
+          <p className="text-xs text-muted">
+            {images.length}/{MAX_IMAGES} foto · su desktop puoi trascinarle qui
+          </p>
         </div>
-
-        <Button
-          type="button"
-          className="mt-4"
-          pending={busy}
-          disabled={full}
-          onClick={() => inputRef.current?.click()}
-        >
-          {images.length === 0 ? 'Scatta o scegli le foto' : 'Aggiungi foto'}
-        </Button>
-
-        <p className="mt-3 text-sm text-muted">
-          {images.length}/{MAX_IMAGES} foto · trascina qui i file su desktop
-        </p>
       </div>
 
       {errors.length > 0 ? (
@@ -186,8 +184,23 @@ export function PhotoPicker({ images, onChange }: Props) {
         </ul>
       ) : null}
 
-      <div className="mt-4 space-y-4 rounded-block border-2 border-line bg-surface p-4">
-        <p className="text-sm font-medium">Cosa fotografare</p>
+    </div>
+  );
+}
+
+/**
+ * Cosa fotografare, fuori dalla scheda che la ospitava.
+ *
+ * Stava dentro il selettore, e da sola pesava tre schermate: accanto a un
+ * campo per incollare un link faceva sembrare la fotografia la strada
+ * principale e il link un ripiego. Sono due mezzi per la stessa cosa, uno dal
+ * vivo e uno virtuale, e devono pesare uguale. La guida resta, chiusa, sotto
+ * tutte e due.
+ */
+export function PhotoGuidance() {
+  return (
+    <Disclosure summary="Cosa fotografare" hint="Le foto che cambiano il risultato">
+      <div className="space-y-4">
         {GUIDANCE.map((group) => (
           <div key={group.title}>
             <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
@@ -202,6 +215,6 @@ export function PhotoPicker({ images, onChange }: Props) {
           </div>
         ))}
       </div>
-    </div>
+    </Disclosure>
   );
 }
