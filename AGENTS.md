@@ -465,13 +465,23 @@ sono ancora aperte.
   pollice di entrambe le mani, e la home rientra fra le voci per chiudere la simmetria attorno a
   lui. Su schermo grande non c'e' una barra da cui sporgere, e la stessa cosa si dice con un
   pulsante pieno accanto a voci che non lo sono.
-- **Le due porte pesano uguale.** Fotografare e incollare un link sono lo stesso mezzo per lo
-  stesso scopo, uno dal vivo e uno virtuale, e la pagina deve dirlo con la forma: due schede
-  gemelle, stessa altezza, stessa struttura (occhiello, una riga, l'azione in fondo). Ci sono
-  volute tre versioni per arrivarci — il link in fondo, poi in cima con la fotografia sotto — e in
-  tutte e due le precedenti una delle due pesava di piu'. Il colpevole piu' grosso era «Cosa
-  fotografare»: da sola aggiungeva tre schermate a un lato solo della bilancia, e ora sta chiusa
-  sotto tutte e due.
+- **Non due porte: una barra.** Fotografare e incollare un link sono lo stesso mezzo per lo stesso
+  scopo, uno dal vivo e uno virtuale. Le versioni prima di questa lo dicevano sempre peggio: il
+  link in fondo alla pagina, poi in cima con la fotografia sotto, poi due schede gemelle
+  affiancate. L'ultima pesava uguale ma chiedeva comunque di **scegliere una porta prima di
+  cominciare**, e se le due cose sono equivalenti quella domanda non andrebbe fatta: c'e' un
+  oggetto, e tu hai una foto o un indirizzo. `StartBar` e' un campo solo che capisce da solo cosa
+  gli hai dato.
+- **La nota sta dentro la barra, e compare solo dopo la foto.** Non e' un terzo modo di cominciare:
+  e' quello che aggiungi mentre stai gia' cominciando, e chiederla prima sarebbe chiedere di
+  descrivere un oggetto che non abbiamo ancora guardato. Il segnaposto cambia da «fotografa o
+  incolla un link» a «premi invio, o aggiungi quello che la foto non dice».
+- **La nota e' un'altra classe di prova, non un'altra opinione.** Chi ha l'oggetto in mano puo'
+  leggere un punzone che la foto non mette a fuoco, sentire il peso, aprire un meccanismo. Il
+  prompt la usa, ma tiene il confine: `supports` resta solo cio' che si vede nelle foto, quello che
+  arriva dalla nota va in `confidenceReasons` dicendo da dove si sa, e se la nota contraddice le
+  foto il disaccordo si scrive invece di essere risolto in silenzio. Marca e modello restano quelli
+  che si vedono, e restano null se non si vedono: cercare non e' affermare.
 - **La voce attiva e' inchiostro, l'azione e' teal.** Erano tutte e due teal piene, e su uno schermo
   grande «+ Analizza» e la pagina in cui ti trovi diventavano due blocchi identici: il colore
   smetteva di dire quale dei due fosse l'azione. Il nero non e' riservato a niente, si distingue dal

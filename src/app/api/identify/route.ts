@@ -35,6 +35,18 @@ export async function POST(request: Request) {
     return errorResponse('Richiesta non valida.', 'bad_request', 400);
   }
 
+  /*
+   * La nota di chi ha l'oggetto in mano. Tagliata corta apposta: serve a dire
+   * quello che una foto non mostra — un peso, un punzone letto sotto la base,
+   * cosa ha detto il venditore — non a scrivere una scheda. Un campo lungo
+   * inviterebbe a raccontare l'oggetto invece di aggiungere prove.
+   */
+  const notaGrezza = formData.get('note');
+  const note =
+    typeof notaGrezza === 'string' && notaGrezza.trim() !== ''
+      ? notaGrezza.trim().slice(0, 400)
+      : null;
+
   const files = formData.getAll('images').filter((entry): entry is File => entry instanceof File);
 
   if (files.length < MIN_IMAGES) {
@@ -95,6 +107,7 @@ export async function POST(request: Request) {
       try {
         const { identification, usage } = await getProvider().identify(images, {
           onPartial: (partial) => send({ type: 'partial', partial }),
+          note,
         });
         // Il costo si mostra solo in sviluppo: e' un dato sulla nostra
         // infrastruttura.

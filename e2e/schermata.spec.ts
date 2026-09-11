@@ -27,7 +27,7 @@ test('@istantanea l’attesa dell’analisi', async ({ page }) => {
   await page.locator('input[type="file"]').setInputFiles(
     path.join(process.cwd(), 'bench', 'photos', 'olivetti-valentine.jpg'),
   );
-  await page.getByRole('button', { name: /^Analizza (la|le) / }).click();
+  await page.getByRole('button', { name: 'Analizza', exact: true }).click();
   // Appena parte: primo passo in corso, gli altri spenti.
   await page.getByText('Ci sto lavorando').waitFor({ timeout: 30_000 });
   await page.screenshot({ path: 'e2e/schermate/attesa-1.png' });
@@ -59,7 +59,7 @@ test('@istantanea la pagina risultato', async ({ page }) => {
   await page.locator('input[type="file"]').setInputFiles(
     path.join(process.cwd(), 'bench', 'photos', 'olivetti-valentine.jpg'),
   );
-  await page.getByRole('button', { name: /^Analizza (la|le) / }).click();
+  await page.getByRole('button', { name: 'Analizza', exact: true }).click();
   await page.getByText('Quanto costa', { exact: true }).first().waitFor({ timeout: 150_000 });
   await page.getByLabel('Prezzo richiesto dal venditore').fill('30');
   await page.waitForTimeout(500);

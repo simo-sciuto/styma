@@ -37,10 +37,30 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
 
+  /*
+   * Il server se lo avvia il test, e non riusa quello che trova.
+   *
+   * Prima era `reuseExistingServer: true`, e ha funzionato finche' nessuno
+   * teneva aperto un dev server. Quando c'e', Playwright lo riusa **e le
+   * variabili qui sotto non si applicano**: ogni `npm run e2e` finiva a
+   * chiamare il modello vero, quattro centesimi a giro, contro una regola
+   * scritta in AGENTS — sviluppare non deve costare. Se n'e' accorto un
+   * credito esaurito, non un controllo.
+   *
+   * Le due vie d'uscita sono peggio. Una build di produzione su un'altra porta
+   * non funziona: i fixture rifiutano di partire in produzione, ed e' giusto
+   * cosi', perche' servire un'analisi registrata come fresca sarebbe la bugia
+   * peggiore. E Next 16 rifiuta un secondo dev server nella stessa cartella,
+   * quindi nemmeno cambiare porta basta.
+   *
+   * Resta questo: il test avvia il suo dev server e fallisce forte se la porta
+   * e' gia' occupata. **Prima di `npm run e2e` va fermato il proprio `npm run
+   * dev`.** Un fastidio dichiarato vale piu' di una spesa silenziosa.
+   */
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:3000',
-    reuseExistingServer: true,
+    reuseExistingServer: false,
     timeout: 120_000,
     env: {
       // L'identificazione si rigioca dalle risposte registrate: un e2e che

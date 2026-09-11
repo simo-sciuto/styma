@@ -88,7 +88,15 @@ export interface ObjectIntelligenceProvider {
    */
   identify(
     images: ImageInput[],
-    options?: { onPartial?: (partial: PartialIdentification) => void },
+    options?: {
+      onPartial?: (partial: PartialIdentification) => void;
+      /**
+       * Quello che sa chi ha l'oggetto in mano e la foto non mostra: un peso,
+       * un suono, un punzone sotto la base, cosa ha detto il venditore. E'
+       * un'altra classe di prova, non un'altra opinione.
+       */
+      note?: string | null;
+    },
   ): Promise<IdentificationOutcome>;
   researchMarket(
     identification: Identification,

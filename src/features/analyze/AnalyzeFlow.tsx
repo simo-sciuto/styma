@@ -22,8 +22,8 @@ import type { SharedListing } from '@/services/listings/types';
 import type { Calibration } from '@/services/inventory/calibration';
 import { AnalysisProgress, type Passo } from './AnalysisProgress';
 import { ListingCard } from './ListingCard';
-import { ListingInput } from './ListingInput';
 import { PhotoGuidance, PhotoPicker } from './PhotoPicker';
+import { StartBar } from './StartBar';
 import { ResultView } from './ResultView';
 
 type Stage = 'idle' | 'identifying' | 'researching' | 'done';
@@ -80,6 +80,8 @@ export function AnalyzeFlow({
   const prezzoSalvato = saved?.askingPrice != null ? String(saved.askingPrice) : '';
 
   const [images, setImages] = useState<PreparedImage[]>([]);
+  /** Quello che chi guarda sa e la foto non mostra. Vedi `PhotoPicker`. */
+  const [note, setNote] = useState('');
   const [purchasePrice, setPurchasePrice] = useState(prezzoSalvato);
   const [stage, setStage] = useState<Stage>(saved ? 'done' : 'idle');
   const [identification, setIdentification] = useState<Identification | null>(
@@ -305,12 +307,16 @@ export function AnalyzeFlow({
     }
   }
 
-  async function analyze() {
+  async function analyze(nota = note) {
     ricomincia();
 
     try {
       const formData = new FormData();
       for (const image of images) formData.append('images', image.file);
+      // La nota arriva come argomento e non dallo stato: `setNote` nello
+      // stesso giro di eventi non e' ancora visibile qui, e la prima analisi
+      // partirebbe senza quello che hai appena scritto.
+      if (nota.trim() !== '') formData.append('note', nota.trim());
 
       const identified = await leggiIdentificazione(
         await fetch('/api/identify', { method: 'POST', body: formData }),
@@ -389,6 +395,7 @@ export function AnalyzeFlow({
     setItemId(null);
     setGiaSalvata(false);
     setImages([]);
+    setNote('');
     setPurchasePrice('');
     setResult(null);
     setIdentification(null);
@@ -513,25 +520,25 @@ export function AnalyzeFlow({
       ) : null}
 
       {/*
-        Due schede gemelle, non una strada e un ripiego.
-        Il link era prima in fondo alla pagina, poi in cima con la fotografia
-        sotto: in tutte e due le versioni una delle due pesava piu' dell'altra,
-        e la guida «cosa fotografare» da sola aggiungeva tre schermate a un
-        lato solo della bilancia. Sono lo stesso mezzo per lo stesso scopo, uno
-        dal vivo e uno virtuale: stessa forma, stessa altezza, stesso peso.
+        Una barra sola, non due porte.
+        Erano due schede gemelle affiancate, che gia' pesavano uguale — ma
+        chiedevano comunque di scegliere una porta prima di cominciare. Se le
+        due cose sono equivalenti, quella domanda non andrebbe fatta: c'e' un
+        oggetto, e tu hai una foto o un indirizzo. E la nota sta dentro la
+        stessa barra perche' non e' un terzo modo di cominciare, e' quello che
+        aggiungi mentre stai gia' cominciando.
       */}
-      <div className="grid items-stretch gap-4 sm:grid-cols-2">
-        <PhotoPicker images={images} onChange={setImages} />
-        <ListingInput onSubmit={(url) => void analyzeLink(url)} />
-      </div>
+      <StartBar
+        images={images}
+        onImagesChange={setImages}
+        onAnalyzePhotos={(nota) => {
+          setNote(nota);
+          void analyze(nota);
+        }}
+        onAnalyzeLink={(url) => void analyzeLink(url)}
+      />
 
-      {/* Compare solo quando c'e' qualcosa da analizzare: un pulsante spento
-          sotto due schede vuote non dice a nessuno da dove cominciare. */}
-      {images.length > 0 ? (
-        <Button className="w-full" onClick={() => void analyze()}>
-          {images.length === 1 ? 'Analizza la foto' : `Analizza le ${images.length} foto`}
-        </Button>
-      ) : null}
+      {images.length > 0 ? <PhotoPicker images={images} onChange={setImages} /> : null}
 
       <PhotoGuidance />
     </div>

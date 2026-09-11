@@ -19,8 +19,8 @@ const ANNUNCIO =
 test('@annuncio dal link di Vinted al verdetto', async ({ page }) => {
   await page.goto('/analizza');
 
-  await page.getByLabel('Link dell’annuncio').fill(ANNUNCIO);
-  await page.getByRole('button', { name: 'Guarda' }).click();
+  await page.getByLabel(/Link dell’annuncio/).fill(ANNUNCIO);
+  await page.getByRole('button', { name: 'Analizza', exact: true }).click();
 
   // Cosa dice l'annuncio arriva molto prima dell'identificazione: e' gia'
   // abbastanza per sapere che abbiamo aperto la pagina giusta.

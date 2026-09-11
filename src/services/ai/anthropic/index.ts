@@ -122,7 +122,7 @@ function listingFactsBrief(facts: ListingFacts): string {
 export class AnthropicProvider implements ObjectIntelligenceProvider {
   async identify(
     images: ImageInput[],
-    options: { onPartial?: (partial: PartialIdentification) => void } = {},
+    options: { onPartial?: (partial: PartialIdentification) => void; note?: string | null } = {},
   ): Promise<IdentificationOutcome> {
     if (images.length === 0) {
       throw new ProviderError('Nessuna immagine da analizzare', 'invalid_response');
@@ -156,7 +156,7 @@ export class AnthropicProvider implements ObjectIntelligenceProvider {
   async #identifyWith(
     model: string,
     images: ImageInput[],
-    options: { onPartial?: (partial: PartialIdentification) => void } = {},
+    options: { onPartial?: (partial: PartialIdentification) => void; note?: string | null } = {},
   ): Promise<IdentificationOutcome> {
     const client = getAnthropicClient();
 
@@ -194,7 +194,17 @@ export class AnthropicProvider implements ObjectIntelligenceProvider {
                 },
               },
             ]),
-            { type: 'text' as const, text: 'Identifica questo oggetto.' },
+            {
+              type: 'text' as const,
+              /*
+               * La nota si marca come detta da qualcun altro, non come un
+               * fatto accertato: il prompt sa gia' che va tenuta separata da
+               * cio' che si vede, e questa etichetta e' il confine.
+               */
+              text: options.note
+                ? `Identifica questo oggetto.\n\nNOTA DI CHI HA L'OGGETTO DAVANTI: ${options.note}`
+                : 'Identifica questo oggetto.',
+            },
           ].flat(),
         },
       ],

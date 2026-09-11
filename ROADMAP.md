@@ -659,9 +659,13 @@ Multi-oggetto · Scout · allerte · analytics personali · escalation a esperto
   che non lo sono.
 - La voce attiva passa da teal a inchiostro: due blocchi teal accanto non
   dicevano piu' quale dei due fosse l'azione.
-- E le due porte d'ingresso diventano gemelle: stessa forma, stessa altezza,
-  stesso peso. «Cosa fotografare» esce dalla scheda delle foto e sta chiusa
-  sotto tutte e due, perche' da sola aggiungeva tre schermate a un lato solo.
+- E le due porte d'ingresso diventano una barra sola: `StartBar` accetta
+  foto, link e nota, e capisce da sola cosa le hai dato. Due schede gemelle
+  pesavano uguale ma chiedevano comunque di scegliere una porta prima di
+  cominciare.
+- La nota di chi ha l'oggetto in mano entra nell'identificazione come classe
+  di prova separata da cio' che si vede. **Non verificata contro il modello
+  vero: il credito Anthropic si e' esaurito durante il lavoro.**
 
 ## Decisioni aperte
 
