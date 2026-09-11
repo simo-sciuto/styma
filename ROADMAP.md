@@ -57,6 +57,7 @@ I4 ████████████████████ l'email al terzo
 I5 ████████████████████ l'identificazione a eventi                    fatto
 I6 ████████████████████ revisione dei testi                            fatto
 I7 ████████████████████ il cruscotto prende il suo spazio               fatto
+I8 ████████████████████ da un link a un verdetto                        fatto
 ```
 
 ---
@@ -625,6 +626,21 @@ Multi-oggetto · Scout · allerte · analytics personali · escalation a esperto
 - `ledger.ts` cresce di `byCategory`, `aging`, `sellThrough` e
   `cumulativeMarginEur`. Sei test nuovi, fra cui quello che verifica che il
   margine non conti mai la roba non ancora venduta.
+
+### I8 — da un link a un verdetto (commit successivo)
+- Si incolla il link di un annuncio Vinted o eBay e parte la stessa analisi
+  delle foto scattate al banco, col prezzo dell'annuncio come prezzo da
+  giudicare.
+- Vinted si legge dalla pagina perche' il loro `robots.txt` porta
+  `ai-input=yes`; eBay dalla Browse API. Niente altro finche' non c'e' un
+  permesso altrettanto chiaro.
+- Il testo dell'annuncio non entra nel prompt: identificazione dalle foto, e
+  `ListingCard` mette su due colonne quello che dice chi vende e quello che
+  vediamo noi.
+- Il titolo del venditore entra come query, tagliato dalla marca in poi:
+  misurato, intero da' zero risultati, tagliato ne da' tre e centrati.
+- `npm run annuncio` e' a parte da `npm run e2e`: dipende da un annuncio di
+  terzi che puo' sparire, e non deve far diventare rosso il giro principale.
 
 ## Decisioni aperte
 

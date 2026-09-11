@@ -34,6 +34,8 @@ sono ancora aperte.
 - `src/services/market-data` — fonti strutturate: eBay Browse API per le inserzioni con prezzo,
   Discogs per il catalogo musicale. Vengono prima della ricerca col modello, che parte solo se
   questi non bastano.
+- `src/services/listings` — da un link a un annuncio leggibile (Vinted, eBay). `parse.ts` e' puro
+  e testato, e la sua lista di domini e' un controllo di sicurezza.
 - `src/services/listing` — prezzo suggerito per un annuncio (`price.ts`, puro e testato). Il testo
   lo scrive il modello via `ObjectIntelligenceProvider.generateListing`, il prezzo mai: viene
   sempre dalla valutazione gia' salvata.
@@ -397,6 +399,36 @@ sono ancora aperte.
   legarlo all'oggetto giusto. `services/inventory/ledger.ts` e' puro e testato, e usa le stesse
   commissioni di `flipConfig`: se qui uscisse da un'altra aritmetica, due schermate dello stesso
   prodotto direbbero due cose diverse sullo stesso oggetto.
+- **Un link vale una fotografia, ma solo dove e' lecito leggerlo.** Da `/analizza` si puo' incollare
+  il link di un annuncio invece di fotografare: l'idea nasce da come si usa il telefono davvero,
+  cioe' scorrendo Vinted sul divano. Due sorgenti, e la scelta non e' tecnica.
+  **eBay** si legge dalla Browse API con le credenziali che gia' usiamo (`get_item_by_legacy_id`):
+  dato ufficiale, autorizzato, completo — e la pagina web di eBay risponde 403 a un fetch da
+  server, il che dice da solo quale strada e' quella giusta.
+  **Vinted** si legge dalla pagina, e lo facciamo perche' lo dicono loro: il `robots.txt` di
+  vinted.it lascia `/items/` aperto a `User-Agent: *` e porta
+  `Content-Signal: ai-train=no, search=yes, **ai-input=yes**`, dove «ai-input» e' definito nel file
+  stesso come dare contenuto in pasto a un modello. Una pagina per volta, su richiesta di chi la
+  sta guardando, senza addestrare niente. **Se quel segnale diventa `no`, la funzione si spegne,
+  non si aggira.** Tutto il resto resta fuori finche' non c'e' un'API o un segnale altrettanto
+  chiaro.
+- **Il testo dell'annuncio non entra nel prompt.** L'identificazione gira sulle foto, come sempre.
+  Se il venditore scrive «Olivetti Valentine» e le foto mostrano una Lettera 32, quel disaccordo e'
+  l'informazione piu' utile della pagina, e mescolando le due cose sparirebbe. `ListingCard` le
+  tiene su due colonne: quando dicono la stessa cosa chi legge si fida di piu', quando non la
+  dicono lo vede.
+- **Il titolo del venditore e' una query, mai un'affermazione.** Su Vinted il nome del modello e' il
+  valore, e spesso e' l'unica cosa precisa disponibile quando dalle foto un modello non si legge.
+  Metterlo in `model` vorrebbe dire far affermare al prodotto una cosa che non ha verificato; in
+  `searchQueries` non afferma niente, e saranno i comparabili a reggere o a non reggere.
+  **Tagliato, pero':** misurato su un annuncio vero, il titolo intero da' **zero risultati** su
+  cinque mercati, e tagliato dalla marca in poi ne da' tre e centrati. Le parole prima della marca
+  sono come chi vende chiama la categoria nella sua lingua, e nei titoli eBay non ci sono. E' la
+  stessa regola di posizione di `looksLikeAccessory`: la marca segna il confine.
+- **Un dominio in una lista bianca e' un controllo di sicurezza.** L'URL incollato lo apre il
+  *nostro* server. La prima versione del riconoscitore usava `/(^|\.)vinted\.[a-z.]+$/`, e il punto
+  dentro la classe rendeva valido `vinted.it.truffa.example`: chiunque poteva farsi aprire una
+  pagina qualunque dal nostro backend. Se n'e' accorto un test, non una rilettura.
 - **La navigazione del telefono sta in basso.** Le voci erano tre in una barra in alto e ci
   stavano appena; la quarta non ci sarebbe entrata. Ma il vincolo vero non era lo spazio: questa
   app si usa in piedi con una mano sola, e il bordo alto di uno schermo da sei pollici e' il punto

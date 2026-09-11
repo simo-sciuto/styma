@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 import { Button, Card, PageHeader } from '@/components/ui';
-import { readAnalysisEvents, type IdentifyEvent } from '@/lib/analysis-stream';
+import { readAnalysisEvents, type ListingEvent } from '@/lib/analysis-stream';
 import { assessFlip } from '@/services/valuation/flip-score';
 import type { PreparedImage } from '@/lib/images';
 import type { AnalysisResult } from '@/schemas/analysis';
@@ -18,8 +18,11 @@ import { LinkAccountNudge } from '@/features/auth/LinkAccountNudge';
 import { lookUpPreviousSightings } from '@/features/inventory/actions';
 import { usePersistAskingPrice } from '@/features/inventory/useAskingPrice';
 import type { PreviousSighting } from '@/services/inventory/repository';
+import type { SharedListing } from '@/services/listings/types';
 import type { Calibration } from '@/services/inventory/calibration';
 import { AnalysisProgress, type Passo } from './AnalysisProgress';
+import { ListingCard } from './ListingCard';
+import { ListingInput } from './ListingInput';
 import { PhotoPicker } from './PhotoPicker';
 import { ResultView } from './ResultView';
 
@@ -100,6 +103,12 @@ export function AnalyzeFlow({
    * dall'identificazione vera appena arriva.
    */
   const [partial, setPartial] = useState<PartialIdentification>(NOTHING_YET);
+  /**
+   * L'annuncio da cui siamo partiti, quando si parte da un link. Resta in
+   * pagina accanto al risultato: quello che dice chi vende e quello che
+   * vediamo noi sono due cose, e vanno lette come due cose.
+   */
+  const [listing, setListing] = useState<SharedListing | null>(null);
   /**
    * Lo stesso modello, gia' passato per le nostre mani. Tiene con se' la
    * chiave per cui e' stato cercato: cosi' un risultato che arriva in ritardo
@@ -228,43 +237,94 @@ export function AnalyzeFlow({
     },
   ];
 
-  async function analyze() {
+  /** Riparte da zero: e' identico per le due porte d'ingresso. */
+  function ricomincia() {
     setError(null);
     setResult(null);
     setIdentification(null);
     setPartial(NOTHING_YET);
+    setListing(null);
     setSightings({ chiave: '', trovati: [] });
     setLanes([]);
     setReusedResearch(null);
     setStructuredSource(null);
     setStage('identifying');
+  }
+
+  /**
+   * L'identificazione, da qualunque porta si entri.
+   *
+   * Arriva a eventi: i campi in cima allo schema (nome, tipo, marca, modello)
+   * sono pronti dopo due o tre secondi, il resto dopo venti. Non accorcia
+   * l'attesa di un millisecondo, accorcia il tempo in cui chi guarda non sa
+   * ancora niente.
+   *
+   * Lo stesso lettore vale per `/api/identify` e per `/api/annuncio`: il
+   * secondo manda due eventi in piu' davanti, l'annuncio e quante foto e'
+   * riuscito a scaricare, e da li' in poi i due flussi sono lo stesso flusso.
+   */
+  async function leggiIdentificazione(response: Response): Promise<Identification> {
+    if (!response.ok || !response.body) {
+      throw new Error(await readError(response, 'Identificazione non riuscita.'));
+    }
+
+    let identified: Identification | null = null;
+    for await (const event of readAnalysisEvents<ListingEvent>(response.body)) {
+      if (event.type === 'listing') {
+        setListing(event.listing);
+      } else if (event.type === 'photos') {
+        // Nessuno stato: il numero di foto scaricate si vede gia' dal passo.
+      } else if (event.type === 'partial') {
+        setPartial(event.partial);
+      } else if (event.type === 'identification') {
+        identified = event.identification;
+      } else {
+        throw new Error(event.error);
+      }
+    }
+
+    if (!identified) throw new Error('L’identificazione si e’ interrotta. Riprova.');
+    return identified;
+  }
+
+  /** Dal link di un annuncio, invece che dalle foto che hai scattato tu. */
+  async function analyzeLink(url: string) {
+    ricomincia();
+    try {
+      const identified = await leggiIdentificazione(
+        await fetch('/api/annuncio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url }),
+        }),
+      );
+      await valuta(identified);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Qualcosa e’ andato storto.');
+      setStage('idle');
+    }
+  }
+
+  async function analyze() {
+    ricomincia();
 
     try {
       const formData = new FormData();
       for (const image of images) formData.append('images', image.file);
 
-      const identifyResponse = await fetch('/api/identify', { method: 'POST', body: formData });
-      if (!identifyResponse.ok || !identifyResponse.body) {
-        throw new Error(await readError(identifyResponse, 'Identificazione non riuscita.'));
-      }
+      const identified = await leggiIdentificazione(
+        await fetch('/api/identify', { method: 'POST', body: formData }),
+      );
+      await valuta(identified);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Qualcosa e’ andato storto.');
+      setStage('idle');
+    }
+  }
 
-      /*
-       * L'identificazione arriva a eventi: i campi in cima allo schema (nome,
-       * tipo, marca, modello) sono pronti dopo due o tre secondi, il resto
-       * dopo venti. Non accorcia l'attesa di un millisecondo, accorcia il
-       * tempo in cui chi guarda non sa ancora niente.
-       */
-      let identified: Identification | null = null;
-      for await (const event of readAnalysisEvents<IdentifyEvent>(identifyResponse.body)) {
-        if (event.type === 'partial') {
-          setPartial(event.partial);
-        } else if (event.type === 'identification') {
-          identified = event.identification;
-        } else {
-          throw new Error(event.error);
-        }
-      }
-      if (!identified) throw new Error('L’identificazione si e’ interrotta. Riprova.');
+  /** La stima, identica per le due porte: cambia solo da dove vengono le foto. */
+  async function valuta(identified: Identification) {
+    {
       setIdentification(identified);
       setStage('researching');
 
@@ -318,9 +378,6 @@ export function AnalyzeFlow({
 
       setResult(analysis);
       setStage('done');
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Qualcosa e’ andato storto.');
-      setStage('idle');
     }
   }
 
@@ -336,6 +393,7 @@ export function AnalyzeFlow({
     setResult(null);
     setIdentification(null);
     setPartial(NOTHING_YET);
+    setListing(null);
     setSightings({ chiave: '', trovati: [] });
     setLanes([]);
     setReusedResearch(null);
@@ -397,6 +455,9 @@ export function AnalyzeFlow({
           onPurchasePriceChange={setPurchasePrice}
           sightings={precedenti}
           calibration={calibration}
+          listingSlot={
+            listing ? <ListingCard listing={listing} identification={identification!} /> : null
+          }
           saveSlot={
             giaSalvata ? null : (
               <AutoSave result={liveResult} images={images} onSaved={setItemId} />
@@ -441,6 +502,11 @@ export function AnalyzeFlow({
       />
 
       <PhotoPicker images={images} onChange={setImages} />
+
+      {/* La seconda porta. Sotto le foto e non sopra: fotografare e' quello
+          che fai al banco, il link e' quello che fai sul divano, e il primo
+          e' il caso d'uso per cui questo prodotto esiste. */}
+      <ListingInput onSubmit={(url) => void analyzeLink(url)} />
 
       {error ? (
         <Card className="border-danger/40 bg-danger-soft">

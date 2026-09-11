@@ -1,6 +1,7 @@
 import type { AnalysisResult } from '@/schemas/analysis';
 import type { Identification } from '@/schemas/identification';
 import type { PartialIdentification } from '@/services/ai/partial';
+import type { SharedListing } from '@/services/listings/types';
 import type { ResearchLaneEvent } from '@/services/ai/provider';
 import type { UsageTotals } from '@/services/ai/usage';
 
@@ -17,6 +18,19 @@ export type IdentifyEvent =
   | { type: 'partial'; partial: PartialIdentification }
   | { type: 'identification'; identification: Identification; usage?: UsageTotals }
   | { type: 'error'; error: string; code: string };
+
+/**
+ * Il protocollo fra `/api/annuncio` e l'interfaccia.
+ *
+ * E' quello dell'identificazione con due eventi in piu' davanti: cosa dice
+ * l'annuncio, e quante delle sue foto siamo riusciti a scaricare. Il primo
+ * arriva in meno di un secondo — molto prima dell'identificazione — ed e' gia'
+ * abbastanza per far vedere a chi aspetta che abbiamo aperto la pagina giusta.
+ */
+export type ListingEvent =
+  | { type: 'listing'; listing: SharedListing }
+  | { type: 'photos'; count: number }
+  | IdentifyEvent;
 
 /**
  * Il protocollo fra `/api/valuate` e l'interfaccia. Sta qui e non nella route

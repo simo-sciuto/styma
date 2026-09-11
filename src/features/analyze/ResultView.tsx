@@ -37,6 +37,7 @@ export function ResultView({
   saveSlot,
   sightings = [],
   calibration = null,
+  listingSlot,
 }: {
   result: AnalysisResult;
   /** La prima foto: un'anteprima locale durante l'analisi, un URL firmato
@@ -51,6 +52,8 @@ export function ResultView({
   sightings?: PreviousSighting[];
   /** Come chiudono davvero le vendite di chi legge. */
   calibration?: Calibration | null;
+  /** Cosa dice l'annuncio, quando si e' partiti da un link invece che da una foto. */
+  listingSlot?: ReactNode;
 }) {
   const { identification, market, marketSource, valuation, flip } = result;
   const decision = flip?.atPrice ?? null;
@@ -124,9 +127,13 @@ export function ResultView({
         </div>
       </div>
 
-      {/* Prima di tutto il resto: l'unica cosa in pagina che parla di te e
-          non dell'oggetto. Un «ci sei gia' passato» letto dopo aver deciso
-          arriva tardi. */}
+      {/* Quando si parte da un link, cosa dice chi vende viene prima di
+          tutto: e' il pezzo di realta' da cui siamo partiti, e va letto
+          accanto alla nostra lettura, non dopo. */}
+      {listingSlot}
+
+      {/* Poi l'unica cosa in pagina che parla di te e non dell'oggetto. Un
+          «ci sei gia' passato» letto dopo aver deciso arriva tardi. */}
       <PreviousSightings sightings={sightings} />
 
       {/* La domanda del prodotto, subito. Tutto cio' che segue serve a
