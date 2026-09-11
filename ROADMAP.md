@@ -58,6 +58,7 @@ I5 ████████████████████ l'identificazion
 I6 ████████████████████ revisione dei testi                            fatto
 I7 ████████████████████ il cruscotto prende il suo spazio               fatto
 I8 ████████████████████ da un link a un verdetto                        fatto
+I9 ████████████████████ l'analisi diventa il pulsante, non una voce     fatto
 ```
 
 ---
@@ -648,6 +649,16 @@ Multi-oggetto · Scout · allerte · analytics personali · escalation a esperto
   sola e il prezzo lo scrive chi guarda.
 - Il campo del link e' salito in cima, e sul telefono e' tornato il marchio in
   alto: spostando la navigazione in basso era sparita la home.
+
+### I9 — l'analisi diventa il pulsante (commit successivo)
+- Con i link, «analizza» ha smesso di essere una delle cose che fa l'app:
+  e' la cosa che fa l'app, da un banco o dal divano. Nella barra in basso
+  sporge come pulsante tondo, in mezzo, dove arriva il pollice di entrambe le
+  mani; la home rientra fra le voci per chiudere la simmetria.
+- Su schermo grande la stessa cosa detta con un pulsante pieno accanto a voci
+  che non lo sono.
+- La voce attiva passa da teal a inchiostro: due blocchi teal accanto non
+  dicevano piu' quale dei due fosse l'azione.
 
 ## Decisioni aperte
 

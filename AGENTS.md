@@ -458,6 +458,17 @@ sono ancora aperte.
   **Togliendo del tutto la barra alta era sparita la home**, e dentro l'app non c'era piu' modo di
   uscirne: sul telefono resta una riga col solo marchio, che e' il collegamento a `/`. Quaranta
   pixel sono il prezzo giusto per non avere un vicolo cieco.
+- **L'analisi e' un pulsante che sporge, non una voce come le altre.** Finche' l'oggetto arrivava
+  solo da una fotografia al banco, «Analizza» poteva stare in fila con «Inventario» e «Andamento».
+  Da quando arriva anche da un link ha smesso di essere una delle cose che fa l'app: e' la cosa che
+  fa l'app, da un banco o dal divano. Il pulsante sta in mezzo alla barra perche' li' arriva il
+  pollice di entrambe le mani, e la home rientra fra le voci per chiudere la simmetria attorno a
+  lui. Su schermo grande non c'e' una barra da cui sporgere, e la stessa cosa si dice con un
+  pulsante pieno accanto a voci che non lo sono.
+- **La voce attiva e' inchiostro, l'azione e' teal.** Erano tutte e due teal piene, e su uno schermo
+  grande «+ Analizza» e la pagina in cui ti trovi diventavano due blocchi identici: il colore
+  smetteva di dire quale dei due fosse l'azione. Il nero non e' riservato a niente, si distingue dal
+  teal a un metro, e a un metro era il motivo per cui la voce attiva un colore ce l'ha.
 - **Il cruscotto risponde a due domande, non a una.** «Sto guadagnando» ne ha una sola e sta in
   cima. «Su cosa» cambia cosa comprerai domenica prossima, e la categoria la scrive il modello a
   ogni identificazione — ce l'avevamo da sempre e non la leggeva nessuno. Il margine per categoria

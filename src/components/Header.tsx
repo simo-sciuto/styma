@@ -28,8 +28,17 @@ function LinkPending() {
   );
 }
 
+/*
+ * La voce attiva e' inchiostro, l'azione e' teal.
+ *
+ * Erano tutte e due teal piene, e su uno schermo grande «+ Analizza» e la
+ * pagina in cui ti trovi diventavano due blocchi identici: il colore smetteva
+ * di dire quale dei due era l'azione. Il nero non e' riservato a niente e si
+ * distingue dal teal a un metro, che era il motivo per cui la voce attiva un
+ * colore ce l'ha.
+ */
+/** Le voci «guarda cosa hai fatto». L'azione e' un pulsante a parte. */
 const LINKS = [
-  { href: '/analizza', label: 'Analizza' },
   { href: '/inventario', label: 'Inventario' },
   { href: '/andamento', label: 'Andamento' },
 ] as const;
@@ -61,9 +70,6 @@ export function Header() {
       >
         <span className="h-2.5 w-2.5 rounded-[0.2rem] border-2 border-line bg-tile-teal" aria-hidden />
         STYMA
-        <span aria-hidden className="ml-auto text-muted">
-          home
-        </span>
       </Link>
 
       <nav className="mx-auto hidden w-full max-w-2xl items-center justify-between gap-1 rounded-block border-2 border-line bg-surface/95 px-1.5 py-1.5 shadow-pop-sm backdrop-blur sm:flex sm:px-2 sm:py-2">
@@ -79,6 +85,21 @@ export function Header() {
         </Link>
 
         <div className="flex items-center gap-0.5 sm:gap-1">
+          {/*
+            L'azione principale ha la forma di un pulsante anche qui. Sul
+            telefono sporge dalla barra in basso; su uno schermo grande non
+            c'e' una barra da cui sporgere, ma resta vero che questa app fa
+            una cosa sola e le altre voci servono a guardare cosa ha fatto.
+          */}
+          <Link
+            href="/analizza"
+            className="mr-1 inline-flex items-center gap-1.5 rounded-[0.5rem] border-2 border-line bg-tile-teal px-3.5 py-2 text-sm font-semibold text-tile-cream shadow-pop-sm transition-[transform,box-shadow] duration-100 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+          >
+            <span aria-hidden className="text-base leading-none">+</span>
+            Analizza
+            <LinkPending />
+          </Link>
+
           {LINKS.map((link) => {
             const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
             return (
@@ -87,7 +108,7 @@ export function Header() {
                 href={link.href}
                 className={`rounded-[0.5rem] px-2.5 py-2 text-[13px] font-semibold transition sm:px-3.5 sm:text-sm ${
                   active
-                    ? 'border-2 border-line bg-tile-teal text-tile-cream'
+                    ? 'border-2 border-line bg-foreground text-background'
                     : 'border-2 border-transparent text-muted hover:bg-accent-soft hover:text-foreground'
                 }`}
               >
@@ -101,7 +122,7 @@ export function Header() {
             aria-label="Account"
             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.5rem] transition ${
               pathname === '/account'
-                ? 'border-2 border-line bg-tile-teal text-tile-cream'
+                ? 'border-2 border-line bg-foreground text-background'
                 : 'border-2 border-transparent text-muted hover:bg-accent-soft hover:text-foreground'
             }`}
           >
