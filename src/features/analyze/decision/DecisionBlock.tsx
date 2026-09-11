@@ -2,6 +2,7 @@
 
 import type { FlipAssessment, Valuation } from '@/schemas/analysis';
 import { RECOMMENDATION_STYLES, formatEur, formatRange } from '@/lib/format';
+import { atYourRate, type Calibration } from '@/services/inventory/calibration';
 import { PriceZones } from './PriceZones';
 
 /**
@@ -43,17 +44,30 @@ export function DecisionBlock({
   valuation,
   purchasePrice,
   onPurchasePriceChange,
+  calibration = null,
 }: {
   flip: FlipAssessment;
   valuation: Extract<Valuation, { available: true }>;
   purchasePrice: string;
   onPurchasePriceChange?: (value: string) => void;
+  /** Come chiudono davvero le vendite di chi sta guardando. */
+  calibration?: Calibration | null;
 }) {
   const decision = flip.atPrice;
   const { thresholds } = flip;
   const { breakdown } = thresholds;
   const asking = decision?.purchasePrice ?? null;
   const restaInMano = thresholds.maybeUpTo;
+  /*
+   * La stima riportata al metro di chi legge.
+   *
+   * La fascia poggia su prezzi richiesti, non su vendite concluse, perche' una
+   * fonte lecita di venduti non esiste. Chi rivende lo sa e applica una
+   * correzione a mente, ogni volta, a occhio. Dopo qualche vendita vera quella
+   * correzione e' un dato: sta accanto alla fascia e non al suo posto, perche'
+   * sono due cose diverse e vanno lette come due cose diverse.
+   */
+  const alTuoMetro = calibration ? atYourRate(valuation.likely, calibration) : null;
   const usati = valuation.used.length;
   const annunci =
     usati === 1 ? 'Da 1 annuncio dello stesso modello.' : `Da ${usati} annunci dello stesso modello.`;
@@ -79,6 +93,14 @@ export function DecisionBlock({
       <p className="mt-1.5 text-sm text-muted">
         Di solito si vende a {formatEur(valuation.likely)}. {annunci}
       </p>
+
+      {alTuoMetro !== null && calibration?.enough ? (
+        <p className="mt-2 rounded-block border-2 border-line bg-surface-warm px-3 py-2 text-sm">
+          Al tuo metro: <strong>{formatEur(alTuoMetro)}</strong>. Le tue{' '}
+          {calibration.sales} vendite chiudono al {Math.round(calibration.ratio * 100)}% della
+          stima.
+        </p>
+      ) : null}
 
       <label className="mt-5 block border-t-2 border-line pt-5">
         {/* "Quanto te lo chiedono" era gergo da mercatino: chiarissimo per

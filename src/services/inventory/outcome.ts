@@ -26,10 +26,14 @@ export type SoldOutcome = {
   salePrice: number;
   marketplace: string | null;
   /**
-   * Margine lordo: incasso meno quanto hai pagato. E' l'unico numero
-   * interamente verificabile qui — sono due cifre che hai digitato tu.
+   * Il guadagno: incasso meno quanto l'oggetto ti e' costato in tutto, prezzo
+   * di acquisto piu' quello che ci hai speso sopra. Sono cifre che hai
+   * digitato tu: e' l'unico numero interamente verificabile di questa pagina.
    */
   grossMargin: number | null;
+  /** Quanto ci hai speso oltre il prezzo, se l'hai dichiarato. */
+  extraCosts: number | null;
+  extraCostsNote: string | null;
   /** Giorni dall'acquisto alla vendita. */
   daysHeld: number | null;
   /** Giorni passati in vendita: da quando l'hai messo online. */
@@ -48,6 +52,9 @@ export type Outcome =
       kind: 'holding';
       askingPrice: number | null;
       purchasePrice: number | null;
+      /** Quanto ci hai speso oltre il prezzo, se l'hai dichiarato. */
+      extraCosts: number | null;
+      extraCostsNote: string | null;
       negotiated: number | null;
       listed: boolean;
       daysHeld: number | null;
@@ -94,12 +101,20 @@ export function describeOutcome(
     return { kind: 'passed', askingPrice: asking };
   }
 
+  // Quanto l'oggetto e' costato in tutto. Il prezzo di acquisto da solo
+  // faceva sembrare ogni margine piu' alto di quanto fosse: la pulizia e i
+  // ricambi escono dalla stessa tasca.
+  const extra = item.extra_costs;
+  const costoTotale = paid === null ? null : paid + (extra ?? 0);
+
   if (item.status === 'sold' && item.sale_price !== null) {
-    const grossMargin = paid !== null ? item.sale_price - paid : null;
+    const grossMargin = costoTotale !== null ? item.sale_price - costoTotale : null;
     return {
       kind: 'sold',
       askingPrice: asking,
       purchasePrice: paid,
+      extraCosts: extra,
+      extraCostsNote: item.extra_costs_note,
       negotiated,
       salePrice: item.sale_price,
       marketplace: item.marketplace,
@@ -116,6 +131,8 @@ export function describeOutcome(
       kind: 'holding',
       askingPrice: asking,
       purchasePrice: paid,
+      extraCosts: extra,
+      extraCostsNote: item.extra_costs_note,
       negotiated,
       listed: item.status === 'listed',
       daysHeld: daysBetween(item.purchase_date, today),

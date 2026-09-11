@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Card, PageHeader } from '@/components/ui';
 import { CashflowChart } from '@/features/dashboard/CashflowChart';
 import { formatEur } from '@/lib/format';
+import { calibrate } from '@/services/inventory/calibration';
 import { buildLedger } from '@/services/inventory/ledger';
 import { listInventory } from '@/services/inventory/repository';
 
@@ -81,6 +82,7 @@ export default async function AndamentoPage() {
   }
 
   const ledger = buildLedger(result.entries.map((entry) => entry.item));
+  const calibration = calibrate(result.entries);
   const { totals, months } = ledger;
   const inUtile = totals.marginEur >= 0;
 
@@ -109,7 +111,7 @@ export default async function AndamentoPage() {
               hint={
                 totals.sold === 0
                   ? 'nessuna vendita registrata: finche’ non vendi, il conto resta quello che hai speso'
-                  : `su ${totals.sold} ${totals.sold === 1 ? 'vendita' : 'vendite'}, al netto delle commissioni`
+                  : `su ${totals.sold} ${totals.sold === 1 ? 'vendita' : 'vendite'}, al netto di tutto quello che hai speso`
               }
             />
 
@@ -169,6 +171,41 @@ export default async function AndamentoPage() {
               </div>
             </Card>
           ) : null}
+
+          {/*
+            Il numero che descrive te e non il mercato. Compare solo quando ha
+            abbastanza vendite dietro: prima dice quante ne mancano, perche'
+            una correzione costruita su due vendite convincerebbe piu' di
+            quanto vale.
+          */}
+          <Card className="mt-4">
+            <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
+              Il tuo metro
+            </p>
+            {calibration.enough ? (
+              <>
+                <p className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">
+                  {Math.round(calibration.ratio * 100)}% della stima
+                </p>
+                <p className="mt-1 text-sm text-muted">
+                  E’ la quota a cui chiudono le tue {calibration.sales} vendite, presa in mezzo:
+                  fra il {Math.round(calibration.lowest * 100)}% e il{' '}
+                  {Math.round(calibration.highest * 100)}%.
+                </p>
+                <p className="mt-3 border-t-2 border-line pt-3 text-sm">
+                  Da adesso ogni analisi ti mostra anche la stima riportata a questo metro. E’ il
+                  solo numero del prodotto che non descrive il mercato: descrive te.
+                </p>
+              </>
+            ) : (
+              <p className="mt-2 text-sm text-muted">
+                Servono {calibration.needed}{' '}
+                {calibration.needed === 1 ? 'vendita' : 'vendite'} in piu’, con il prezzo incassato
+                e una stima con cui confrontarlo. Poi ogni analisi ti dira’ anche quanto vale al tuo
+                metro, non solo a quello del mercato.
+              </p>
+            )}
+          </Card>
 
           <Link
             href="/inventario"

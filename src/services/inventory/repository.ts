@@ -8,6 +8,7 @@ import type {
   ItemDetail,
   ItemImageRow,
   ItemRow,
+  ItemStatus,
   ValuationRow,
 } from './types';
 import { IMAGE_BUCKET } from './types';
@@ -193,5 +194,71 @@ export async function getItemDetail(id: string): Promise<GetItemDetailResult> {
   } catch (error) {
     console.error('[inventory] Supabase irraggiungibile', error);
     return { status: 'unreachable' };
+  }
+}
+
+/**
+ * Lo stesso oggetto, gia' analizzato in passato.
+ *
+ * Al mercato la stessa Olivetti Valentine ricapita sei volte a stagione, e
+ * fino a ieri l'app non se ne accorgeva: rifaceva l'analisi da zero, ripagava
+ * l'identificazione e mostrava una fascia come se fosse la prima volta. Ma
+ * l'informazione piu' utile in quel momento non e' la stima: e' che tre
+ * settimane fa l'avevi gia' visto, l'avevi lasciato a 40 € e adesso te ne
+ * chiedono 60.
+ *
+ * Il confronto e' su marca e modello normalizzati, non sul titolo: «Olivetti
+ * Valentine» e «Macchina da scrivere Olivetti Valentine rossa» sono lo stesso
+ * oggetto e due titoli diversi. Senza modello non si cerca: la sola marca
+ * pescherebbe qualunque altra cosa dello stesso produttore, che e' lo stesso
+ * errore che `mentionsObjectType` evita sui comparabili.
+ */
+export type PreviousSighting = {
+  id: string;
+  seenAt: string;
+  status: ItemStatus;
+  askingPrice: number | null;
+  purchasePrice: number | null;
+  salePrice: number | null;
+};
+
+export async function findPreviousSightings(
+  brand: string | null,
+  model: string | null,
+  excludeItemId: string | null = null,
+): Promise<PreviousSighting[]> {
+  if (!brand || !model) return [];
+
+  const supabase = await getServerSupabase();
+  if (!supabase) return [];
+
+  try {
+    const { data, error } = await supabase
+      .from('items')
+      .select('id, created_at, status, asking_price, purchase_price, sale_price, brand, model')
+      .ilike('brand', brand)
+      .ilike('model', model)
+      .order('created_at', { ascending: false })
+      .limit(4);
+
+    if (error) {
+      console.error('[inventory] ricerca dei precedenti fallita', error.message);
+      return [];
+    }
+
+    return (data ?? [])
+      .filter((row) => row.id !== excludeItemId)
+      .slice(0, 3)
+      .map((row) => ({
+        id: row.id as string,
+        seenAt: row.created_at as string,
+        status: row.status as ItemStatus,
+        askingPrice: row.asking_price as number | null,
+        purchasePrice: row.purchase_price as number | null,
+        salePrice: row.sale_price as number | null,
+      }));
+  } catch (caught) {
+    console.error('[inventory] ricerca dei precedenti interrotta', caught);
+    return [];
   }
 }

@@ -146,3 +146,43 @@ describe('conto economico del magazzino', () => {
     expect(ledger.totals.spentEur).toBe(30);
   });
 });
+
+describe('quello che ci hai speso sopra', () => {
+  it('entra nella spesa del mese dell’acquisto e nel margine della vendita', () => {
+    // Pulizia e ricambi escono dalla stessa tasca del prezzo: tenerli fuori
+    // faceva sembrare ogni margine piu' alto di quanto fosse.
+    const ledger = buildLedger(
+      [
+        item({
+          status: 'sold',
+          purchase_price: 30,
+          extra_costs: 20,
+          purchase_date: '2026-03-14',
+          sale_price: 100,
+          sale_date: '2026-07-02',
+        }),
+      ],
+      ADESSO,
+    );
+
+    expect(ledger.months.find((m) => m.month === '2026-03')!.spentEur).toBe(50);
+    expect(ledger.months.find((m) => m.month === '2026-07')!.marginEur).toBe(50);
+    expect(ledger.totals.spentEur).toBe(50);
+  });
+
+  it('gonfia anche il capitale fermo, perche’ e’ soldo uscito', () => {
+    const ledger = buildLedger(
+      [item({ status: 'bought', purchase_price: 40, extra_costs: 15, purchase_date: '2026-08-01' })],
+      ADESSO,
+    );
+    expect(ledger.lockedUpEur).toBe(55);
+  });
+
+  it('un oggetto senza costi extra conta come prima', () => {
+    const ledger = buildLedger(
+      [item({ status: 'bought', purchase_price: 40, purchase_date: '2026-08-01' })],
+      ADESSO,
+    );
+    expect(ledger.lockedUpEur).toBe(40);
+  });
+});

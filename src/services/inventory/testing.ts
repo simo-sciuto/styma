@@ -28,6 +28,8 @@ export function item(overrides: Partial<ItemRow> = {}): ItemRow {
     archived_at: null,
     asking_price: null,
     purchase_price: null,
+    extra_costs: null,
+    extra_costs_note: null,
     purchase_currency: 'EUR',
     purchase_date: null,
     purchase_location: null,

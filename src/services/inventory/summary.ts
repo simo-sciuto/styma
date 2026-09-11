@@ -79,7 +79,10 @@ export function summarizeInventory(
     byStatus[item.status] += 1;
 
     const likely = valuation?.likely_value ?? null;
-    const paid = item.purchase_price;
+    // Quanto l'oggetto e' costato davvero: prezzo pagato piu' quello che ci
+    // hai speso sopra. Sono soldi usciti dalla stessa tasca.
+    const paid =
+      item.purchase_price === null ? null : item.purchase_price + (item.extra_costs ?? 0);
     const isSold = item.status === 'sold';
 
     if (likely !== null) {

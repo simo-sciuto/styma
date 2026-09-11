@@ -105,7 +105,7 @@ function Figure({ label, value, tone }: { label: string; value: string; tone?: '
   );
 }
 
-type FormKind = 'bought' | 'listed' | 'sold' | null;
+type FormKind = 'bought' | 'listed' | 'sold' | 'costs' | null;
 
 /**
  * `outcome` arriva gia' calcolato dal server invece di essere ricavato qui:
@@ -127,8 +127,14 @@ export function OutcomeTracker({ item, outcome }: { item: ItemRow; outcome: Outc
     setDate(today());
     // Il prezzo chiesto e' la partenza piu' probabile di una trattativa: chi
     // non ha trattato conferma e va avanti, chi ha trattato corregge.
-    setPrice(kind === 'bought' && item.asking_price !== null ? String(item.asking_price) : '');
-    setWhere('');
+    setPrice(
+      kind === 'bought' && item.asking_price !== null
+        ? String(item.asking_price)
+        : kind === 'costs' && item.extra_costs !== null
+          ? String(item.extra_costs)
+          : '',
+    );
+    setWhere(kind === 'costs' ? (item.extra_costs_note ?? '') : '');
   }
 
   function submit(input: OutcomeInput) {
@@ -142,6 +148,49 @@ export function OutcomeTracker({ item, outcome }: { item: ItemRow; outcome: Outc
 
   const amount = Number.parseFloat(price.replace(',', '.'));
   const amountValid = Number.isFinite(amount) && amount >= 0;
+
+  if (form === 'costs') {
+    /*
+     * Una cifra e una nota. Non una tabella di voci, e non una data: chi sta
+     * chiudendo una vendita scrive «35, ricambi e pulizia» in tre secondi e va
+     * avanti, e un modulo a righe multiple non lo compila nessuno. Un dato
+     * che nessuno compila vale meno di un dato approssimato.
+     */
+    return (
+      <Card>
+        <Eyebrow>Quanto ci hai speso sopra</Eyebrow>
+        <p className="mt-1.5 text-sm text-muted">
+          Pulizia, ricambi, trasporto, l’ingresso al mercato. Escono dalla stessa tasca del prezzo
+          d’acquisto, e senza di loro il guadagno sembra piu’ alto di quello che e’.
+        </p>
+
+        <div className="mt-4 space-y-4">
+          <MoneyInput label="Quanto, in tutto" value={price} onChange={setPrice} autoFocus />
+          <PlainInput
+            label="In che cosa"
+            value={where}
+            onChange={setWhere}
+            placeholder="Ricambi e pulizia"
+          />
+        </div>
+
+        {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
+
+        <div className="mt-5 grid gap-2 sm:grid-cols-2">
+          <Button
+            pending={pending}
+            disabled={!amountValid}
+            onClick={() => submit({ type: 'costs', amount: amount, note: where })}
+          >
+            Registra
+          </Button>
+          <Button variant="ghost" disabled={pending} onClick={() => setForm(null)}>
+            Annulla
+          </Button>
+        </div>
+      </Card>
+    );
+  }
 
   if (form !== null) {
     const isBought = form === 'bought';
@@ -293,12 +342,23 @@ export function OutcomeTracker({ item, outcome }: { item: ItemRow; outcome: Outc
               tone="good"
             />
           ) : null}
+          {outcome.extraCosts !== null ? (
+            <Figure label="Ci hai speso" value={`+${formatEur(outcome.extraCosts)}`} tone="bad" />
+          ) : null}
           {outcome.listed && outcome.daysOnMarket !== null ? (
             <Figure label="In vendita da" value={`${outcome.daysOnMarket} gg`} />
           ) : outcome.daysHeld !== null ? (
             <Figure label="Ce l’hai da" value={`${outcome.daysHeld} gg`} />
           ) : null}
         </div>
+
+        {outcome.extraCostsNote ? (
+          <p className="mt-2 text-xs text-muted">{outcome.extraCostsNote}</p>
+        ) : null}
+
+        <TextButton className="mt-3" pending={pending} onClick={() => open('costs')}>
+          {outcome.extraCosts !== null ? 'Correggi quanto ci hai speso' : 'Ci ho speso altro'}
+        </TextButton>
 
         {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
 
@@ -333,6 +393,9 @@ export function OutcomeTracker({ item, outcome }: { item: ItemRow; outcome: Outc
       <div className="mt-5 grid grid-cols-2 gap-4 border-t-2 border-line pt-4 sm:grid-cols-4">
         {outcome.purchasePrice !== null ? (
           <Figure label="Pagato" value={formatEur(outcome.purchasePrice)} />
+        ) : null}
+        {outcome.extraCosts !== null && outcome.extraCosts > 0 ? (
+          <Figure label="Ci hai speso" value={`+${formatEur(outcome.extraCosts)}`} tone="bad" />
         ) : null}
         {outcome.grossMargin !== null ? (
           <Figure

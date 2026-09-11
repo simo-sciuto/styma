@@ -13,7 +13,11 @@ import type { AnalysisSnapshot } from '@/schemas/snapshot';
 import type { Identification } from '@/schemas/identification';
 import { ArchiveToggle } from '@/features/inventory/ArchiveToggle';
 import { AutoSave } from '@/features/inventory/AutoSave';
+import { LinkAccountNudge } from '@/features/auth/LinkAccountNudge';
+import { lookUpPreviousSightings } from '@/features/inventory/actions';
 import { usePersistAskingPrice } from '@/features/inventory/useAskingPrice';
+import type { PreviousSighting } from '@/services/inventory/repository';
+import type { Calibration } from '@/services/inventory/calibration';
 import { AnalysisProgress, type Passo } from './AnalysisProgress';
 import { PhotoPicker } from './PhotoPicker';
 import { ResultView } from './ResultView';
@@ -58,7 +62,14 @@ async function readError(response: Response, fallback: string): Promise<string> 
   }
 }
 
-export function AnalyzeFlow({ saved = null }: { saved?: SavedAnalysis | null }) {
+export function AnalyzeFlow({
+  saved = null,
+  calibration = null,
+}: {
+  saved?: SavedAnalysis | null;
+  /** Letta dal server al caricamento: non cambia durante l'analisi. */
+  calibration?: Calibration | null;
+}) {
   // Il prezzo gia' registrato per questo oggetto. Serve anche dopo, come
   // valore di riferimento del salvataggio ritardato: senza, il primo effetto
   // riscriverebbe `null` sopra la cifra appena riletta dal database.
@@ -82,6 +93,16 @@ export function AnalyzeFlow({ saved = null }: { saved?: SavedAnalysis | null }) 
     comparables: number;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * Lo stesso modello, gia' passato per le nostre mani. Tiene con se' la
+   * chiave per cui e' stato cercato: cosi' un risultato che arriva in ritardo
+   * per l'oggetto di prima non si mostra sotto quello di adesso, e non serve
+   * azzerare lo stato dentro l'effetto.
+   */
+  const [sightings, setSightings] = useState<{ chiave: string; trovati: PreviousSighting[] }>({
+    chiave: '',
+    trovati: [],
+  });
   /** L'id dell'oggetto salvato: e' l'indirizzo a cui questa analisi vive. */
   const [itemId, setItemId] = useState<string | null>(saved?.itemId ?? null);
   /** Se questa analisi arriva dal database: allora e' gia' salvata, e
@@ -105,6 +126,31 @@ export function AnalyzeFlow({ saved = null }: { saved?: SavedAnalysis | null }) 
   useEffect(() => {
     if (itemId) window.history.replaceState(null, '', `/analizza?oggetto=${itemId}`);
   }, [itemId]);
+
+  /*
+   * I precedenti si chiedono appena c'e' un'identificazione, non a fine
+   * analisi: e' l'informazione piu' utile del momento e non ha motivo di
+   * aspettare la stima. Rimonta a ogni cambio di marca o modello, e
+   * `itemId` esce dall'elenco perche' l'oggetto di adesso non e' un
+   * precedente di se stesso.
+   */
+  const marca = identification?.brand ?? null;
+  const modello = identification?.model ?? null;
+  const chiaveModello = marca && modello ? `${marca}|${modello}|${itemId ?? ''}` : '';
+
+  useEffect(() => {
+    if (chiaveModello === '') return;
+    let valido = true;
+    const [cercaMarca, cercaModello, escludi] = chiaveModello.split('|');
+    void lookUpPreviousSightings(cercaMarca!, cercaModello!, escludi || null).then((trovati) => {
+      if (valido) setSightings({ chiave: chiaveModello, trovati });
+    });
+    return () => {
+      valido = false;
+    };
+  }, [chiaveModello]);
+
+  const precedenti = sightings.chiave === chiaveModello ? sightings.trovati : [];
 
   // Il prezzo si scrive dopo il salvataggio automatico, quindi va portato
   // all'oggetto man mano che lo digiti. Il valore di riferimento e' quello
@@ -170,6 +216,7 @@ export function AnalyzeFlow({ saved = null }: { saved?: SavedAnalysis | null }) 
     setError(null);
     setResult(null);
     setIdentification(null);
+    setSightings({ chiave: '', trovati: [] });
     setLanes([]);
     setReusedResearch(null);
     setStructuredSource(null);
@@ -257,6 +304,7 @@ export function AnalyzeFlow({ saved = null }: { saved?: SavedAnalysis | null }) 
     setPurchasePrice('');
     setResult(null);
     setIdentification(null);
+    setSightings({ chiave: '', trovati: [] });
     setLanes([]);
     setReusedResearch(null);
     setStructuredSource(null);
@@ -315,6 +363,8 @@ export function AnalyzeFlow({ saved = null }: { saved?: SavedAnalysis | null }) 
           coverUrl={images[0]?.previewUrl ?? saved?.coverUrl ?? null}
           purchasePrice={purchasePrice}
           onPurchasePriceChange={setPurchasePrice}
+          sightings={precedenti}
+          calibration={calibration}
           saveSlot={
             giaSalvata ? null : (
               <AutoSave result={liveResult} images={images} onSaved={setItemId} />
@@ -329,6 +379,10 @@ export function AnalyzeFlow({ saved = null }: { saved?: SavedAnalysis | null }) 
           anche su un'analisi riaperta dal suo indirizzo, dove non c'e' niente
           da salvare e quel componente non viene montato affatto.
         */}
+        {/* Compare solo dal terzo oggetto salvato in poi, e solo a chi non
+            ha ancora un'email: decide da solo se esistere. */}
+        {itemId ? <LinkAccountNudge /> : null}
+
         {itemId ? (
           <div className="mt-5 flex flex-col items-center gap-3">
             <Link

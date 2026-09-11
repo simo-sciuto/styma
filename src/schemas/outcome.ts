@@ -47,6 +47,20 @@ export const OutcomeInputSchema = z.discriminatedUnion('type', [
     date: isoDate,
     marketplace: shortText,
   }),
+  /**
+   * Quello che ci hai speso sopra: pulizia, ricambi, trasporto, l'ingresso al
+   * mercato. Una cifra e una nota, non una tabella di voci: chi sta chiudendo
+   * una vendita scrive «35, ricambi e pulizia» in tre secondi, e un modulo a
+   * righe multiple non lo compila nessuno.
+   *
+   * Zero e' un valore legittimo e diverso da null: «non ho speso altro» e
+   * «non l'ho ancora detto» sono due cose diverse.
+   */
+  z.object({
+    type: z.literal('costs'),
+    amount: money,
+    note: shortText,
+  }),
   /** Sbagliato a segnare: si torna indietro invece di convivere con un dato falso. */
   z.object({ type: z.literal('reopen') }),
 ]);

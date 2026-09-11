@@ -1,5 +1,6 @@
 import { AnalyzeFlow, type SavedAnalysis } from '@/features/analyze/AnalyzeFlow';
-import { getItemDetail } from '@/services/inventory/repository';
+import { calibrate } from '@/services/inventory/calibration';
+import { getItemDetail, listInventory } from '@/services/inventory/repository';
 
 export const metadata = { title: 'Analizza un oggetto · STYMA' };
 
@@ -43,11 +44,21 @@ async function leggiSalvata(id: string): Promise<SavedAnalysis | null> {
 export default async function AnalyzePage({ searchParams }: PageProps<'/analizza'>) {
   const { oggetto } = await searchParams;
   const id = typeof oggetto === 'string' && oggetto !== '' ? oggetto : null;
-  const saved = id ? await leggiSalvata(id) : null;
+
+  /*
+   * La calibrazione si legge qui, una volta sola: non cambia mentre analizzi
+   * un oggetto, e farla calcolare al client vorrebbe dire scaricargli tutto
+   * il magazzino per ottenere un numero.
+   */
+  const [saved, inventario] = await Promise.all([
+    id ? leggiSalvata(id) : Promise.resolve(null),
+    listInventory(true),
+  ]);
+  const calibration = inventario.status === 'ok' ? calibrate(inventario.entries) : null;
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-20 pt-6 sm:px-5">
-      <AnalyzeFlow saved={saved} />
+      <AnalyzeFlow saved={saved} calibration={calibration} />
     </main>
   );
 }

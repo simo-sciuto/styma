@@ -31,7 +31,7 @@ export type MonthlyLedger = {
   month: string;
   spentEur: number;
   earnedEur: number;
-  /** Incassato meno quanto erano costati gli oggetti venduti. */
+  /** Incassato meno quanto erano costati davvero gli oggetti venduti. */
   marginEur: number;
   bought: number;
   sold: number;
@@ -128,12 +128,24 @@ export function buildLedger(items: ItemRow[], now: Date = new Date()): Ledger {
   let oldestInStockDays: number | null = null;
 
   for (const item of items) {
+    /*
+     * Quello che l'oggetto e' costato davvero: il prezzo pagato piu' quello
+     * che ci hai speso sopra. Sono soldi usciti dalla stessa tasca, e tenerli
+     * fuori faceva sembrare ogni margine piu' alto di quanto fosse.
+     *
+     * I costi extra vanno nel mese dell'acquisto e non in quello in cui li
+     * hai sostenuti: e' un'approssimazione, e la scelgo perche' l'alternativa
+     * sarebbe chiedere una data per ogni ricambio comprato. Chi rivende non
+     * la scriverebbe, e un dato che nessuno compila vale meno di uno
+     * approssimato.
+     */
     const paid = item.purchase_price;
+    const costoTotale = paid === null ? null : paid + (item.extra_costs ?? 0);
     const sold = item.status === 'sold';
 
-    if (paid !== null && item.purchase_date) {
+    if (costoTotale !== null && item.purchase_date) {
       const month = bucket(monthOf(item.purchase_date));
-      month.spentEur += paid;
+      month.spentEur += costoTotale;
       month.bought += 1;
     }
 
@@ -143,7 +155,7 @@ export function buildLedger(items: ItemRow[], now: Date = new Date()): Ledger {
       month.sold += 1;
       // Il margine sta nel mese della vendita anche quando la spesa stava in
       // un altro: e' il momento in cui si scopre se quell'acquisto era buono.
-      month.marginEur += item.sale_price - (paid ?? 0);
+      month.marginEur += item.sale_price - (costoTotale ?? 0);
 
       if (item.purchase_date) {
         daysToSell.push(daysBetween(item.purchase_date, new Date(item.sale_date)));
@@ -152,8 +164,8 @@ export function buildLedger(items: ItemRow[], now: Date = new Date()): Ledger {
 
     // In magazzino: comprato e non ancora venduto. `found` e `passed` non ci
     // sono mai stati, e vanno tenuti fuori dal capitale fermo.
-    if (!sold && paid !== null && (item.status === 'bought' || item.status === 'listed')) {
-      lockedUpEur += paid;
+    if (!sold && costoTotale !== null && (item.status === 'bought' || item.status === 'listed')) {
+      lockedUpEur += costoTotale;
       itemsInStock += 1;
       if (item.purchase_date) {
         const days = daysBetween(item.purchase_date, now);

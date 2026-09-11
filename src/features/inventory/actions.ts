@@ -2,6 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 
+import { findPreviousSightings, type PreviousSighting } from '@/services/inventory/repository';
+
 import { getServerSupabase } from '@/lib/supabase/server';
 import type { AnalysisResult } from '@/schemas/analysis';
 import { OutcomeInputSchema } from '@/schemas/outcome';
@@ -158,6 +160,19 @@ export async function saveAnalysis(
 export type OutcomeResult = { ok: true } | { ok: false; error: string };
 
 /**
+ * «L'hai gia' visto». Chiamata dal client appena l'identificazione arriva,
+ * cioe' molto prima che la stima sia pronta: e' l'informazione piu' utile del
+ * momento, e non deve aspettare il resto.
+ */
+export async function lookUpPreviousSightings(
+  brand: string | null,
+  model: string | null,
+  excludeItemId: string | null = null,
+): Promise<PreviousSighting[]> {
+  return findPreviousSightings(brand, model, excludeItemId);
+}
+
+/**
  * Registra com'e' finita: comprato, lasciato perdere, messo in vendita,
  * venduto.
  *
@@ -193,12 +208,15 @@ export async function recordOutcome(itemId: string, raw: unknown): Promise<Outco
       case 'passed':
         // Il prezzo pagato si azzera apposta: se avevi segnato l'acquisto e
         // poi correggi, lasciare la cifra la' vorrebbe dire contare fra le
-        // spese un oggetto che hai lasciato al banco.
+        // spese un oggetto che hai lasciato al banco. Vale anche per quello
+        // che ci avevi speso sopra.
         return {
           status: 'passed',
           purchase_price: null,
           purchase_date: null,
           purchase_location: null,
+          extra_costs: null,
+          extra_costs_note: null,
         };
       case 'listed':
         return { status: 'listed', listed_at: input.date, marketplace: input.marketplace };
@@ -209,6 +227,10 @@ export async function recordOutcome(itemId: string, raw: unknown): Promise<Outco
           sale_date: input.date,
           marketplace: input.marketplace,
         };
+      case 'costs':
+        // Non tocca lo stato: si dichiarano mentre l'oggetto e' in casa o dopo
+        // averlo venduto, e in nessuno dei due casi cambiano dove si trova.
+        return { extra_costs: input.amount, extra_costs_note: input.note };
       case 'reopen':
         return {
           status: 'found',
@@ -218,6 +240,10 @@ export async function recordOutcome(itemId: string, raw: unknown): Promise<Outco
           listed_at: null,
           sale_price: null,
           sale_date: null,
+          // I costi seguono l'acquisto: senza un acquisto non appartengono a
+          // niente, e il vincolo in migrazione lo impone comunque.
+          extra_costs: null,
+          extra_costs_note: null,
         };
     }
   })();

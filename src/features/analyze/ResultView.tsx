@@ -4,12 +4,15 @@ import Image from 'next/image';
 import type { ReactNode } from 'react';
 
 import type { AnalysisResult } from '@/schemas/analysis';
+import type { PreviousSighting } from '@/services/inventory/repository';
+import type { Calibration } from '@/services/inventory/calibration';
 import { Card, Disclosure, Pill } from '@/components/ui';
 import { DecisionBlock } from './decision/DecisionBlock';
 import { Authenticity } from './identity/Authenticity';
 import { ObjectEvidence } from './identity/ObjectEvidence';
 import { Deals } from './market/Deals';
 import { MarketScan } from './market/MarketScan';
+import { PreviousSightings } from './PreviousSightings';
 import { RiskList } from './risks/RiskList';
 import { Ledger } from './flip/Ledger';
 import { BeforeYouBuy } from './checks/BeforeYouBuy';
@@ -32,6 +35,8 @@ export function ResultView({
   purchasePrice = '',
   onPurchasePriceChange,
   saveSlot,
+  sightings = [],
+  calibration = null,
 }: {
   result: AnalysisResult;
   /** La prima foto: un'anteprima locale durante l'analisi, un URL firmato
@@ -42,6 +47,10 @@ export function ResultView({
   purchasePrice?: string;
   onPurchasePriceChange?: (value: string) => void;
   saveSlot?: ReactNode;
+  /** Lo stesso modello, gia' analizzato in passato. */
+  sightings?: PreviousSighting[];
+  /** Come chiudono davvero le vendite di chi legge. */
+  calibration?: Calibration | null;
 }) {
   const { identification, market, marketSource, valuation, flip } = result;
   const decision = flip?.atPrice ?? null;
@@ -115,6 +124,11 @@ export function ResultView({
         </div>
       </div>
 
+      {/* Prima di tutto il resto: l'unica cosa in pagina che parla di te e
+          non dell'oggetto. Un «ci sei gia' passato» letto dopo aver deciso
+          arriva tardi. */}
+      <PreviousSightings sightings={sightings} />
+
       {/* La domanda del prodotto, subito. Tutto cio' che segue serve a
           capire perche', non se. */}
       {valuation.available && flip ? (
@@ -123,6 +137,7 @@ export function ResultView({
           valuation={valuation}
           purchasePrice={purchasePrice}
           onPurchasePriceChange={onPurchasePriceChange}
+          calibration={calibration}
         />
       ) : null}
 

@@ -39,6 +39,15 @@ export type ItemRow = {
   /** Quanto chiedeva chi vendeva. Non e' quanto hai pagato: vedi `purchase_price`. */
   asking_price: number | null;
   purchase_price: number | null;
+  /**
+   * Quello che l'oggetto ti e' costato oltre il prezzo di acquisto: pulizia,
+   * ricambi, trasporto, ingresso al mercato. Senza, il margine del magazzino
+   * e' sempre piu' alto di quello vero, ed e' l'unica voce di costo che chi
+   * rivende paga di tasca sua a ogni oggetto.
+   */
+  extra_costs: number | null;
+  /** In che cosa, scritto da chi vende. Non e' un elenco strutturato apposta. */
+  extra_costs_note: string | null;
   purchase_currency: string;
   purchase_date: string | null;
   purchase_location: string | null;
