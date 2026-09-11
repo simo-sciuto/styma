@@ -59,6 +59,12 @@ export type Outcome =
       listed: boolean;
       daysHeld: number | null;
       daysOnMarket: number | null;
+      /**
+       * Il valore atteso della stima, per dire quanto ci guadagni se lo vendi.
+       * Mentre ce l'hai in magazzino e' l'unica cifra che guarda avanti: tutte
+       * le altre dicono cos'e' gia' successo.
+       */
+      likelyValue: number | null;
     }
   | SoldOutcome;
 
@@ -137,6 +143,7 @@ export function describeOutcome(
       listed: item.status === 'listed',
       daysHeld: daysBetween(item.purchase_date, today),
       daysOnMarket: daysBetween(item.listed_at, today),
+      likelyValue: valuation?.likely_value ?? null,
     };
   }
 

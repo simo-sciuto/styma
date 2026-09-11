@@ -3,7 +3,7 @@
 import type { MarketSource, Valuation, WeightedComparable } from '@/schemas/analysis';
 import type { Identification } from '@/schemas/identification';
 import type { MarketResearch } from '@/schemas/market';
-import { ebaySoldSearchUrl } from '@/services/market-data/ebay/queries';
+import { ebaySearchUrl, ebaySoldSearchUrl } from '@/services/market-data/ebay/queries';
 import {
   DEMAND_LABELS,
   LIQUIDITY_LABELS,
@@ -132,6 +132,7 @@ export function MarketScan({
   identification: Identification;
 }) {
   const soldSearch = ebaySoldSearchUrl(identification);
+  const liveSearch = ebaySearchUrl(identification);
 
   /*
    * Il pavimento: fin dove qualcuno si e' gia' spinto davvero.
@@ -257,10 +258,19 @@ export function MarketScan({
         </ul>
       ) : null}
 
-      {rest.length > 0 ? (
-        <p className="mt-2 text-xs text-muted">
-          Nella stima ne sono entrati {used.length}: qui ci sono i {mostrati.length} che pesano di
-          piu’.
+      {/* Il «vedi tutti» della striscia: invece di scrivere quanti ne
+          abbiamo tenuti, si porta chi legge dove ci sono tutti, con la stessa
+          query che abbiamo usato noi. */}
+      {liveSearch && rest.length > 0 ? (
+        <p className="mt-2.5">
+          <a
+            href={liveSearch}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="text-sm font-medium underline decoration-line underline-offset-4"
+          >
+            Vedi tutti gli annunci su eBay
+          </a>
         </p>
       ) : null}
 

@@ -105,6 +105,50 @@ function Figure({ label, value, tone }: { label: string; value: string; tone?: '
   );
 }
 
+/**
+ * Il telaio di ogni stato: dove sei, i soldi, la mossa.
+ *
+ * Prima ogni stato era una scheda a se': titolo diverso, impaginazione
+ * diversa, bottoni che cambiavano significato sotto lo stesso posto. Chi la
+ * riapriva doveva ricapire ogni volta cosa stava guardando, ed e' il motivo
+ * per cui la scatola sembrava non servire a niente.
+ *
+ * Adesso sono sempre le stesse quattro righe, nello stesso ordine:
+ *
+ *   STATO    a che punto e' questo oggetto, detto in una parola
+ *   frase    cos'e' successo, con le date e i prezzi dentro
+ *   soldi    quanto e' uscito e quanto rientra — la riga che mancava
+ *   mossa    l'unica cosa che ha senso fare adesso
+ *
+ * La riga dei soldi e' quella che rende utile la scatola: dice se stai
+ * guadagnando su *questo* oggetto senza doverlo cercare nel cruscotto. E in
+ * magazzino guarda avanti invece che indietro — quanto ne fai se lo vendi al
+ * valore atteso — che e' la domanda di chi ce l'ha sullo scaffale.
+ */
+function Stato({
+  stato,
+  frase,
+  soldi,
+  error,
+  children,
+}: {
+  stato: string;
+  frase: string;
+  soldi?: ReactNode;
+  error: string | null;
+  children: ReactNode;
+}) {
+  return (
+    <Card>
+      <Eyebrow>{stato}</Eyebrow>
+      <p className="mt-1.5 text-xl font-semibold tracking-tight text-balance">{frase}</p>
+      {soldi ? <div className="mt-4 border-t-2 border-line pt-4">{soldi}</div> : null}
+      {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
+      <div className="mt-5">{children}</div>
+    </Card>
+  );
+}
+
 type FormKind = 'bought' | 'listed' | 'sold' | 'costs' | null;
 
 /**
@@ -253,115 +297,107 @@ export function OutcomeTracker({ item, outcome }: { item: ItemRow; outcome: Outc
 
   if (outcome.kind === 'open') {
     return (
-      <Card>
-        {/*
-          «Com'e' andata» era il titolo sbagliato nel momento sbagliato: qui
-          non e' ancora andata in nessun modo, la domanda arriva mentre hai
-          l'oggetto in mano.
-
-          E il testo sotto spiegava perche' la risposta serve *a noi* —
-          «e' l'unico modo di sapere se questa app ci aveva visto giusto» —
-          il che e' vero e non e' un motivo per cui qualcuno dovrebbe premere
-          un bottone. Le due risposte servono a chi le da': quello che compri
-          entra nel conto di quanto stai guadagnando, quello che lasci resta
-          come una scommessa da riaprire.
-        */}
-        <Eyebrow>Che fine ha fatto</Eyebrow>
-        {/* Una domanda sola, corta. «Te lo chiedevano 99 €. L'hai comprato?»
-            metteva un'informazione davanti alla domanda, e su una riga stretta
-            la domanda finiva a capo, dopo un prezzo: si leggeva il prezzo e si
-            saltava il resto. Il prezzo e' contesto, quindi sta sotto e piano. */}
-        <p className="mt-2 text-2xl font-semibold tracking-tight">L’hai comprato?</p>
-        {item.asking_price !== null ? (
-          <p className="mt-0.5 text-sm text-muted">
-            Ne chiedevano {formatEur(item.asking_price)}.
-          </p>
-        ) : null}
-
-        {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
-
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <div>
-            <Button className="w-full" pending={pending} onClick={() => open('bought')}>
-              Si’, l’ho comprato
-            </Button>
-            <p className="mt-1.5 text-xs text-muted">
-              Entra nel conto di quanto spendi e quanto ti resta.
-            </p>
-          </div>
-          <div>
-            <Button
-              className="w-full"
-              variant="ghost"
-              pending={pending}
-              onClick={() => submit({ type: 'passed' })}
-            >
-              No, l’ho lasciato li’
-            </Button>
-            <p className="mt-1.5 text-xs text-muted">
-              Se fra un mese vale il doppio, lo scopri.
-            </p>
-          </div>
+      <Stato
+        stato="Da decidere"
+        frase={
+          item.asking_price !== null
+            ? `Te lo chiedono ${formatEur(item.asking_price)}: l’hai comprato?`
+            : 'L’hai comprato?'
+        }
+        error={error}
+      >
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Button pending={pending} onClick={() => open('bought')}>
+            L’ho comprato
+          </Button>
+          <Button variant="ghost" pending={pending} onClick={() => submit({ type: 'passed' })}>
+            L’ho lasciato li’
+          </Button>
         </div>
-      </Card>
+      </Stato>
     );
   }
 
   if (outcome.kind === 'passed') {
     return (
-      <Card>
-        <Eyebrow>Che fine ha fatto</Eyebrow>
-        <p className="mt-2 text-xl font-semibold tracking-tight">L’hai lasciato li’.</p>
-        {outcome.askingPrice !== null ? (
-          <p className="mt-1 text-sm text-muted">
-            Ne chiedevano {formatEur(outcome.askingPrice)}.
-          </p>
-        ) : null}
-        {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
+      <Stato
+        stato="Lasciato li’"
+        frase={
+          outcome.askingPrice !== null
+            ? `Ne chiedevano ${formatEur(outcome.askingPrice)} e non l’hai preso.`
+            : 'Non l’hai preso.'
+        }
+        error={error}
+      >
         <TextButton pending={pending} onClick={() => submit({ type: 'reopen' })}>
           Non e’ andata cosi’
         </TextButton>
-      </Card>
+      </Stato>
     );
   }
 
   if (outcome.kind === 'holding') {
+    // Quanto ti e' costato davvero: il prezzo piu' quello che ci hai speso
+    // sopra. La pulizia e i ricambi escono dalla stessa tasca, e tenerli
+    // fuori fa sembrare ogni guadagno piu' grande di quello che e'.
+    const speso =
+      outcome.purchasePrice === null
+        ? null
+        : outcome.purchasePrice + (outcome.extraCosts ?? 0);
+    const guadagno =
+      speso === null || outcome.likelyValue === null ? null : outcome.likelyValue - speso;
+
+    // Due mezze frasi, e la seconda sa se e' la prima o la seconda della
+    // riga. Concatenandole a pezzi si perdeva lo spazio fra un punto e la
+    // maiuscola dopo, quando il prezzo di acquisto non c'era.
+    const giorni = outcome.listed ? outcome.daysOnMarket : outcome.daysHeld;
+    const quanto = speso === null ? null : `Ti e’ costato ${formatEur(speso)}`;
+    const da = giorni === null
+      ? null
+      : `${outcome.listed ? 'in vendita da' : 'ce l’hai da'} ${giorni} giorni`;
+    const frase =
+      quanto && da
+        ? `${quanto}, ${da}.`
+        : quanto
+          ? `${quanto}.`
+          : da
+            ? `${da.charAt(0).toUpperCase()}${da.slice(1)}.`
+            : 'L’hai comprato.';
+
     return (
-      <Card>
-        <Eyebrow>{outcome.listed ? 'In vendita' : 'Ce l’hai in magazzino'}</Eyebrow>
+      <Stato
+        stato={outcome.listed ? 'In vendita' : 'In magazzino'}
+        frase={frase}
+        soldi={
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <Figure label="Ti e’ costato" value={speso === null ? '—' : formatEur(speso)} />
+              {/* La sola cifra di questa scatola che guarda avanti: al valore
+                  atteso della stima, quanto ti resta in mano. */}
+              {guadagno !== null ? (
+                <Figure
+                  label={`Venduto a ${formatEur(outcome.likelyValue ?? 0)}`}
+                  value={`${guadagno >= 0 ? '+' : ''}${formatEur(guadagno)}`}
+                  tone={guadagno > 0 ? 'good' : 'bad'}
+                />
+              ) : null}
+            </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-4">
-          {outcome.purchasePrice !== null ? (
-            <Figure label="Pagato" value={formatEur(outcome.purchasePrice)} />
-          ) : null}
-          {outcome.negotiated !== null && outcome.negotiated > 0 ? (
-            <Figure
-              label="Trattato"
-              value={`−${formatEur(outcome.negotiated)}`}
-              tone="good"
-            />
-          ) : null}
-          {outcome.extraCosts !== null ? (
-            <Figure label="Ci hai speso" value={`+${formatEur(outcome.extraCosts)}`} tone="bad" />
-          ) : null}
-          {outcome.listed && outcome.daysOnMarket !== null ? (
-            <Figure label="In vendita da" value={`${outcome.daysOnMarket} gg`} />
-          ) : outcome.daysHeld !== null ? (
-            <Figure label="Ce l’hai da" value={`${outcome.daysHeld} gg`} />
-          ) : null}
-        </div>
+            {outcome.extraCosts !== null && outcome.extraCosts > 0 ? (
+              <p className="mt-2 text-xs text-muted">
+                Dentro ci sono {formatEur(outcome.extraCosts)} di spese
+                {outcome.extraCostsNote ? ` (${outcome.extraCostsNote})` : ''}.
+              </p>
+            ) : null}
 
-        {outcome.extraCostsNote ? (
-          <p className="mt-2 text-xs text-muted">{outcome.extraCostsNote}</p>
-        ) : null}
-
-        <TextButton className="mt-3" pending={pending} onClick={() => open('costs')}>
-          {outcome.extraCosts !== null ? 'Correggi quanto ci hai speso' : 'Ci ho speso altro'}
-        </TextButton>
-
-        {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
-
-        <div className="mt-5 grid gap-2 sm:grid-cols-2">
+            <TextButton className="mt-2" pending={pending} onClick={() => open('costs')}>
+              {outcome.extraCosts !== null ? 'Correggi le spese' : 'Ci ho speso altro'}
+            </TextButton>
+          </>
+        }
+        error={error}
+      >
+        <div className="grid gap-2 sm:grid-cols-2">
           <Button pending={pending} onClick={() => open('sold')}>
             L’ho venduto
           </Button>
@@ -375,62 +411,69 @@ export function OutcomeTracker({ item, outcome }: { item: ItemRow; outcome: Outc
             </Button>
           )}
         </div>
-      </Card>
+      </Stato>
     );
   }
 
   const { vsEstimate } = outcome;
+  const speso =
+    outcome.purchasePrice === null ? null : outcome.purchasePrice + (outcome.extraCosts ?? 0);
+  const giorni = outcome.daysOnMarket ?? outcome.daysHeld;
 
   return (
-    <Card>
-      <Eyebrow>Venduto{outcome.marketplace ? ` su ${outcome.marketplace}` : ''}</Eyebrow>
+    <Stato
+      stato="Venduto"
+      frase={[
+        `L’hai venduto a ${formatEur(outcome.salePrice)}`,
+        outcome.marketplace ? ` su ${outcome.marketplace}` : '',
+        giorni === null ? '' : `, dopo ${giorni} giorni`,
+        '.',
+      ].join('')}
+      soldi={
+        <>
+          <div className="grid grid-cols-2 gap-4">
+            <Figure label="Ti e’ costato" value={speso === null ? '—' : formatEur(speso)} />
+            {outcome.grossMargin !== null ? (
+              <Figure
+                label="Ci hai guadagnato"
+                value={`${outcome.grossMargin >= 0 ? '+' : ''}${formatEur(outcome.grossMargin)}`}
+                tone={outcome.grossMargin > 0 ? 'good' : 'bad'}
+              />
+            ) : null}
+          </div>
 
-      <p className="mt-2 text-[clamp(1.75rem,1.5rem+1.4vw,2.5rem)] font-semibold leading-none tracking-tight">
-        {formatEur(outcome.salePrice)}
-      </p>
+          {outcome.extraCosts !== null && outcome.extraCosts > 0 ? (
+            <p className="mt-2 text-xs text-muted">
+              Dentro ci sono {formatEur(outcome.extraCosts)} di spese
+              {outcome.extraCostsNote ? ` (${outcome.extraCostsNote})` : ''}.
+            </p>
+          ) : null}
 
-      <div className="mt-5 grid grid-cols-2 gap-4 border-t-2 border-line pt-4 sm:grid-cols-4">
-        {outcome.purchasePrice !== null ? (
-          <Figure label="Pagato" value={formatEur(outcome.purchasePrice)} />
-        ) : null}
-        {outcome.extraCosts !== null && outcome.extraCosts > 0 ? (
-          <Figure label="Ci hai speso" value={`+${formatEur(outcome.extraCosts)}`} tone="bad" />
-        ) : null}
-        {outcome.grossMargin !== null ? (
-          <Figure
-            label="Guadagno"
-            value={`${outcome.grossMargin >= 0 ? '+' : ''}${formatEur(outcome.grossMargin)}`}
-            tone={outcome.grossMargin > 0 ? 'good' : 'bad'}
-          />
-        ) : null}
-        {outcome.daysOnMarket !== null ? (
-          <Figure label="Sul mercato" value={`${outcome.daysOnMarket} gg`} />
-        ) : outcome.daysHeld !== null ? (
-          <Figure label="Tenuto" value={`${outcome.daysHeld} gg`} />
-        ) : null}
-      </div>
-
-      {/* Il momento in cui il prodotto puo' essere smentito. Se la fascia era
-          sbagliata si dice qui, con lo stesso rilievo di quando e' giusta. */}
-      {vsEstimate ? (
-        <div
-          className={`mt-4 rounded-block p-4 text-sm ${
-            vsEstimate.verdict === 'inside' ? 'bg-accent-soft text-accent' : 'bg-warn-soft text-warn'
-          }`}
-        >
-          {vsEstimate.verdict === 'inside'
-            ? `La stima diceva ${formatEur(vsEstimate.low)}–${formatEur(vsEstimate.high)}: ci siamo.`
-            : vsEstimate.verdict === 'above'
-              ? `L’avevamo sottovalutato: la stima si fermava a ${formatEur(vsEstimate.high)}.`
-              : `L’avevamo sopravvalutato: la stima partiva da ${formatEur(vsEstimate.low)}.`}
-        </div>
-      ) : null}
-
-
-      {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
+          {/* Il momento in cui il prodotto puo' essere smentito. Se la fascia
+              era sbagliata si dice qui, con lo stesso rilievo di quando e'
+              giusta. */}
+          {vsEstimate ? (
+            <p
+              className={`mt-3 rounded-block p-3 text-sm ${
+                vsEstimate.verdict === 'inside'
+                  ? 'bg-accent-soft text-accent'
+                  : 'bg-warn-soft text-warn'
+              }`}
+            >
+              {vsEstimate.verdict === 'inside'
+                ? `La stima diceva ${formatEur(vsEstimate.low)}–${formatEur(vsEstimate.high)}: ci siamo.`
+                : vsEstimate.verdict === 'above'
+                  ? `L’avevamo sottovalutato: la stima si fermava a ${formatEur(vsEstimate.high)}.`
+                  : `L’avevamo sopravvalutato: la stima partiva da ${formatEur(vsEstimate.low)}.`}
+            </p>
+          ) : null}
+        </>
+      }
+      error={error}
+    >
       <TextButton pending={pending} onClick={() => submit({ type: 'reopen' })}>
         Correggi
       </TextButton>
-    </Card>
+    </Stato>
   );
 }

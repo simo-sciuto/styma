@@ -2,25 +2,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { Card, PageHeader, Pill } from '@/components/ui';
-import { summarizeInventory, type InventorySummary } from '@/services/inventory/summary';
 import { formatEur, formatRange } from '@/lib/format';
 import { listInventory } from '@/services/inventory/repository';
+import { InventoryFilters } from '@/features/inventory/InventoryFilters';
 import { ITEM_STATUS_LABELS, type ItemRow } from '@/services/inventory/types';
-
-/**
- * Un dato mancante si dichiara invece di diventare uno zero: "non hai
- * registrato spese" e "hai speso 0 €" sono due cose diverse, e la seconda
- * e' quella che farebbe sembrare gratis un magazzino pieno.
- */
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <div>
-      <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">{label}</p>
-      <p className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">{value}</p>
-      {hint ? <p className="mt-0.5 text-[0.7rem] leading-snug text-muted">{hint}</p> : null}
-    </div>
-  );
-}
 
 /**
  * Il prezzo che vale la pena mostrare in lista dipende da dove sei arrivato
@@ -34,79 +19,6 @@ function priceNote(item: ItemRow): string | null {
   if (item.purchase_price !== null) return `Pagato ${formatEur(item.purchase_price)}`;
   if (item.asking_price !== null) return `Chiedevano ${formatEur(item.asking_price)}`;
   return null;
-}
-
-function InventorySummaryBlock({ summary }: { summary: InventorySummary }) {
-  const {
-    items,
-    valued,
-    estimatedValueEur,
-    bought,
-    spentEur,
-    withBoth,
-    potentialMarginEur,
-    sold,
-    soldWithBoth,
-    realizedMarginEur,
-    checkedAgainstEstimate,
-    insideEstimate,
-  } = summary;
-
-  return (
-    <div className="mt-6 rounded-block bg-surface-warm p-5 sm:p-6">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Stat label="Oggetti" value={String(items)} />
-        <Stat
-          label="Valore stimato"
-          value={estimatedValueEur !== null ? formatEur(estimatedValueEur) : 'n.d.'}
-          hint={valued < items ? `su ${valued} di ${items} stimati` : undefined}
-        />
-        <Stat
-          label="Speso"
-          value={spentEur !== null ? formatEur(spentEur) : 'n.d.'}
-          hint={bought < items ? `su ${bought} comprati davvero` : undefined}
-        />
-        <Stat
-          label="Margine atteso"
-          value={potentialMarginEur !== null ? formatEur(potentialMarginEur) : 'n.d.'}
-          hint={
-            withBoth > 0
-              ? `su ${withBoth} ${withBoth === 1 ? 'oggetto' : 'oggetti'} ancora in mano, al netto di quello che hai speso`
-              : 'serve sia il prezzo pagato sia una stima'
-          }
-        />
-      </div>
-
-      {/* La riga dei fatti, separata da quella delle previsioni: sopra c'e'
-          quello che pensiamo, qui sotto quello che e' successo. Compare solo
-          quando c'e' almeno una vendita: quattro trattini non sono un
-          cruscotto, sono un rimprovero. */}
-      {sold > 0 ? (
-        <div className="mt-5 grid grid-cols-2 gap-4 border-t-2 border-line pt-5">
-          <Stat
-            label="Guadagnato davvero"
-            value={realizedMarginEur !== null ? formatEur(realizedMarginEur) : 'n.d.'}
-            hint={
-              soldWithBoth > 0
-                ? `su ${soldWithBoth} ${soldWithBoth === 1 ? 'vendita' : 'vendite'} di cui sai anche quanto avevi pagato`
-                : 'serve anche il prezzo pagato'
-            }
-          />
-          <Stat
-            label="Stime centrate"
-            value={
-              checkedAgainstEstimate > 0 ? `${insideEstimate}/${checkedAgainstEstimate}` : 'n.d.'
-            }
-            hint={
-              checkedAgainstEstimate > 0
-                ? 'vendite finite dentro la fascia che avevamo dato'
-                : 'nessuna vendita confrontabile con una stima'
-            }
-          />
-        </div>
-      ) : null}
-    </div>
-  );
 }
 
 export const metadata = { title: 'Inventario · STYMA' };
@@ -166,11 +78,6 @@ export default async function InventoryPage({ searchParams }: PageProps<'/invent
         </Card>
       ) : (
         <>
-          {/* Il magazzino a colpo d'occhio, prima della lista: quanto vale,
-              quanto e' costato, quanto ci puoi guadagnare. Dati gia' caricati
-              per la lista, nessuna query in piu'. */}
-          <InventorySummaryBlock summary={summarizeInventory(result.entries)} />
-
           {result.archived > 0 ? (
             // Nasconderli senza dire quanti sono farebbe sparire oggetti
             // senza che nessuno sappia dove sono finiti.
@@ -187,8 +94,24 @@ export default async function InventoryPage({ searchParams }: PageProps<'/invent
             </p>
           ) : null}
 
+          {/*
+            Cercare, al posto dei totali.
+            In cima c'era il cruscotto in miniatura: gli stessi numeri di
+            `/andamento`, detti peggio perche' senza il tempo, sulla meta' alta
+            di una pagina che serve a trovare un oggetto fra quaranta.
+          */}
+          <InventoryFilters
+            items={result.entries.map(({ item }) => ({
+              id: item.id,
+              title: item.title,
+              brand: item.brand,
+              category: item.category,
+              status: item.status,
+            }))}
+          >
+            {(visibili) => (
           <ul className="mt-4 grid gap-4 sm:grid-cols-2">
-            {result.entries.map(({ item, valuation, coverUrl }) => (
+            {result.entries.filter(({ item }) => visibili.has(item.id)).map(({ item, valuation, coverUrl }) => (
               // min-w-0: un elemento di griglia ha min-width:auto, e il titolo
               // con `truncate` (white-space:nowrap) contribuisce con la sua
               // larghezza intera. Con un titolo lungo la traccia diventava piu'
@@ -253,6 +176,8 @@ export default async function InventoryPage({ searchParams }: PageProps<'/invent
               </li>
             ))}
           </ul>
+            )}
+          </InventoryFilters>
         </>
       )}
     </main>

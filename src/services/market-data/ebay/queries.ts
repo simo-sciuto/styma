@@ -78,3 +78,24 @@ export function ebaySoldSearchUrl(identification: Identification, host = 'www.eb
   url.searchParams.set('_sop', '13');
   return url.toString();
 }
+
+/**
+ * La stessa ricerca, ma sugli annunci vivi.
+ *
+ * E' il «vedi tutti» della striscia dei comparabili: noi ne mostriamo dodici
+ * su quaranta, e invece di scrivere quanti ne abbiamo tenuti — una nota che
+ * non serve a nessuno — si porta chi legge dove ci sono tutti, con la stessa
+ * query che abbiamo usato noi. Se la nostra ricerca era storta, li' si vede.
+ *
+ * Ordinati per prezzo crescente: chi guarda gli annunci di un oggetto che sta
+ * per comprare cerca il piu' basso, non il piu' pertinente.
+ */
+export function ebaySearchUrl(identification: Identification, host = 'www.ebay.it'): string | null {
+  const query = buildQuery(identification);
+  if (query === null) return null;
+
+  const url = new URL(`https://${host}/sch/i.html`);
+  url.searchParams.set('_nkw', query);
+  url.searchParams.set('_sop', '15');
+  return url.toString();
+}
