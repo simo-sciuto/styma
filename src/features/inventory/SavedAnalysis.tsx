@@ -20,13 +20,13 @@ import { usePersistAskingPrice } from './useAskingPrice';
 export function SavedAnalysis({
   itemId,
   snapshot,
-  coverUrl,
+  photoUrls,
   initialAskingPrice,
   listing = null,
 }: {
   itemId: string;
   snapshot: AnalysisSnapshot;
-  coverUrl: string | null;
+  photoUrls: string[];
   initialAskingPrice: number | null;
   /** L'annuncio da cui era nata, se non era nata da una fotografia. */
   listing?: { url: string; source: 'vinted' | 'ebay' } | null;
@@ -47,7 +47,7 @@ export function SavedAnalysis({
   return (
     <ResultView
       result={result}
-      coverUrl={coverUrl}
+      photoUrls={photoUrls}
       purchasePrice={price}
       onPurchasePriceChange={setPrice}
       /* Nella stessa fessura dell'analisi appena fatta, cioe' subito sotto il

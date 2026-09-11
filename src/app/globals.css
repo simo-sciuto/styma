@@ -360,27 +360,46 @@ body {
 }
 
 /*
- * Il cartellino appeso che dondola, durante l'attesa lunga.
+ * La riga che scorre dentro il mirino, durante l'attesa lunga.
  *
- * Il perno sta in alto, dove il filo si attacca: e' l'unico punto da cui un
- * cartellino appeso puo' girare, e metterlo altrove fa sembrare il disegno
- * una figura che si piega invece di un oggetto che pende. La curva e'
- * simmetrica e senza scatti, come un pendolo che nessuno spinge piu'.
+ * Non e' un avanzamento e non deve sembrarlo: va su e giu' perche' non
+ * sappiamo quanto manca. Somiglia pero' a quello che sta davvero succedendo —
+ * delle fotografie guardate riga per riga — e un'attesa che assomiglia al
+ * lavoro si capisce senza didascalia.
  */
 @media (prefers-reduced-motion: no-preference) {
-  .cartellino-oscilla {
-    transform-origin: 50% 3%;
-    animation: styma-oscilla 2.6s ease-in-out infinite;
+  .scansione-riga {
+    animation: styma-scansione 1.9s ease-in-out infinite alternate;
   }
 }
 
-@keyframes styma-oscilla {
-  0%,
-  100% {
-    transform: rotate(-7deg);
+@keyframes styma-scansione {
+  from {
+    top: 0.375rem;
   }
-  50% {
-    transform: rotate(7deg);
+  to {
+    top: calc(100% - 0.375rem);
+  }
+}
+
+/* Chi ha chiesto meno movimento vede la riga ferma a meta'. */
+@media (prefers-reduced-motion: reduce) {
+  .scansione-riga {
+    top: calc(50% - 1.5px);
+  }
+}
+
+/* Le foto che si alternano durante l'attesa entrano in dissolvenza: la
+   sostituzione secca, con gli occhi fermi li', si legge come un errore. */
+@media (prefers-reduced-motion: no-preference) {
+  .dissolvenza {
+    animation: styma-dissolvenza 0.5s var(--ease-smooth) both;
+  }
+}
+
+@keyframes styma-dissolvenza {
+  from {
+    opacity: 0;
   }
 }
 

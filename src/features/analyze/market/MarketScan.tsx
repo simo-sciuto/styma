@@ -12,10 +12,17 @@ import {
   formatDate,
   formatEur,
 } from '@/lib/format';
-import { Card, Disclosure, Pill } from '@/components/ui';
+import { Card, Pill } from '@/components/ui';
 
-/** Quante inserzioni mostrare aperte. Le altre restano, ma piegate. */
-const STRONGEST = 4;
+/**
+ * Quante inserzioni mettere nella striscia.
+ *
+ * Dodici e non tutte: in orizzontale la quantita' non costa altezza, ma ogni
+ * scheda porta una fotografia, e settanta immagini su una connessione da
+ * mercatino sono un peso vero. Sono ordinate per peso, quindi le prime sono
+ * quelle che hanno spostato la stima.
+ */
+const STRONGEST = 12;
 
 /**
  * L'eta' della ricerca si dichiara sempre, anche quando e' di oggi. Chi decide
@@ -41,7 +48,7 @@ function describeSource(source: MarketSource): string {
  * gli occhi: e' l'unico controllo sui comparabili che il nostro codice non
  * puo' fare al posto suo.
  */
-function ComparableRow({
+function ComparableCard({
   item,
   showKind,
   showWeight,
@@ -54,8 +61,13 @@ function ComparableRow({
   const date = formatDate(comparable.soldAt);
 
   return (
-    <li className="border-t-2 border-line py-3 first:border-0 first:pt-0">
-      <div className="flex gap-3">
+    <li className="w-40 shrink-0 snap-start">
+      <a
+        href={comparable.url}
+        target="_blank"
+        rel="noreferrer noopener"
+        className="flex h-full flex-col rounded-block border-2 border-line bg-surface"
+      >
         {comparable.imageUrl ? (
           /* Non `next/image`: sono miniature da 225px gia' dimensionate da
              eBay, e passarle dall'ottimizzatore costerebbe una
@@ -65,34 +77,18 @@ function ComparableRow({
             src={comparable.imageUrl}
             alt=""
             loading="lazy"
-            className="h-20 w-20 shrink-0 rounded-block border-2 border-line bg-surface object-cover"
+            className="h-28 w-full rounded-t-[0.75rem] border-b-2 border-line bg-background object-cover"
           />
         ) : null}
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline justify-between gap-3">
-            <span className="font-mono text-lg font-semibold tabular-nums">
-              {formatEur(item.priceEur)}
-            </span>
-            <span className="shrink-0 text-xs text-muted">{comparable.source}</span>
-          </div>
+        <div className="flex flex-1 flex-col p-2.5">
+          <p className="font-mono text-lg font-semibold tabular-nums">{formatEur(item.priceEur)}</p>
+          <p className="mt-0.5 line-clamp-2 text-xs leading-snug">{comparable.title}</p>
 
-          <a
-            href={comparable.url}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="mt-0.5 line-clamp-2 block text-sm underline decoration-line underline-offset-4"
-          >
-            {comparable.title}
-          </a>
-
-          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+          <div className="mt-auto flex flex-wrap items-center gap-1 pt-2">
             <Pill tone={comparable.matchLevel === 'exact_model' ? 'accent' : 'neutral'}>
               {MATCH_LABELS[comparable.matchLevel]}
             </Pill>
-            {showWeight ? (
-              <span className="font-mono text-xs text-muted">peso {item.weight.toFixed(2)}</span>
-            ) : null}
             {showKind ? (
               <Pill
                 tone={
@@ -102,12 +98,15 @@ function ComparableRow({
                 {PRICE_KIND_LABELS[comparable.kind]}
               </Pill>
             ) : null}
-            {date ? <span className="text-xs text-muted">{date}</span> : null}
           </div>
-        </div>
-      </div>
 
-      {comparable.notes ? <p className="mt-1.5 text-xs text-muted">{comparable.notes}</p> : null}
+          {showWeight || date ? (
+            <p className="mt-1 font-mono text-[0.65rem] text-muted">
+              {[showWeight ? `peso ${item.weight.toFixed(2)}` : null, date].filter(Boolean).join(' · ')}
+            </p>
+          ) : null}
+        </div>
+      </a>
     </li>
   );
 }
@@ -144,7 +143,7 @@ export function MarketScan({
   const bids = valuation.discarded.filter((entry) => entry.comparable.kind === 'bid');
   const highestBid = bids.length > 0 ? Math.max(...bids.map((e) => e.comparable.price)) : null;
   const used = [...valuation.used].sort((a, b) => b.weight - a.weight);
-  const strongest = used.slice(0, STRONGEST);
+  const mostrati = used.slice(0, STRONGEST);
   const rest = used.slice(STRONGEST);
 
   // Sono tutti prezzi richiesti finche' non esiste una fonte di venduti: dirlo
@@ -236,34 +235,33 @@ export function MarketScan({
         </p>
       ) : null}
 
-      {strongest.length > 0 ? (
-        <ul className="mt-4">
-          {strongest.map((item) => (
-            <ComparableRow
+      {/*
+        Una striscia che scorre, non un elenco lungo.
+        Quattro annunci aperti e settanta chiusi in un accordion erano due
+        decisioni prese al posto di chi legge: quali contano, e quanti ne puo'
+        reggere. In orizzontale la quantita' non costa niente in altezza, si
+        scorre col pollice come su qualunque altra app, e le foto — che sono
+        il modo in cui uno riconosce il proprio oggetto — stanno grandi
+        invece che in miniatura di lato.
+      */}
+      {mostrati.length > 0 ? (
+        <ul className="-mx-5 mt-4 flex snap-x snap-mandatory gap-2 overflow-x-auto px-5 pb-1 sm:-mx-6 sm:px-6">
+          {mostrati.map((item) => (
+            <ComparableCard
               key={`${item.comparable.url}-${item.comparable.price}`}
               item={item}
               showKind={!allAsking}
-              showWeight={pesiVariano(strongest)}
+              showWeight={pesiVariano(mostrati)}
             />
           ))}
         </ul>
       ) : null}
 
       {rest.length > 0 ? (
-        <div className="mt-3">
-          <Disclosure summary={`Gli altri ${rest.length}`}>
-            <ul>
-              {rest.map((item) => (
-                <ComparableRow
-                  key={`${item.comparable.url}-${item.comparable.price}`}
-                  item={item}
-                  showKind={!allAsking}
-                  showWeight={pesiVariano(rest)}
-                />
-              ))}
-            </ul>
-          </Disclosure>
-        </div>
+        <p className="mt-2 text-xs text-muted">
+          Nella stima ne sono entrati {used.length}: qui ci sono i {mostrati.length} che pesano di
+          piu’.
+        </p>
       ) : null}
 
       {/* Come si e' arrivati da queste inserzioni a quella fascia. Stava in

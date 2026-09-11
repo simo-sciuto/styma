@@ -1,10 +1,9 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
-import { Button, Card, PageHeader } from '@/components/ui';
+import { Button, Card } from '@/components/ui';
 import { readAnalysisEvents, type ListingEvent } from '@/lib/analysis-stream';
 import { assessFlip } from '@/services/valuation/flip-score';
 import type { PreparedImage } from '@/lib/images';
@@ -25,7 +24,8 @@ import { ListingCard } from './ListingCard';
 import { ListingLink } from './ListingLink';
 import { PhotoGuidance, PhotoPicker } from './PhotoPicker';
 import { StartBar } from './StartBar';
-import { SwingingTag } from './SwingingTag';
+import { RotatingCover } from './RotatingCover';
+import { Scanning } from './Scanning';
 import { ResultView } from './ResultView';
 
 type Stage = 'idle' | 'identifying' | 'researching' | 'done';
@@ -38,7 +38,8 @@ type Stage = 'idle' | 'identifying' | 'researching' | 'done';
 export type SavedAnalysis = {
   itemId: string;
   snapshot: AnalysisSnapshot;
-  coverUrl: string | null;
+  /** Tutte le foto salvate, non solo la copertina: si aprono grandi. */
+  photoUrls: string[];
   askingPrice: number | null;
   /** L'annuncio da cui era nata, se non era nata da una fotografia. */
   listing: { url: string; source: 'vinted' | 'ebay' } | null;
@@ -443,31 +444,24 @@ export function AnalyzeFlow({
    * concreto invece che con del bianco.
    */
   if (busy) {
-    /* Partendo da un link non ci sono file scelti a mano, e la foto
-       dell'annuncio arriva dopo un secondo: da li' in poi riempie lo stesso
-       posto, ed e' anche la conferma che abbiamo aperto la pagina giusta. */
-    const copertina = images[0]?.previewUrl ?? listing?.imageUrls[0] ?? null;
+    /* Partendo da un link non ci sono file scelti a mano, e le foto
+       dell'annuncio arrivano dopo un secondo: da li' in poi riempiono lo
+       stesso posto, ed e' anche la conferma che abbiamo aperto la pagina
+       giusta. */
+    const copertine =
+      images.length > 0 ? images.map((image) => image.previewUrl) : (listing?.imageUrls ?? []);
 
     return (
       <div className="flex min-h-[calc(100svh-8rem)] flex-col justify-center py-6">
-        {copertina ? (
-          <Image
-            src={copertina}
-            alt=""
-            width={400}
-            height={400}
-            unoptimized
-            className="mx-auto h-32 w-32 rounded-block border-[3px] border-line object-cover shadow-pop sm:h-40 sm:w-40"
-          />
-        ) : null}
+        <RotatingCover urls={copertine} alt="" />
 
         <h1 className="mt-6 text-center text-[clamp(1.75rem,1.4rem+1.8vw,2.5rem)] font-semibold leading-none tracking-tighter">
           Ci penso io
         </h1>
-        {/* Qualcosa che si muove, senza dire niente. Un cartellino appeso
-            dondola: e' tutto quello che serve a far vedere che non e'
-            piantata. Compare solo quando non c'e' una foto da guardare. */}
-        {copertina ? null : <SwingingTag />}
+        {/* Un mirino con una riga che scorre: assomiglia a quello che sta
+            succedendo davvero, cioe' delle foto guardate riga per riga.
+            Compare solo quando non c'e' ancora una foto da guardare. */}
+        {copertine.length > 0 ? null : <Scanning />}
 
         <div className="mt-6">
           <AnalysisProgress passi={passi} corsie={lanes} />
@@ -481,7 +475,11 @@ export function AnalyzeFlow({
       <>
         <ResultView
           result={liveResult}
-          coverUrl={images[0]?.previewUrl ?? listing?.imageUrls[0] ?? saved?.coverUrl ?? null}
+          photoUrls={
+            images.length > 0
+              ? images.map((image) => image.previewUrl)
+              : (listing?.imageUrls ?? saved?.photoUrls ?? [])
+          }
           purchasePrice={purchasePrice}
           onPurchasePriceChange={setPurchasePrice}
           sightings={precedenti}
@@ -539,10 +537,25 @@ export function AnalyzeFlow({
   }
 
   return (
-    <div className="mt-6 space-y-5">
-      {/* Senza sottotitolo: la barra qui sotto dice gia' cosa accetta, e
-          ripeterlo sopra in altre parole e' la stessa frase detta due volte. */}
-      <PageHeader title="Da dove partiamo" />
+    /* Centrata in verticale: con tre elementi in croce, impilarli dall'alto
+       lascia mezza schermata vuota sotto e avvicina la barra al menu. */
+    <div className="flex min-h-[calc(100svh-11rem)] flex-col justify-center gap-5 py-6">
+      {/*
+        Niente intestazione a colore pieno su questa pagina.
+
+        C'era un blocco teal alto centotrenta pixel con dentro «Da dove
+        partiamo»: un livello 1, cioe' il trattamento che il sistema riserva
+        alla risposta, messo sopra una barra che e' l'unica cosa da usare qui.
+        Due elementi in rilievo nella stessa schermata non fanno due punti
+        importanti, ne fanno zero — e la barra finiva schiacciata in mezzo,
+        fra l'intestazione sopra e il menu sotto.
+
+        Resta una domanda in testo semplice e la barra, al centro dello
+        schermo. In rilievo c'e' una cosa sola, ed e' quella su cui si tocca.
+      */}
+      <h1 className="text-center text-[clamp(1.75rem,1.4rem+1.8vw,2.5rem)] font-semibold leading-none tracking-tighter">
+        Cosa hai trovato?
+      </h1>
 
       {error ? (
         <Card className="border-danger/40 bg-danger-soft">
@@ -550,15 +563,6 @@ export function AnalyzeFlow({
         </Card>
       ) : null}
 
-      {/*
-        Una barra sola, non due porte.
-        Erano due schede gemelle affiancate, che gia' pesavano uguale — ma
-        chiedevano comunque di scegliere una porta prima di cominciare. Se le
-        due cose sono equivalenti, quella domanda non andrebbe fatta: c'e' un
-        oggetto, e tu hai una foto o un indirizzo. E la nota sta dentro la
-        stessa barra perche' non e' un terzo modo di cominciare, e' quello che
-        aggiungi mentre stai gia' cominciando.
-      */}
       <StartBar
         images={images}
         onImagesChange={setImages}
@@ -571,7 +575,9 @@ export function AnalyzeFlow({
 
       {images.length > 0 ? <PhotoPicker images={images} onChange={setImages} /> : null}
 
-      <PhotoGuidance />
+      <div className="mt-2">
+        <PhotoGuidance />
+      </div>
     </div>
   );
 }

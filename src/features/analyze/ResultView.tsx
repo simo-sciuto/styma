@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import type { ReactNode } from 'react';
 
 import type { AnalysisResult } from '@/schemas/analysis';
@@ -12,6 +11,7 @@ import { Authenticity } from './identity/Authenticity';
 import { ObjectEvidence } from './identity/ObjectEvidence';
 import { Deals } from './market/Deals';
 import { MarketScan } from './market/MarketScan';
+import { PhotoLightbox } from './PhotoLightbox';
 import { PreviousSightings } from './PreviousSightings';
 import { RiskList } from './risks/RiskList';
 import { Ledger } from './flip/Ledger';
@@ -31,7 +31,7 @@ function riassuntoFattori(factors: { direction: 'positive' | 'negative' }[]): st
 
 export function ResultView({
   result,
-  coverUrl = null,
+  photoUrls = [],
   purchasePrice = '',
   onPurchasePriceChange,
   saveSlot,
@@ -40,9 +40,12 @@ export function ResultView({
   listingSlot,
 }: {
   result: AnalysisResult;
-  /** La prima foto: un'anteprima locale durante l'analisi, un URL firmato
-   *  quando la stessa pagina viene riaperta da salvata. */
-  coverUrl?: string | null;
+  /**
+   * Le foto dell'oggetto: anteprime locali durante l'analisi, URL firmati
+   * quando la stessa pagina viene riaperta da salvata. La prima fa da
+   * miniatura, tutte si aprono grandi con un tocco.
+   */
+  photoUrls?: string[];
   /** Testo grezzo del campo prezzo: lo stato vive nel chiamante, che deve
    *  passare lo stesso numero anche al salvataggio in inventario. */
   purchasePrice?: string;
@@ -95,16 +98,7 @@ export function ResultView({
         centoventi pixel e il verdetto entra nella prima schermata.
       */}
       <div className="flex items-center gap-3">
-        {coverUrl ? (
-          <Image
-            src={coverUrl}
-            alt=""
-            width={200}
-            height={200}
-            unoptimized
-            className="h-16 w-16 shrink-0 rounded-block border-2 border-line object-cover"
-          />
-        ) : null}
+        <PhotoLightbox urls={photoUrls} alt={titolo} />
 
         <div className="min-w-0 flex-1">
           <h1 className="line-clamp-2 text-[clamp(1.25rem,1.1rem+0.9vw,1.6rem)] font-semibold leading-[1.05] tracking-tight text-balance">
