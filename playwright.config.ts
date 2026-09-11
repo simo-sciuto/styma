@@ -56,11 +56,15 @@ export default defineConfig({
    * Resta questo: il test avvia il suo dev server e fallisce forte se la porta
    * e' gia' occupata. **Prima di `npm run e2e` va fermato il proprio `npm run
    * dev`.** Un fastidio dichiarato vale piu' di una spesa silenziosa.
+   *
+   * `STYMA_E2E_REUSE=1` riattiva il riuso, per chi sa che il server aperto ha
+   * gia' i fixture. E' una scelta esplicita di chi la fa, non piu' il
+   * comportamento di default che costava senza dirlo.
    */
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:3000',
-    reuseExistingServer: false,
+    reuseExistingServer: process.env.STYMA_E2E_REUSE === '1',
     timeout: 120_000,
     env: {
       // L'identificazione si rigioca dalle risposte registrate: un e2e che

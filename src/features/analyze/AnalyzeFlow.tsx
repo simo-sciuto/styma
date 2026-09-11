@@ -25,6 +25,7 @@ import { ListingCard } from './ListingCard';
 import { ListingLink } from './ListingLink';
 import { PhotoGuidance, PhotoPicker } from './PhotoPicker';
 import { StartBar } from './StartBar';
+import { SwingingTag } from './SwingingTag';
 import { ResultView } from './ResultView';
 
 type Stage = 'idle' | 'identifying' | 'researching' | 'done';
@@ -442,7 +443,10 @@ export function AnalyzeFlow({
    * concreto invece che con del bianco.
    */
   if (busy) {
-    const copertina = images[0]?.previewUrl ?? null;
+    /* Partendo da un link non ci sono file scelti a mano, e la foto
+       dell'annuncio arriva dopo un secondo: da li' in poi riempie lo stesso
+       posto, ed e' anche la conferma che abbiamo aperto la pagina giusta. */
+    const copertina = images[0]?.previewUrl ?? listing?.imageUrls[0] ?? null;
 
     return (
       <div className="flex min-h-[calc(100svh-8rem)] flex-col justify-center py-6">
@@ -460,9 +464,10 @@ export function AnalyzeFlow({
         <h1 className="mt-6 text-center text-[clamp(1.75rem,1.4rem+1.8vw,2.5rem)] font-semibold leading-none tracking-tighter">
           Ci penso io
         </h1>
-        <p className="mt-2 text-center text-sm text-muted">
-          Da mezzo minuto a un paio. Puoi mettere via il telefono.
-        </p>
+        {/* Qualcosa che si muove, senza dire niente. Un cartellino appeso
+            dondola: e' tutto quello che serve a far vedere che non e'
+            piantata. Compare solo quando non c'e' una foto da guardare. */}
+        {copertina ? null : <SwingingTag />}
 
         <div className="mt-6">
           <AnalysisProgress passi={passi} corsie={lanes} />
@@ -535,10 +540,9 @@ export function AnalyzeFlow({
 
   return (
     <div className="mt-6 space-y-5">
-      <PageHeader
-        title="Da dove partiamo"
-        subtitle="Stesso risultato da una foto o da un link. Cambia solo dove hai trovato l’oggetto."
-      />
+      {/* Senza sottotitolo: la barra qui sotto dice gia' cosa accetta, e
+          ripeterlo sopra in altre parole e' la stessa frase detta due volte. */}
+      <PageHeader title="Da dove partiamo" />
 
       {error ? (
         <Card className="border-danger/40 bg-danger-soft">

@@ -121,7 +121,7 @@ export default async function InventoryPage({ searchParams }: PageProps<'/invent
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-20 pt-6 sm:px-5">
       <PageHeader
         title="Inventario"
-        subtitle="Tutto quello che hai analizzato, e com’e’ andata a finire."
+        subtitle="Ogni oggetto che hai analizzato."
       />
 
       {result.status === 'not_configured' ? (

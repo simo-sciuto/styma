@@ -63,7 +63,7 @@ export function Ledger({
       </dl>
 
       <p className="mt-2 text-xs text-muted">
-        Se la stima e’ fragile il margine cresce, e tu paghi meno.
+        Piu’ la stima e’ incerta, piu’ margine teniamo da parte.
       </p>
 
       {/*

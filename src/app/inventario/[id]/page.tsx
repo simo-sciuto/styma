@@ -10,7 +10,6 @@ import { GenerateListing } from '@/features/listing/GenerateListing';
 import { ArchiveToggle } from '@/features/inventory/ArchiveToggle';
 import { LegacyItemDetail } from '@/features/inventory/LegacyItemDetail';
 import { OutcomeTracker } from '@/features/inventory/OutcomeTracker';
-import { ListingLink } from '@/features/analyze/ListingLink';
 import { SavedAnalysis } from '@/features/inventory/SavedAnalysis';
 
 export const dynamic = 'force-dynamic';
@@ -93,27 +92,17 @@ export default async function ItemPage({ params }: PageProps<'/inventario/[id]'>
           snapshot={snapshot}
           coverUrl={null}
           initialAskingPrice={item.asking_price}
-        />
-      ) : (
-        <LegacyItemDetail item={item} valuation={valuation} comparables={comparables} />
-      )}
-
-      <div className="mt-4 space-y-4">
-        {/*
-          Se l'oggetto veniva da un annuncio, la strada per tornarci sta qui.
-          Prima si perdeva col salvataggio: la scheda del confronto vive nello
-          stato del browser, e riaperto l'oggetto non restava niente. Ma
-          «quella borsa e' ancora in vendita? a quanto sta adesso?» e' proprio
-          la domanda di chi riapre, e va prima di «com'e' andata».
-        */}
-        <ListingLink
           listing={
             item.listing_url
               ? { url: item.listing_url, source: item.listing_source ?? 'vinted' }
               : null
           }
         />
+      ) : (
+        <LegacyItemDetail item={item} valuation={valuation} comparables={comparables} />
+      )}
 
+      <div className="mt-4 space-y-4">
         <OutcomeTracker item={item} outcome={describeOutcome(item, valuation)} />
 
         {/* Solo per le schede vecchie: con lo snapshot l'attribuzione e' gia'

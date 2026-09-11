@@ -17,7 +17,7 @@ export default function Loading() {
     <LoadingShell label="Carico l’inventario">
       <PageHeader
         title="Inventario"
-        subtitle="Tutto quello che hai analizzato, e com’e’ andata a finire."
+        subtitle="Ogni oggetto che hai analizzato."
       />
 
       {/* I quattro totali del cruscotto. */}

@@ -682,6 +682,21 @@ Multi-oggetto · Scout · allerte · analytics personali · escalation a esperto
   righe dichiarando successo. Controllare la colonna dopo un push, non il
   messaggio del push.
 
+### I11 — il collegamento sale, i sottotitoli si sgonfiano (commit successivo)
+- «Riaprilo su Vinted» passa dentro `listingSlot`, cioe' subito sotto il nome
+  dell'oggetto, come nell'analisi appena fatta. Stava in fondo alla scheda,
+  dopo tutte le prove.
+- Sottotitoli riscritti: erano note di progettazione, con la forma «frase, poi
+  frase che la giustifica». Quella voce resta nei commenti.
+- Nell'attesa un cartellino che dondola al posto di una riga di testo. Prima
+  c'erano dei consigli da mercatino che scorrevano: frasi fatte, tolte dopo
+  un'ora. Se c'e' una foto da guardare, non compare nemmeno il cartellino.
+- La foto dell'annuncio riempie l'attesa appena arriva, che e' anche la
+  conferma di aver aperto la pagina giusta.
+- `STYMA_E2E_REUSE=1` riattiva il riuso del dev server per chi sa di avere i
+  fixture accesi: scelta esplicita, non piu' un default che costava in
+  silenzio.
+
 ## Decisioni aperte
 
 - **Autenticazione sulle API a pagamento.** `/api/identify` e `/api/valuate`

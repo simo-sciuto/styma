@@ -13,7 +13,7 @@ export default function Loading() {
     <LoadingShell label="Conto quanto hai guadagnato">
       <PageHeader
         title="Come sta andando"
-        subtitle="Soldi veri: quelli usciti e quelli rientrati. Nessuna stima."
+        subtitle="Quanto hai speso e quanto hai incassato."
         tone="terracotta"
       />
 

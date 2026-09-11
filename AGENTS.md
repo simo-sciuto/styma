@@ -195,6 +195,15 @@ sono ancora aperte.
   `priceThresholds` e `recommendationAt`, le stesse funzioni che rispondono davanti al banco, e usa
   gli stessi componenti della pagina risultato: se cambia l'aritmetica, cambia anche la home. Un
   numero in vetrina che invecchia senza che nessuno lo tocchi e' il modo piu' silenzioso di mentire.
+- **Un'attesa non si riempie di parole.** Al posto della riga «ci metto un minuto o due» erano
+  finiti dei consigli da mercatino che scorrevano, e sono durati un'ora: frasi fatte, il tono di chi
+  ti da' del tu senza conoscerti, riconoscibili a un chilometro come scritte da una macchina. Chi
+  aspetta non ha bisogno di leggere, ha bisogno di vedere che qualcosa si muove: un cartellino
+  appeso che dondola, e basta. Quando c'e' una foto da guardare, nemmeno quello.
+- **I sottotitoli non spiegano la pagina.** «Stesso risultato da una foto o da un link, cambia solo
+  dove hai trovato l'oggetto» e' una nota di progettazione finita sullo schermo: la forma «frase,
+  poi frase che giustifica la prima» e' la voce dei commenti in questo codice, e li' va lasciata.
+  Un sottotitolo dice cosa c'e' nella pagina in una riga piana, o non c'e'.
 - **I passi dell'attesa sono domande, non verbi.** «Leggo forma, materiali, marchi e punzoni» era
   la macchina che racconta se stessa: vero, e a chi aspetta non serve. «Che oggetto e'», «A quanto
   lo vendono», «Quanto puoi pagarlo» sono le stesse domande del resto del prodotto, e dicono cosa

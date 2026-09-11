@@ -359,6 +359,31 @@ body {
   }
 }
 
+/*
+ * Il cartellino appeso che dondola, durante l'attesa lunga.
+ *
+ * Il perno sta in alto, dove il filo si attacca: e' l'unico punto da cui un
+ * cartellino appeso puo' girare, e metterlo altrove fa sembrare il disegno
+ * una figura che si piega invece di un oggetto che pende. La curva e'
+ * simmetrica e senza scatti, come un pendolo che nessuno spinge piu'.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .cartellino-oscilla {
+    transform-origin: 50% 3%;
+    animation: styma-oscilla 2.6s ease-in-out infinite;
+  }
+}
+
+@keyframes styma-oscilla {
+  0%,
+  100% {
+    transform: rotate(-7deg);
+  }
+  50% {
+    transform: rotate(7deg);
+  }
+}
+
 @keyframes styma-fade-in {
   from {
     opacity: 0;

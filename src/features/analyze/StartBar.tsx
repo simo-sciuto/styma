@@ -153,7 +153,7 @@ export function StartBar({
         ) : images.length > 0 ? (
           `${images.length}/${MAX_IMAGES} foto${caricando ? ' · preparo…' : ''}`
         ) : (
-          'Vinted, eBay, o le tue foto. Su desktop puoi trascinarle qui.'
+          'Vinted, eBay, o le tue foto.'
         )}
       </p>
 
