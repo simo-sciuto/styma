@@ -40,19 +40,19 @@ function TagIcon() {
 const STEPS = [
   {
     title: 'Fotografa',
-    body: 'Da 4 a 8 scatti: fronte, retro, sotto, marchio, difetti. Bastano anche meno se l’oggetto e’ evidente.',
+    body: 'Fronte, retro, sotto, il marchio, i difetti. Da quattro a otto scatti.',
     tone: 'bg-tile-teal text-tile-cream',
     icon: CameraIcon,
   },
   {
     title: 'Identifica',
-    body: 'Riconosciamo l’oggetto, leggiamo punzoni ed etichette, ricostruiamo epoca e materiali.',
+    body: 'Leggiamo punzoni ed etichette. Epoca, materiali, marca, modello.',
     tone: 'bg-tile-terracotta text-tile-ink',
     icon: LoupeIcon,
   },
   {
     title: 'Decidi',
-    body: 'Cerchiamo annunci reali dello stesso oggetto, calcoliamo la fascia di prezzo e diciamo fino a quanto conviene pagarlo.',
+    body: 'Cerchiamo annunci veri dello stesso oggetto e ti diciamo fino a quanto pagarlo.',
     tone: 'bg-accent-vivid text-accent-on-vivid',
     icon: TagIcon,
   },
@@ -143,7 +143,7 @@ export default function HomePage() {
         </p>
 
         <p className="reveal reveal-delay-2 mt-6 max-w-md text-base leading-relaxed">
-          Fotografa quello che hai in mano: in pochi secondi sai cos’e’, quanto vale e se conviene.
+          Fotografa quello che hai in mano. In pochi secondi sai cos’e’ e fino a quanto pagarlo.
         </p>
 
         <div className="reveal reveal-delay-3 mt-9 flex flex-wrap items-center justify-center gap-3">
@@ -213,10 +213,8 @@ export default function HomePage() {
           </div>
 
           <p className="mt-5 border-t-2 border-line pt-4 text-sm text-muted">
-            Il prezzo massimo e’ una sottrazione che puoi rifare a mente: quanto lo rivendi, meno
-            il margine che ti tieni, compreso quello che teniamo da parte perche’ la stima puo’
-            sbagliare.
-            Nell’analisi trovi il conto, riga per riga.
+            Quanto lo rivendi, meno il margine che ti tieni. Il conto e’ nell’analisi, riga per
+            riga.
           </p>
         </Reveal>
 
@@ -241,10 +239,9 @@ export default function HomePage() {
         </ol>
 
         <p className="mt-10 text-sm text-muted">
-          La stima nasce da annunci comparabili trovati sul mercato, non dall’intuito di un modello.
-          Sono prezzi richiesti, non vendite concluse: le vendite vere nessuno le vende a condizioni
-          che possiamo accettare, e fingere di stimarle sarebbe la bugia piu’ comoda. Quando i dati
-          non bastano, te lo diciamo invece di riempire il vuoto con un numero.
+          La stima esce da annunci veri, trovati sul mercato. Sono prezzi richiesti, non vendite
+          concluse, e quando i dati non bastano te lo diciamo invece di riempire il vuoto con un
+          numero.
         </p>
       </main>
 

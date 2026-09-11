@@ -84,8 +84,7 @@ export function LinkAccountNudge() {
     return (
       <Card className="mt-5 bg-accent-soft">
         <p className="text-sm">
-          Ti abbiamo mandato un’email di conferma. Aprila e i tuoi {conteggio} oggetti ti seguono su
-          qualsiasi telefono.
+          Ti abbiamo mandato un’email. Aprila e i tuoi {conteggio} oggetti ti seguono ovunque.
         </p>
       </Card>
     );
@@ -97,8 +96,8 @@ export function LinkAccountNudge() {
         Mettili al sicuro
       </p>
       <p className="mt-2 text-sm leading-relaxed">
-        Hai <strong>{conteggio} oggetti</strong> salvati, e vivono solo in questo browser. Se lo
-        svuoti o cambi telefono, spariscono. Basta un’email per ritrovarli ovunque.
+        I tuoi <strong>{conteggio} oggetti</strong> vivono solo in questo browser. Cambi telefono
+        e spariscono.
       </p>
 
       {stato === 'invito' ? (

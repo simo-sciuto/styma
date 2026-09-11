@@ -103,7 +103,7 @@ export function Deals({
           </ul>
 
           <p className="mt-3 text-xs text-muted">
-            Guarda la foto prima di fidarti: il titolo non distingue l’oggetto da un suo pezzo.
+            Guarda la foto. Un titolo non distingue l’oggetto da un suo pezzo.
           </p>
         </>
       ) : null}
@@ -125,7 +125,7 @@ export function Deals({
               ))}
             </ul>
             <p className="mt-3 text-xs text-muted">
-              Non sono lo stesso modello: il prezzo massimo qui sopra non vale per loro.
+              Non sono lo stesso modello. Il massimo qui sopra non vale per loro.
             </p>
           </Disclosure>
         </div>

@@ -160,8 +160,8 @@ export function OutcomeTracker({ item, outcome }: { item: ItemRow; outcome: Outc
       <Card>
         <Eyebrow>Quanto ci hai speso sopra</Eyebrow>
         <p className="mt-1.5 text-sm text-muted">
-          Pulizia, ricambi, trasporto, l’ingresso al mercato. Escono dalla stessa tasca del prezzo
-          d’acquisto, e senza di loro il guadagno sembra piu’ alto di quello che e’.
+          Pulizia, ricambi, trasporto, ingresso al mercato. Senza, il guadagno sembra piu’ alto di
+          quello che e’.
         </p>
 
         <div className="mt-4 space-y-4">
@@ -286,7 +286,7 @@ export function OutcomeTracker({ item, outcome }: { item: ItemRow; outcome: Outc
               Si’, l’ho comprato
             </Button>
             <p className="mt-1.5 text-xs text-muted">
-              Entra nel conto di quanto hai speso e quanto ti resta.
+              Entra nel conto di quanto spendi e quanto ti resta.
             </p>
           </div>
           <div>
@@ -299,7 +299,7 @@ export function OutcomeTracker({ item, outcome }: { item: ItemRow; outcome: Outc
               No, l’ho lasciato li’
             </Button>
             <p className="mt-1.5 text-xs text-muted">
-              Resta qui: se fra un mese vale il doppio, lo scopri.
+              Se fra un mese vale il doppio, lo scopri.
             </p>
           </div>
         </div>
@@ -314,8 +314,7 @@ export function OutcomeTracker({ item, outcome }: { item: ItemRow; outcome: Outc
         <p className="mt-2 text-xl font-semibold tracking-tight">L’hai lasciato li’.</p>
         {outcome.askingPrice !== null ? (
           <p className="mt-1 text-sm text-muted">
-            Ne chiedevano {formatEur(outcome.askingPrice)}. Se un giorno scopri che valeva la pena,
-            questa riga te lo ricorda.
+            Ne chiedevano {formatEur(outcome.askingPrice)}.
           </p>
         ) : null}
         {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}

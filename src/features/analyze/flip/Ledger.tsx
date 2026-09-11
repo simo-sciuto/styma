@@ -63,7 +63,7 @@ export function Ledger({
       </dl>
 
       <p className="mt-2 text-xs text-muted">
-        Il margine cresce quando la stima e’ fragile: l’incertezza la paghi in trattativa, non dopo.
+        Se la stima e’ fragile il margine cresce, e tu paghi meno.
       </p>
 
       {/*

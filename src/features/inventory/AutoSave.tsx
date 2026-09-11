@@ -86,7 +86,7 @@ export function AutoSave({
   if (!isPersistenceEnabled()) {
     return (
       <p className="pt-2 text-center text-xs text-muted">
-        Inventario non configurato: questa analisi non viene salvata e si perde ricaricando.
+        Inventario non configurato. Questa analisi si perde se ricarichi.
       </p>
     );
   }

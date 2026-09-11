@@ -7,7 +7,7 @@ const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'STYMA · quanto vale quella cosa strana',
+  title: 'STYMA · quanto vale, prima di comprare',
   description:
     'Fotografa un oggetto trovato al mercatino e scopri cos’e’, quanto vale e se conviene comprarlo.',
 };

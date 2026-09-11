@@ -125,7 +125,7 @@ export function GenerateListing({ itemId }: Props) {
         </div>
 
         <p className="text-center text-xs text-muted">
-          Lo scrive il modello leggendo l’analisi: una decina di secondi.
+          Una decina di secondi.
         </p>
       </Card>
     );
@@ -153,7 +153,7 @@ export function GenerateListing({ itemId }: Props) {
         </div>
       ) : (
         <p className="text-sm text-muted">
-          Nessuna valutazione disponibile per questo oggetto: il prezzo lo decidi tu.
+          Nessuna stima per questo oggetto. Il prezzo lo decidi tu.
         </p>
       )}
 

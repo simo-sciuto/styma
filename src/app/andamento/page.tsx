@@ -67,7 +67,7 @@ export default async function AndamentoPage() {
     return (
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-20 pt-6 sm:px-5">
         <PageHeader title="Come sta andando" tone="terracotta" />
-        <Vuoto testo="L’inventario non e’ configurato, quindi non c’e’ niente da contare." />
+        <Vuoto testo="Inventario non configurato, quindi non c’e’ niente da contare." />
       </main>
     );
   }
@@ -76,7 +76,7 @@ export default async function AndamentoPage() {
     return (
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-20 pt-6 sm:px-5">
         <PageHeader title="Come sta andando" tone="terracotta" />
-        <Vuoto testo="Non riusciamo a leggere il magazzino in questo momento. I dati sono al sicuro: riprova fra poco." />
+        <Vuoto testo="Non riusciamo a leggere il magazzino. I dati sono al sicuro, riprova fra poco." />
       </main>
     );
   }
@@ -90,14 +90,14 @@ export default async function AndamentoPage() {
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-20 pt-6 sm:px-5">
       <PageHeader
         title="Come sta andando"
-        subtitle="Soldi veri: quelli usciti e quelli rientrati. Nessuna stima."
+        subtitle="Quello che e’ uscito e quello che e’ rientrato. Nessuna stima."
         tone="terracotta"
       />
 
       {months.length === 0 ? (
         <Vuoto
-          testo="Non hai ancora registrato ne’ un acquisto ne’ una vendita. Appena dichiari quanto hai
-          pagato un oggetto, questa pagina comincia a contare."
+          testo="Non hai ancora registrato ne’ un acquisto ne’ una vendita. Appena dici quanto hai
+          pagato un oggetto, qui comincia il conto."
         />
       ) : (
         <>
@@ -110,8 +110,8 @@ export default async function AndamentoPage() {
               tone={inUtile ? 'good' : 'bad'}
               hint={
                 totals.sold === 0
-                  ? 'nessuna vendita registrata: finche’ non vendi, il conto resta quello che hai speso'
-                  : `su ${totals.sold} ${totals.sold === 1 ? 'vendita' : 'vendite'}, al netto di tutto quello che hai speso`
+                  ? 'finche’ non vendi, il conto resta quello che hai speso'
+                  : `su ${totals.sold} ${totals.sold === 1 ? 'vendita' : 'vendite'}, tolto tutto quello che hai speso`
               }
             />
 
@@ -188,21 +188,18 @@ export default async function AndamentoPage() {
                   {Math.round(calibration.ratio * 100)}% della stima
                 </p>
                 <p className="mt-1 text-sm text-muted">
-                  E’ la quota a cui chiudono le tue {calibration.sales} vendite, presa in mezzo:
-                  fra il {Math.round(calibration.lowest * 100)}% e il{' '}
-                  {Math.round(calibration.highest * 100)}%.
+                  Le tue {calibration.sales} vendite chiudono fra il{' '}
+                  {Math.round(calibration.lowest * 100)}% e il{' '}
+                  {Math.round(calibration.highest * 100)}%. Questa e’ la mediana.
                 </p>
                 <p className="mt-3 border-t-2 border-line pt-3 text-sm">
-                  Da adesso ogni analisi ti mostra anche la stima riportata a questo metro. E’ il
-                  solo numero del prodotto che non descrive il mercato: descrive te.
+                  Da adesso ogni analisi ti mostra anche la stima al tuo metro.
                 </p>
               </>
             ) : (
               <p className="mt-2 text-sm text-muted">
-                Servono {calibration.needed}{' '}
-                {calibration.needed === 1 ? 'vendita' : 'vendite'} in piu’, con il prezzo incassato
-                e una stima con cui confrontarlo. Poi ogni analisi ti dira’ anche quanto vale al tuo
-                metro, non solo a quello del mercato.
+                Servono {calibration.needed} {calibration.needed === 1 ? 'vendita' : 'vendite'} in
+                piu’. Poi ogni analisi ti dice anche quanto vale al tuo metro.
               </p>
             )}
           </Card>

@@ -135,13 +135,13 @@ export default async function InventoryPage({ searchParams }: PageProps<'/invent
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-20 pt-6 sm:px-5">
       <PageHeader
         title="Inventario"
-        subtitle="Ogni oggetto che hai analizzato, con la valutazione che aveva quel giorno e com’e’ andata a finire."
+        subtitle="Tutto quello che hai analizzato, e com’e’ andata a finire."
       />
 
       {result.status === 'not_configured' ? (
         <Card className="mt-6">
           <p className="text-sm">
-            L’inventario non e’ configurato: manca la connessione a Supabase. L’analisi funziona
+            Inventario non configurato, manca la connessione a Supabase. L’analisi funziona
             comunque.
           </p>
         </Card>
@@ -151,8 +151,8 @@ export default async function InventoryPage({ searchParams }: PageProps<'/invent
         // credere a chi ha gia' salvato qualcosa di averlo perso.
         <Card className="mt-6 border-danger/40 bg-danger-soft">
           <p className="text-sm text-danger">
-            Non riusciamo a raggiungere l’inventario in questo momento. I tuoi oggetti sono al
-            sicuro: riprova fra poco.
+            Non riusciamo a raggiungere l’inventario. I tuoi oggetti sono al sicuro, riprova fra
+            poco.
           </p>
         </Card>
       ) : result.entries.length === 0 ? (
@@ -173,8 +173,8 @@ export default async function InventoryPage({ searchParams }: PageProps<'/invent
             </p>
           ) : (
             <p className="text-sm text-muted">
-              Ancora niente qui. Analizza un oggetto: si salva da solo e lo ritrovi in questa
-              pagina, con la valutazione che aveva quel giorno.
+              Ancora niente. Analizza un oggetto e lo ritrovi qui, con la stima che aveva quel
+              giorno.
             </p>
           )}
         </Card>

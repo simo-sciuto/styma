@@ -33,7 +33,7 @@ export function ArchiveToggle({ itemId, archived }: { itemId: string; archived: 
     return (
       <Card className="bg-surface-warm">
         <p className="text-sm">
-          Archiviato: non compare nella lista, ma resta nei dati e nei conteggi.
+          Archiviato. Non e’ in lista, ma resta nei conti.
         </p>
         {error ? <p className="mt-2 text-sm text-danger">{error}</p> : null}
         <TextButton className="mt-2 text-foreground" pending={pending} onClick={toggle}>

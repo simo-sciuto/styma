@@ -100,7 +100,7 @@ export function ObjectEvidence({ identification }: { identification: Identificat
             ))}
           </ul>
           <p className="mt-2 text-xs text-muted">
-            Trascritto dalle foto, non dedotto. Controlla che corrisponda a quello che hai in mano.
+            Letto sulle foto, non dedotto. Controlla che corrisponda a quello che hai in mano.
           </p>
         </div>
       ) : null}

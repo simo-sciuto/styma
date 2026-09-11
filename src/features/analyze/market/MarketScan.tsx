@@ -224,15 +224,15 @@ export function MarketScan({
       {highestBid !== null ? (
         <p className="mt-3 text-sm">
           Su {bids.length === 1 ? 'un’asta aperta' : `${bids.length} aste aperte`} qualcuno ha gia’
-          offerto fino a <strong>{formatEur(highestBid)}</strong>. Non entra nella stima, perche’
-          l’asta non e’ finita: e’ un pavimento, non un prezzo.
+          offerto fino a <strong>{formatEur(highestBid)}</strong>. L’asta non e’ finita, quindi e’
+          un pavimento e non entra nella stima.
         </p>
       ) : null}
 
       {competition ? (
         <p className="mt-3 text-sm">
-          <strong>{competition.count} inserzioni</strong> dello stesso modello aperte adesso, da{' '}
-          {formatEur(competition.low)} a {formatEur(competition.high)}: e’ la tua concorrenza.
+          La tua concorrenza: <strong>{competition.count} inserzioni</strong> dello stesso modello
+          aperte adesso, da {formatEur(competition.low)} a {formatEur(competition.high)}.
         </p>
       ) : null}
 

@@ -96,9 +96,8 @@ export function DecisionBlock({
 
       {alTuoMetro !== null && calibration?.enough ? (
         <p className="mt-2 rounded-block border-2 border-line bg-surface-warm px-3 py-2 text-sm">
-          Al tuo metro: <strong>{formatEur(alTuoMetro)}</strong>. Le tue{' '}
-          {calibration.sales} vendite chiudono al {Math.round(calibration.ratio * 100)}% della
-          stima.
+          Al tuo metro <strong>{formatEur(alTuoMetro)}</strong>: le tue {calibration.sales}{' '}
+          vendite chiudono al {Math.round(calibration.ratio * 100)}%.
         </p>
       ) : null}
 
@@ -138,7 +137,7 @@ export function DecisionBlock({
            dal nulla, la prima cifra digitata spingerebbe giu' tutto quello
            che sta sotto mentre il pollice e' ancora sulla tastiera. */
         <p className="mt-4 rounded-block border-[3px] border-dashed border-line px-5 py-5 text-sm text-muted">
-          Scrivi quanto costa e qui ti diciamo se conviene.
+          Scrivi il prezzo e ti dico se conviene.
         </p>
       )}
 
@@ -163,9 +162,8 @@ export function DecisionBlock({
       */}
       {restaInMano !== null ? (
         <p className="mt-4 border-t-2 border-line pt-4 text-sm leading-relaxed">
-          Perche’ non di piu’: dei {formatEur(breakdown.expectedSalePrice)} che incassi, tolto il
-          margine che ti tieni, restano {formatEur(restaInMano)}. Dentro ci sta quanto paghi{' '}
-          <em>e</em> quanto ci guadagni.
+          Dei {formatEur(breakdown.expectedSalePrice)} che incassi, {formatEur(restaInMano)}{' '}
+          restano a te. Dentro ci sta quanto paghi <em>e</em> quanto ci guadagni.
         </p>
       ) : null}
     </section>

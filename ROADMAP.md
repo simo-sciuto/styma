@@ -55,6 +55,7 @@ I2 ████████████████████ il tuo metro: la
 I3 ████████████████████ quello che ci hai speso sopra                 fatto
 I4 ████████████████████ l'email al terzo oggetto                      fatto
 I5 ████████████████████ l'identificazione a eventi                    fatto
+I6 ████████████████████ revisione dei testi                            fatto
 ```
 
 ---
@@ -604,6 +605,13 @@ Multi-oggetto · Scout · allerte · analytics personali · escalation a esperto
 - Corretto in AGENTS il costo per analisi: 0,042 $ con una foto e ~0,10 $ con
   otto, non 0,015 $. Era la cifra di Haiku, mai aggiornata al passaggio a
   Sonnet.
+
+### I6 — revisione dei testi (commit successivo)
+- Contati prima: ventuno «X, non Y» e sei frasi sopra i novanta caratteri.
+  Dopo: due e zero, e le due che restano sono quelle che se lo meritano.
+- Quattro regole in AGENTS perche' il tic non ricresca: una frase un punto,
+  «X, non Y» si spende una volta sola, un'etichetta non si difende da
+  obiezioni che nessuno ha fatto, e il prodotto non parla di se'.
 
 ## Decisioni aperte
 

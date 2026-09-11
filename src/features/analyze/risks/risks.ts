@@ -38,7 +38,7 @@ export function collectRisks(result: AnalysisResult): Risk[] {
       'identity-weak',
       'high',
       'Non siamo sicuri di cosa sia',
-      `Identificazione al ${Math.round(identification.confidence * 100)}%: la stima poggia su un'attribuzione che potrebbe essere sbagliata in partenza.`,
+      `Identificazione al ${Math.round(identification.confidence * 100)}%. Se sbagliamo cos’e’, sbagliamo anche quanto vale.`,
     );
   } else if (identification.confidence < 0.75) {
     add(
@@ -70,7 +70,7 @@ export function collectRisks(result: AnalysisResult): Risk[] {
       'photos-poor',
       'high',
       'Le foto non bastano',
-      'Poco leggibili: quello che non si vede non e’ stato valutato, ne’ in bene ne’ in male.',
+      'Quello che non si vede non e’ stato valutato, ne’ in bene ne’ in male.',
     );
   } else if (identification.imageQuality === 'mixed') {
     add(
@@ -88,14 +88,14 @@ export function collectRisks(result: AnalysisResult): Risk[] {
         'comparables-weak',
         'high',
         'Nessun comparabile davvero vicino',
-        'La stima esce da annunci della stessa categoria, non dello stesso oggetto: e’ un ordine di grandezza, non un prezzo.',
+        'Annunci della stessa categoria, non dello stesso oggetto. E’ un ordine di grandezza.',
       );
     } else if (valuation.comparableTier === 'similar') {
       add(
         'comparables-similar',
         'medium',
-        'Nessun annuncio dello stesso identico modello',
-        'Entrano oggetti simili della stessa marca o famiglia: somigliano, ma non e’ detto valgano uguale.',
+        'Nessun annuncio dello stesso modello',
+        'Entrano oggetti della stessa marca o famiglia. Somigliano, ma non e’ detto valgano uguale.',
       );
     }
 
@@ -104,7 +104,7 @@ export function collectRisks(result: AnalysisResult): Risk[] {
         'value-low-confidence',
         'high',
         'Stima poco affidabile',
-        'Trattala come un punto di partenza per trattare, non come un prezzo su cui contare.',
+        'E’ un punto di partenza per trattare, non un prezzo su cui contare.',
       );
     }
 
@@ -121,8 +121,8 @@ export function collectRisks(result: AnalysisResult): Risk[] {
       add(
         'prices-scattered',
         'medium',
-        'I prezzi trovati sono molto diversi fra loro',
-        'Il mercato non ha un prezzo condiviso per questo oggetto: la fascia e’ larga perche’ lo e’ la realta’.',
+        'Prezzi molto diversi fra loro',
+        'Nessun prezzo condiviso per questo oggetto. La fascia e’ larga perche’ lo e’ il mercato.',
       );
     }
 
@@ -134,7 +134,7 @@ export function collectRisks(result: AnalysisResult): Risk[] {
       'condition-poor',
       'high',
       'Stato di conservazione scarso',
-      'I comparabili in stato migliore valgono di piu’: la stima ne tiene conto, il compratore anche.',
+      'La stima ne tiene conto. Anche chi compra.',
     );
   } else if (identification.condition === 'fair') {
     add(
@@ -152,7 +152,7 @@ export function collectRisks(result: AnalysisResult): Risk[] {
       'condition-unseen',
       'medium',
       'Non tutto l’oggetto e’ stato fotografato',
-      'Non abbiamo rilevato difetti, ma non abbiamo nemmeno visto tutto: controlla di persona le parti che mancano.',
+      'Non abbiamo rilevato difetti, ma non abbiamo visto tutto. Controlla tu le parti che mancano.',
     );
   }
 

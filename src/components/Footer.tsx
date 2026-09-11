@@ -13,7 +13,7 @@ export function Footer() {
       <div className="mx-auto w-full max-w-2xl">
         <p className="font-mono text-xs uppercase tracking-[0.2em]">STYMA</p>
         <p className="mt-6 max-w-lg text-balance text-[clamp(2rem,1.6rem+2.8vw,3.75rem)] font-semibold leading-[0.95] tracking-tighter">
-          Il prossimo oggetto strano ti aspetta al prossimo banco.
+          Compra sapendo quanto vale.
         </p>
       </div>
 
@@ -24,6 +24,9 @@ export function Footer() {
           </Link>
           <Link href="/inventario" className="hover:underline">
             Inventario
+          </Link>
+          <Link href="/andamento" className="hover:underline">
+            Andamento
           </Link>
           <Link href="/account" className="hover:underline">
             Account

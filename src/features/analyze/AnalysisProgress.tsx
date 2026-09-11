@@ -155,10 +155,6 @@ export function AnalysisProgress({ passi, corsie }: { passi: Passo[]; corsie: Co
           );
         })}
       </ol>
-
-      <p className="mt-4 border-t-2 border-line pt-3 text-xs text-muted">
-        Annunci veri su cinque mercati, non stime.
-      </p>
     </Card>
   );
 }

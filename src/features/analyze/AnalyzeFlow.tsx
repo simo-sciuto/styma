@@ -377,7 +377,7 @@ export function AnalyzeFlow({
           Ci penso io
         </h1>
         <p className="mt-2 text-center text-sm text-muted">
-          Puoi mettere via il telefono: ci vuole da mezzo minuto a un paio.
+          Da mezzo minuto a un paio. Puoi mettere via il telefono.
         </p>
 
         <div className="mt-6">
@@ -437,7 +437,7 @@ export function AnalyzeFlow({
     <div className="mt-6 space-y-5">
       <PageHeader
         title="Fotografa l’oggetto"
-        subtitle="Da 4 a 8 foto danno il risultato migliore. Se l’oggetto e’ evidente, ne bastano meno."
+        subtitle="Da quattro a otto foto. Se l’oggetto e’ evidente ne bastano meno."
       />
 
       <PhotoPicker images={images} onChange={setImages} />

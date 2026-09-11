@@ -36,7 +36,7 @@ export function RiskList({ result }: { result: AnalysisResult }) {
           Cosa puo’ andare storto
         </p>
         <p className="mt-2 text-sm text-muted">
-          Niente da segnalare. Resta quello che una foto non vede: controlla di persona.
+          Niente da segnalare. Quello che una foto non vede, guardalo tu.
         </p>
       </Card>
     );

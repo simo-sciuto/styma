@@ -145,8 +145,8 @@ export function ResultView({
         <Card className="border-warn/40 bg-warn-soft">
           <p className="text-sm font-medium text-warn">Non sappiamo dirti quanto vale</p>
           <p className="mt-1 text-sm">
-            L’oggetto lo riconosciamo, il suo mercato no: non abbiamo trovato abbastanza annunci
-            comparabili per tirarci fuori un prezzo di cui fidarsi. {valuation.reason}
+            L’oggetto lo riconosciamo, il suo mercato no. Non ci sono abbastanza annunci
+            comparabili per un prezzo di cui fidarsi. {valuation.reason}
           </p>
           {/*
             Anche senza stima si mostra cio' che si e' visto: un rifiuto secco
@@ -162,8 +162,8 @@ export function ResultView({
                   : `${valuation.observed.count} annunci`}
               </strong>{' '}
               fra {formatEur(valuation.observed.lowEur)} e {formatEur(valuation.observed.highEur)}.
-              Sono prezzi richiesti, troppo pochi o troppo diversi fra loro perche’ una media
-              significhi qualcosa. Guardali tu prima di decidere: e’ piu’ di quanto avresti senza.
+              Troppo pochi o troppo diversi perche’ una media significhi qualcosa. Guardali tu
+              prima di decidere.
             </p>
           ) : null}
         </Card>
@@ -228,7 +228,7 @@ export function ResultView({
           </p>
         </div>
         <p className="mt-1 text-sm opacity-80">
-          Il retro del cartellino: da dove viene ogni numero di questa pagina.
+          Da dove viene ogni numero di questa pagina.
         </p>
 
         <div className="mt-4 space-y-2 text-foreground">
@@ -258,8 +258,7 @@ export function ResultView({
                 ))}
               </ul>
               <p className="mt-3 text-xs text-muted">
-                Non e’ quanto vale l’oggetto ne’ quanto pagarlo: e’ quanto conviene questo affare
-                rispetto a un altro, a parita’ di soldi che hai in tasca.
+                Quanto rende questo affare rispetto a un altro, a parita’ di spesa.
               </p>
             </Disclosure>
           ) : null}

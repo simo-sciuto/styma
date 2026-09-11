@@ -158,7 +158,7 @@ test('dall’analisi all’archivio, passando per la vendita', async ({ page }) 
   // — Toglierlo dalla lista non lo cancella ————————————————————————
   await page.goto(`/inventario/${itemId}`);
   await page.getByRole('button', { name: 'Toglilo dalla lista' }).click();
-  await expect(page.getByText(/Archiviato: non compare nella lista/)).toBeVisible({
+  await expect(page.getByText(/Archiviato\. Non e’ in lista/)).toBeVisible({
     timeout: 30_000,
   });
 

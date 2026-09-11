@@ -106,7 +106,7 @@ export function Authenticity({ authenticity }: { authenticity: AuthenticityData 
       ) : null}
 
       <p className="mt-4 text-xs text-muted">
-        Da una foto non si stabilisce se e’ vero. Questa e’ l’evidenza, non un verdetto.
+        Una foto non dice se e’ vero. Dice cosa si vede.
       </p>
     </Disclosure>
   );

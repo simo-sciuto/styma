@@ -198,6 +198,22 @@ sono ancora aperte.
   che fai al venditore. Stessa ragione per «attribuzione» → «quanto e' sicuro che sia questo», e per
   «annunci usati», che voleva dire «usati per la stima» e si leggeva «annunci di roba usata» — che
   qui sono tutti.
+- **Quattro regole sul testo visibile, e servono a tenere a bada un tic che ricresce da solo.**
+  Contate prima della revisione: ventuno costruzioni «X, non Y» e sei frasi sopra i novanta
+  caratteri, su un'app che si usa in piedi con una mano sola.
+  1. **Una frase, un punto.** Il due punti che introduce una giustificazione va quasi sempre
+     sostituito da un punto fermo. «Niente da segnalare. Quello che una foto non vede, guardalo tu»
+     al posto di «Niente da segnalare: resta quello che una foto non vede, controlla di persona».
+  2. **«X, non Y» si usa una volta.** E' la forma con cui questo prodotto dice la verita' scomoda —
+     «prezzi richiesti, non vendite concluse» — e proprio per questo va spesa dove conta. Ripetuta
+     dieci volte diventa un tono querulo e smette di segnalare niente.
+  3. **Un'etichetta non spiega se stessa.** «Quanto e' buona l'occasione · 92/100» si capisce;
+     «non e' quanto vale l'oggetto ne' quanto pagarlo, e' quanto conviene questo affare rispetto a
+     un altro a parita' di soldi che hai in tasca» e' una difesa preventiva contro un'obiezione che
+     nessuno ha ancora fatto.
+  4. **Il prodotto non parla di se'.** «E' il solo numero che non descrive il mercato: descrive te»
+     e' una cosa vera che sta bene in un commento nel codice e non sullo schermo di chi sta
+     trattando un prezzo. Le ragioni di una scelta si scrivono qui e in AGENTS.md, non in pagina.
 - **Due numeri che sembrano contraddirsi vanno collegati in pagina, non in un accordion.** «Vale
   30–70 €» accanto a «paga fino a 15 €» si legge come un errore, e la spiegazione — quei 70 non li
   incassi — stava chiusa. Ogni volta che la pagina mostra due cifre che un lettore ragionevole
