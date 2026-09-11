@@ -52,8 +52,26 @@ export function ObjectEvidence({ identification }: { identification: Identificat
 
   const qualityNote = IMAGE_QUALITY_NOTES[imageQuality];
 
+  /* L'anticipazione dice cosa si trova aprendo, e il marchio letto e' la
+     prova piu' forte che ci sia qui dentro: nominarla fuori e' il motivo per
+     cui qualcuno apre. */
+  const anticipazione = [
+    markings.length > 0
+      ? `${markings.length} ${markings.length === 1 ? 'marchio letto' : 'marchi letti'} sull’oggetto`
+      : null,
+    confidenceReasons.length > 0
+      ? `${confidenceReasons.length} ${confidenceReasons.length === 1 ? 'motivo' : 'motivi'}`
+      : null,
+    qualityNote ? 'foto poco leggibili' : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
   return (
-    <Disclosure summary={`Perche’ pensiamo sia questo (${Math.round(confidence * 100)}%)`}>
+    <Disclosure
+      summary={`Perche’ pensiamo sia questo · ${Math.round(confidence * 100)}%`}
+      hint={anticipazione || undefined}
+    >
       {confidenceReasons.length > 0 ? (
         <ul className="space-y-1.5 text-sm">
           {confidenceReasons.map((reason) => (

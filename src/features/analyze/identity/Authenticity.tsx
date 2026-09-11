@@ -26,9 +26,24 @@ export function Authenticity({ authenticity }: { authenticity: AuthenticityData 
   const filled = AUTHENTICITY_METER[level];
   const hasConcerns = concerns.length > 0;
 
+  /* «Cosa non torna» e' l'unica parte che puo' cambiare una decisione: se
+     c'e', va nominata fuori. Un elenco vuoto non si annuncia. */
+  const anticipazione = [
+    hasConcerns
+      ? `${concerns.length} ${concerns.length === 1 ? 'cosa non torna' : 'cose non tornano'}`
+      : null,
+    supports.length > 0
+      ? `${supports.length} ${supports.length === 1 ? 'elemento a favore' : 'elementi a favore'}`
+      : null,
+    toVerify.length > 0 ? `${toVerify.length} da guardare` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
   return (
     <Disclosure
-      summary={`Quanto e’ sicuro che sia questo: ${AUTHENTICITY_LABELS[level]}`}
+      summary={`Quanto e’ sicuro che sia questo · ${AUTHENTICITY_LABELS[level]}`}
+      hint={anticipazione || undefined}
     >
       {/* La barra a quattro tacche non si riempie mai del tutto: piena si
           leggerebbe come «certo», e la certezza qui non e' fra le risposte

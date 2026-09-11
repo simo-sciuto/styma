@@ -78,6 +78,15 @@ export const ComparableSchema = z.object({
    * invece di sommare un numero che parla di un altro destinatario.
    */
   shippingToItalyEur: z.number().nullable().optional(),
+  /**
+   * Quanto e' affidabile chi vende, secondo i suoi compratori. Presente su
+   * tutte le inserzioni eBay. Non entra in nessun calcolo e non deve: e' una
+   * cosa da guardare prima di comprare da uno sconosciuto, non un ingrediente
+   * della stima.
+   */
+  sellerRating: z.number().nullable().optional(),
+  /** Su quanti voti. Un 100% su tre voti non e' un 100% su quattromila. */
+  sellerVotes: z.number().nullable().optional(),
 });
 
 export type Comparable = z.infer<typeof ComparableSchema>;
@@ -106,8 +115,16 @@ export type MarketResearch = z.infer<typeof MarketResearchSchema>;
  * Questo e' lo schema da passare al modello. `MarketResearchSchema` resta
  * quello con cui l'applicazione legge e valida tutto il resto.
  */
+const CAMPI_DALLE_FONTI = {
+  imageUrl: true,
+  country: true,
+  shippingToItalyEur: true,
+  sellerRating: true,
+  sellerVotes: true,
+} as const;
+
 export const ModelMarketResearchSchema = MarketResearchSchema.extend({
   comparables: z
-    .array(ComparableSchema.omit({ imageUrl: true, country: true, shippingToItalyEur: true }))
+    .array(ComparableSchema.omit(CAMPI_DALLE_FONTI))
     .describe('Comparabili realmente trovati. Vuoto se non ne esistono.'),
 });

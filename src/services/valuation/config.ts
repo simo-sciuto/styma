@@ -129,8 +129,6 @@ export const valuationConfig = {
 } as const;
 
 export const flipConfig = {
-  /** Commissioni marketplace medie (Vinted/eBay/Subito): quota sul venduto. */
-  marketplaceFeeRate: 0.1,
 
   /** ROI e profitto a cui il punteggio economico satura. */
   targetRoi: 1.0,

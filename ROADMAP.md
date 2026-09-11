@@ -48,6 +48,7 @@ H2 ████████████████████ i comparabili ha
 H3 ████████████████████ le occasioni dai comparabili                 fatto
 H4 ████████████████████ otto correzioni dal vivo                      fatto
 H5 ████████████████████ il cruscotto: sto guadagnando?                fatto
+H6 ████████████████████ il conto a tre righe, il retro del cartellino  fatto
 ```
 
 ---
@@ -563,6 +564,22 @@ Multi-oggetto · Scout · allerte · analytics personali · escalation a esperto
 - Capitale fermo in un blocco a parte: non e' ne' guadagno ne' perdita, e'
   il soldo che non puoi rispendere finche' non vendi.
 - L'e2e ci passa: comprato a 25, venduto a 90, il cruscotto dice +56 €.
+
+### H6 — il conto a tre righe, e il retro del cartellino (commit successivo)
+- Fuori anche le commissioni, dopo la spedizione: il conto e' `valore atteso −
+  margine = prezzo massimo`. Cuscinetto di rischio e guadagno obiettivo sono
+  una riga sola, sommati e non cancellati, cosi' la colonna torna e una stima
+  fragile continua ad abbassare il massimo.
+- «Che fine ha fatto» al posto di «Com'e' andata», e le due risposte spiegate
+  per quello che danno a chi le da', non a noi.
+- «Se vuoi controllare» diventa un pannello a colore pieno, e ogni blocco
+  chiuso dichiara cosa contiene: «3 marchi letti», «2 cose non tornano».
+- L'attesa dell'analisi prende tutto lo schermo, con la foto dell'oggetto.
+- L'annuncio in scrittura ha lo scheletro della sua scheda: era l'ultimo punto
+  dell'app con un'animazione inventata sul posto.
+- Dalle inserzioni eBay arrivano anche paese, spedizione e voto del venditore.
+  Le occasioni si confrontano ora anche col prezzo che ti chiedono al banco, e
+  gli oggetti simili in vendita hanno un elenco a parte.
 
 ## Decisioni aperte
 

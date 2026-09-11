@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import { summarizeInventory } from './summary';
-import { flipConfig } from '@/services/valuation/config';
 import { item, valuedAt } from './testing';
 
 describe('totali del magazzino', () => {
@@ -41,7 +40,7 @@ describe('totali del magazzino', () => {
     expect(summary.withBoth).toBe(1);
 
     const atteso = Math.round(
-      100 - 10 - 100 * flipConfig.marketplaceFeeRate,
+      100 - 10,
     );
     expect(summary.potentialMarginEur).toBe(atteso);
   });
@@ -81,7 +80,7 @@ describe('quello che e’ successo davvero', () => {
     expect(summary.potentialMarginEur).toBeNull();
     expect(summary.soldWithBoth).toBe(1);
     expect(summary.realizedMarginEur).toBe(
-      Math.round(90 - 20 - 90 * flipConfig.marketplaceFeeRate),
+      90 - 20,
     );
   });
 

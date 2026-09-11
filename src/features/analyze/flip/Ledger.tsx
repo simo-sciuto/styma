@@ -33,23 +33,29 @@ export function Ledger({
   const pessimo = economics ? economicsAt(economics.purchasePrice, valuation.low) : null;
   const ottimo = economics ? economicsAt(economics.purchasePrice, valuation.high) : null;
 
+  /*
+   * Il cuscinetto di rischio e il guadagno obiettivo stavano su due righe.
+   * Erano due righe vere, e una di troppo: «margine di sicurezza» e' un
+   * concetto contabile che obbliga a fermarsi, e chi legge sta in piedi
+   * davanti a un banco. Sommati fanno una riga sola che l'aritmetica continua
+   * a far tornare fino all'ultimo centesimo, e il prezzo massimo non cambia
+   * di un euro.
+   *
+   * Sommati, non tolti: e' il cuscinetto la sola parte di questo conto che
+   * dipende da quanto siamo sicuri, ed e' cosi' che una stima fragile abbassa
+   * il prezzo massimo invece di scaricare il rischio su chi compra. Toglierlo
+   * davvero avrebbe dato lo stesso massimo a una stima solida e a una tirata
+   * fuori da tre annunci.
+   */
+  const margine = breakdown.riskBuffer + breakdown.targetProfit;
+
   return (
     <Card>
       <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">Il conto</p>
 
       <dl className="mt-3 space-y-1.5 font-mono text-sm tabular-nums">
         <Row label="Lo rivendi a" value={formatEur(breakdown.expectedSalePrice, { precise: true })} />
-        <Row label="Commissioni" value={`− ${formatEur(breakdown.fees, { precise: true })}`} muted />
-        <Row
-          label="Margine di sicurezza"
-          value={`− ${formatEur(breakdown.riskBuffer, { precise: true })}`}
-          muted
-        />
-        <Row
-          label="Il tuo guadagno"
-          value={`− ${formatEur(breakdown.targetProfit, { precise: true })}`}
-          muted
-        />
+        <Row label="Il tuo margine" value={`− ${formatEur(margine, { precise: true })}`} muted />
         <div className="flex items-baseline justify-between gap-3 border-t-2 border-line pt-2 text-lg font-semibold">
           <dt>Paga fino a</dt>
           <dd>{thresholds.buyUpTo !== null ? formatEur(thresholds.buyUpTo) : 'n.d.'}</dd>
@@ -57,8 +63,7 @@ export function Ledger({
       </dl>
 
       <p className="mt-2 text-xs text-muted">
-        Il margine di sicurezza cresce quando la stima e’ fragile: cosi’ l’incertezza la paghi in
-        trattativa, non dopo.
+        Il margine cresce quando la stima e’ fragile: l’incertezza la paghi in trattativa, non dopo.
       </p>
 
       {/*

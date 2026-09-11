@@ -1,5 +1,4 @@
 import type { ItemRow, ItemStatus, ValuationRow } from './types';
-import { flipConfig } from '@/services/valuation/config';
 
 export type InventorySummary = {
   items: number;
@@ -19,7 +18,7 @@ export type InventorySummary = {
    */
   withBoth: number;
   /**
-   * Margine atteso su quegli oggetti, al netto delle commissioni.
+   * Margine atteso su quegli oggetti: stima meno quanto hai pagato.
    * Sommare tutte le stime e sottrarre tutte le spese darebbe un numero
    * costruito su due popolazioni diverse — piu' grande, e senza senso.
    */
@@ -48,10 +47,10 @@ export type InventorySummary = {
  * I totali del magazzino, da dati gia' caricati per la lista: nessuna query
  * in piu'.
  *
- * Le commissioni escono da `flipConfig`, gli stessi numeri con cui
- * si calcola il verdetto di ogni singolo oggetto: se il margine qui uscisse
- * da un'altra aritmetica, due schermate dello stesso prodotto direbbero due
- * cose diverse sullo stesso oggetto.
+ * Il margine e' la differenza fra quello che incassi e quello che hai speso,
+ * la stessa aritmetica del verdetto di ogni singolo oggetto: se qui uscisse da
+ * un altro conto, due schermate dello stesso prodotto direbbero due cose
+ * diverse sullo stesso oggetto.
  */
 export function summarizeInventory(
   entries: { item: ItemRow; valuation: ValuationRow | null }[],
@@ -93,16 +92,14 @@ export function summarizeInventory(
     }
     if (likely !== null && paid !== null && !isSold) {
       withBoth += 1;
-      potentialMarginEur +=
-        likely - paid - likely * flipConfig.marketplaceFeeRate;
+      potentialMarginEur += likely - paid;
     }
 
     if (isSold) {
       sold += 1;
       if (item.sale_price !== null && paid !== null) {
         soldWithBoth += 1;
-        realizedMarginEur +=
-          item.sale_price - paid - item.sale_price * flipConfig.marketplaceFeeRate;
+        realizedMarginEur += item.sale_price - paid;
       }
       if (
         item.sale_price !== null &&

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { Comparable } from '@/schemas/market';
 import type { PriceThresholds, Valuation, WeightedComparable } from '@/schemas/analysis';
-import { findDeals } from './deals';
+import { findDeals, similarForSale } from './deals';
 
 function comparable(overrides: Partial<Comparable> = {}): Comparable {
   return {
@@ -53,7 +53,6 @@ const soglie: PriceThresholds = {
   maybeUpTo: 75,
   breakdown: {
     expectedSalePrice: 120,
-    fees: 15.6,
     riskBuffer: 12,
     targetProfit: 25,
   },
@@ -103,9 +102,25 @@ describe('findDeals', () => {
     expect(deals).toHaveLength(0);
   });
 
-  it('tace quando non esiste un prezzo massimo', () => {
-    const deals = findDeals(valuation([weighted(10)]), { ...soglie, buyUpTo: null });
-    expect(deals).toHaveLength(0);
+  it('tace quando non c’e’ nessun riferimento con cui confrontare', () => {
+    // Senza prezzo massimo e senza prezzo richiesto, un elenco di prezzi non
+    // confrontato con niente e' solo un altro elenco.
+    expect(findDeals(valuation([weighted(10)]), { ...soglie, buyUpTo: null })).toHaveLength(0);
+  });
+
+  it('segnala cio’ che costa meno di quanto ti stanno chiedendo, anche sopra il massimo', () => {
+    // 60 € e' sopra il massimo di 50, quindi non e' un affare da rivendita.
+    // Ma se al banco te lo chiedono 90, saperlo cambia la trattativa comunque.
+    const deals = findDeals(valuation([weighted(60)]), soglie, 90);
+    expect(deals.map((deal) => deal.priceEur)).toEqual([60]);
+
+    // Se invece te lo chiedono 55, online non conviene: 60 non e' «meno».
+    expect(findDeals(valuation([weighted(60)]), soglie, 55)).toHaveLength(0);
+  });
+
+  it('senza prezzo massimo resta il confronto col prezzo richiesto', () => {
+    const deals = findDeals(valuation([weighted(20)]), { ...soglie, buyUpTo: null }, 40);
+    expect(deals).toHaveLength(1);
   });
 
   it('tace quando non c’e’ una stima', () => {
@@ -123,5 +138,33 @@ describe('findDeals', () => {
     );
     expect(deals).toHaveLength(3);
     expect(deals.map((deal) => deal.priceEur)).toEqual([10, 15, 20]);
+  });
+});
+
+describe('oggetti simili in vendita', () => {
+  it('prende la stessa marca e la stessa famiglia, mai lo stesso modello', () => {
+    // Lo stesso modello e' un'occasione e sta nell'altro elenco. Questi
+    // servono a dare un contorno al mercato, non a suggerire un acquisto.
+    const simili = similarForSale(
+      valuation([
+        weighted(40, { matchLevel: 'exact_model' }),
+        weighted(55, { matchLevel: 'same_family' }),
+        weighted(70, { matchLevel: 'same_brand' }),
+        weighted(15, { matchLevel: 'similar_category' }),
+      ]),
+    );
+    expect(simili.map((deal) => deal.priceEur)).toEqual([55, 70]);
+  });
+
+  it('non confronta con nessuna soglia: quella soglia e’ di un altro oggetto', () => {
+    const simili = similarForSale(valuation([weighted(55, { matchLevel: 'same_family' })]));
+    expect(simili[0]?.underByEur).toBe(0);
+  });
+
+  it('lascia fuori le aste: quel prezzo non e’ comprabile', () => {
+    const simili = similarForSale(
+      valuation([weighted(55, { matchLevel: 'same_family', kind: 'bid' })]),
+    );
+    expect(simili).toHaveLength(0);
   });
 });

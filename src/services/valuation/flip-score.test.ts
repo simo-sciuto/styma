@@ -139,9 +139,9 @@ describe('prezzo massimo, riga per riga', () => {
     const thresholds = priceThresholds(available(), identification);
     const b = thresholds.breakdown;
 
-    const copertura = b.expectedSalePrice - b.fees - b.riskBuffer;
+    const copertura = b.expectedSalePrice - b.riskBuffer;
     expect(thresholds.maybeUpTo).toBe(Math.floor(copertura));
-    // venduto, meno commissioni, meno cuscinetto, meno guadagno, uguale massimo
+    // venduto, meno cuscinetto, meno guadagno, uguale prezzo massimo
     expect(thresholds.buyUpTo).toBe(Math.round(copertura - b.targetProfit));
   });
 

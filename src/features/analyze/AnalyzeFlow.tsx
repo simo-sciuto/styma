@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -263,6 +264,49 @@ export function AnalyzeFlow({ saved = null }: { saved?: SavedAnalysis | null }) 
     setStage('idle');
   }
 
+  /*
+   * L'attesa prende tutto lo schermo.
+   *
+   * Prima restava una scheda in mezzo alla pagina, con l'intestazione sopra e
+   * il resto del flusso intorno: per un minuto e mezzo in cui non c'e'
+   * assolutamente nient'altro da fare, e in cui l'unica cosa che si vuole
+   * sapere e' se sta ancora lavorando. Tutto quello che la circondava era
+   * rumore intorno all'unica cosa viva.
+   *
+   * La foto sta in cima perche' e' la conferma piu' diretta che stiamo
+   * guardando il *tuo* oggetto, e perche' riempie l'attesa con qualcosa di
+   * concreto invece che con del bianco.
+   */
+  if (busy) {
+    const copertina = images[0]?.previewUrl ?? null;
+
+    return (
+      <div className="flex min-h-[calc(100svh-8rem)] flex-col justify-center py-6">
+        {copertina ? (
+          <Image
+            src={copertina}
+            alt=""
+            width={400}
+            height={400}
+            unoptimized
+            className="mx-auto h-32 w-32 rounded-block border-[3px] border-line object-cover shadow-pop sm:h-40 sm:w-40"
+          />
+        ) : null}
+
+        <h1 className="mt-6 text-center text-[clamp(1.75rem,1.4rem+1.8vw,2.5rem)] font-semibold leading-none tracking-tighter">
+          Ci penso io
+        </h1>
+        <p className="mt-2 text-center text-sm text-muted">
+          Puoi mettere via il telefono: ci vuole da mezzo minuto a un paio.
+        </p>
+
+        <div className="mt-6">
+          <AnalysisProgress passi={passi} corsie={lanes} />
+        </div>
+      </div>
+    );
+  }
+
   if (stage === 'done' && liveResult) {
     return (
       <>
@@ -306,23 +350,11 @@ export function AnalyzeFlow({ saved = null }: { saved?: SavedAnalysis | null }) 
   return (
     <div className="mt-6 space-y-5">
       <PageHeader
-        title={busy ? 'Ci penso io' : 'Fotografa l’oggetto'}
-        subtitle={
-          busy
-            ? 'Puoi mettere via il telefono: ci vuole da mezzo minuto a un paio.'
-            : 'Da 4 a 8 foto danno il risultato migliore. Se l’oggetto e’ evidente, ne bastano meno.'
-        }
+        title="Fotografa l’oggetto"
+        subtitle="Da 4 a 8 foto danno il risultato migliore. Se l’oggetto e’ evidente, ne bastano meno."
       />
 
-      {/* Mentre l'analisi gira il selettore sparisce del tutto: le foto sono
-          gia' state scelte, e un modulo per caricarne altre in mezzo
-          all'attesa e' un invito a fare una cosa che adesso non si puo'
-          fare. Resta solo il lavoro in corso. */}
-      {busy ? (
-        <AnalysisProgress passi={passi} corsie={lanes} />
-      ) : (
-        <PhotoPicker images={images} onChange={setImages} />
-      )}
+      <PhotoPicker images={images} onChange={setImages} />
 
       {error ? (
         <Card className="border-danger/40 bg-danger-soft">
@@ -330,11 +362,9 @@ export function AnalyzeFlow({ saved = null }: { saved?: SavedAnalysis | null }) 
         </Card>
       ) : null}
 
-      {busy ? null : (
-        <Button className="w-full" disabled={images.length === 0} onClick={() => void analyze()}>
-          Analizza
-        </Button>
-      )}
+      <Button className="w-full" disabled={images.length === 0} onClick={() => void analyze()}>
+        Analizza
+      </Button>
     </div>
   );
 }

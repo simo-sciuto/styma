@@ -1,4 +1,3 @@
-import { flipConfig } from '@/services/valuation/config';
 import type { ItemRow, ValuationRow } from './types';
 
 /**
@@ -31,12 +30,6 @@ export type SoldOutcome = {
    * interamente verificabile qui — sono due cifre che hai digitato tu.
    */
   grossMargin: number | null;
-  /**
-   * Lo stesso margine meno le commissioni. Sono le medie di
-   * `flipConfig`, non le tariffe del tuo marketplace: resta una stima, e
-   * l'interfaccia deve dirlo.
-   */
-  estimatedNet: number | null;
   /** Giorni dall'acquisto alla vendita. */
   daysHeld: number | null;
   /** Giorni passati in vendita: da quando l'hai messo online. */
@@ -111,10 +104,6 @@ export function describeOutcome(
       salePrice: item.sale_price,
       marketplace: item.marketplace,
       grossMargin,
-      estimatedNet:
-        grossMargin === null
-          ? null
-          : grossMargin - item.sale_price * flipConfig.marketplaceFeeRate,
       daysHeld: daysBetween(item.purchase_date, item.sale_date),
       daysOnMarket: daysBetween(item.listed_at, item.sale_date),
       vsEstimate: compareToRange(item.sale_price, valuation),

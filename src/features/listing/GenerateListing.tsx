@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 import { Button, Card, Pill } from '@/components/ui';
+import { Skeleton, SkeletonText } from '@/components/Skeleton';
 import { formatEur } from '@/lib/format';
 import {
   LISTING_MARKETPLACES,
@@ -84,10 +85,49 @@ export function GenerateListing({ itemId }: Props) {
   }
 
   if (stage === 'loading') {
+    /*
+     * L'ultimo posto dell'app che si era inventato un'attesa tutta sua: una
+     * riga di testo che pulsava, con un'animazione scritta a mano nello
+     * `style` inline. Oltre a essere l'unica in tutto il prodotto, spariva il
+     * bottone e lasciava al suo posto tre parole, quindi la pagina saltava su
+     * di ottanta pixel nel momento in cui il dito era ancora li'.
+     *
+     * Lo scheletro ha la forma di quello che arrivera': prezzo, linguette dei
+     * marketplace, titolo, descrizione. Chi aspetta sa gia' dove guardera', e
+     * niente si sposta quando il testo arriva.
+     */
     return (
-      <p className="text-sm text-muted" style={{ animation: 'styma-pulse 1.6s ease-in-out infinite' }}>
-        Scrivo l’annuncio…
-      </p>
+      <Card className="space-y-4">
+        <p role="status" className="sr-only">
+          Scrivo l’annuncio
+        </p>
+
+        <div>
+          <Skeleton className="h-3 w-28" />
+          <Skeleton className="mt-2 h-8 w-32" />
+          <Skeleton className="mt-2 h-3 w-48" />
+        </div>
+
+        <div className="flex gap-1.5">
+          <Skeleton className="h-8 w-20 rounded-block" />
+          <Skeleton className="h-8 w-16 rounded-block" />
+          <Skeleton className="h-8 w-20 rounded-block" />
+        </div>
+
+        <div>
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="mt-2 h-4 w-11/12" />
+        </div>
+
+        <div>
+          <Skeleton className="h-3 w-24" />
+          <SkeletonText className="mt-2" lines={4} />
+        </div>
+
+        <p className="text-center text-xs text-muted">
+          Lo scrive il modello leggendo l’analisi: una decina di secondi.
+        </p>
+      </Card>
     );
   }
 
@@ -126,10 +166,10 @@ export function GenerateListing({ itemId }: Props) {
             type="button"
             onClick={() => setMarketplace(option)}
             aria-pressed={option === marketplace}
-            className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
+            className={`shrink-0 rounded-block border-2 border-line px-3.5 py-1.5 text-sm font-semibold transition ${
               option === marketplace
                 ? 'bg-tile-teal text-tile-cream'
-                : 'border-2 border-line text-muted hover:text-foreground'
+                : 'bg-surface text-muted hover:text-foreground'
             }`}
           >
             {MARKETPLACE_LABELS[option]}

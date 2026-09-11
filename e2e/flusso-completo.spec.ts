@@ -107,8 +107,8 @@ test('dall’analisi all’archivio, passando per la vendita', async ({ page }) 
   await expect(page).toHaveURL(new RegExp(`/inventario/${itemId}$`));
 
   // — L'ho comprato ————————————————————————————————————————————
-  await expect(page.getByText('Com’e’ andata')).toBeVisible();
-  await page.getByRole('button', { name: 'L’ho comprato' }).click();
+  await expect(page.getByText('Che fine ha fatto')).toBeVisible();
+  await page.getByRole('button', { name: 'Si’, l’ho comprato' }).click();
 
   await page.getByLabel('Quanto hai pagato davvero').fill('25');
   // Chiedevano 30, hai pagato 25: la trattativa si dichiara mentre scrivi.
@@ -127,9 +127,10 @@ test('dall’analisi all’archivio, passando per la vendita', async ({ page }) 
   await page.getByRole('button', { name: 'Registra' }).click();
 
   await expect(page.getByText('Venduto su Vinted')).toBeVisible({ timeout: 30_000 });
-  // Il margine lordo e' una sottrazione fra due cifre digitate qui sopra.
-  // `exact` di nuovo: la nota sotto il conto spiega cos'e' "la differenza".
-  await expect(page.getByText('Differenza', { exact: true })).toBeVisible();
+  // Il guadagno e' una sottrazione fra due cifre digitate qui sopra, e da
+  // quando commissioni e spedizione sono uscite dai conti e' l'unico margine
+  // che esiste: niente piu' "lordo" e "netto stimato" da confrontare.
+  await expect(page.getByText('Guadagno', { exact: true })).toBeVisible();
   await expect(page.getByText('+65 €', { exact: true })).toBeVisible();
   // E il confronto con la fascia: l'unico punto in cui il prodotto puo'
   // essere smentito.
@@ -143,14 +144,13 @@ test('dall’analisi all’archivio, passando per la vendita', async ({ page }) 
 
   // — E l'andamento conta gli stessi soldi, non le stime ————————————
   //
-  // Comprato a 25, venduto a 90: incassi 90, spendi 25, e il margine e' 90
-  // meno il 10% di commissioni meno i 25, cioe' 56. Se questa cifra un giorno
-  // divergesse da quella della scheda oggetto, due schermate dello stesso
-  // prodotto direbbero due cose diverse sullo stesso oggetto.
+  // Comprato a 25, venduto a 90: incassi 90, spendi 25, margine 65. Se questa
+  // cifra un giorno divergesse da quella della scheda oggetto, due schermate
+  // dello stesso prodotto direbbero due cose diverse sullo stesso oggetto.
   await page.getByRole('link', { name: /Come sta andando/ }).click();
   await expect(page).toHaveURL(/\/andamento$/);
   await expect(page.getByText('Hai guadagnato')).toBeVisible();
-  await expect(page.getByText('+56 €', { exact: true })).toBeVisible();
+  await expect(page.getByText('+65 €', { exact: true })).toBeVisible();
   await expect(page.getByText('90 €', { exact: true })).toBeVisible();
   await expect(page.getByText('25 €', { exact: true })).toBeVisible();
   await page.screenshot({ path: 'e2e/schermate/andamento.png', fullPage: true });

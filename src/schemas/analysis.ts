@@ -66,7 +66,6 @@ export type ScoreFactor = {
 export type Economics = {
   expectedSalePrice: number;
   purchasePrice: number;
-  marketplaceFees: number;
   expectedProfit: number;
   roi: number | null;
 };
@@ -85,7 +84,6 @@ export type PriceThresholds = {
   maybeUpTo: number | null;
   breakdown: {
     expectedSalePrice: number;
-    fees: number;
     riskBuffer: number;
     targetProfit: number;
   };

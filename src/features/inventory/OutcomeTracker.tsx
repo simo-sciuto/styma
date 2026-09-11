@@ -13,9 +13,11 @@ import { recordOutcome } from './actions';
  * Cosa e' successo dopo l'analisi: comprato, lasciato perdere, venduto.
  *
  * E' la sola parte del prodotto in cui i numeri arrivano dal mondo e non da
- * noi. Serve a due cose, e la seconda conta piu' della prima: dire a chi
- * usa STYMA come sta andando il suo magazzino, e dire a STYMA se le sue
- * stime reggono. Una previsione che nessuno verifica non e' mai sbagliata.
+ * noi, e serve prima di tutto a chi la compila: quello che compra finisce nel
+ * conto di quanto sta guadagnando, quello che lascia resta come una scommessa
+ * che puo' riaprire. Che di riflesso dica anche a STYMA se le sue stime
+ * reggono e' vero, ed e' esattamente il motivo che non si scrive in pagina:
+ * nessuno preme un bottone per fare un favore a un'app.
  *
  * Ogni passaggio chiede solo cio' che quel passaggio sa davvero. Le date
  * partono da oggi perche' questo si compila appena successo, ma restano
@@ -203,26 +205,54 @@ export function OutcomeTracker({ item, outcome }: { item: ItemRow; outcome: Outc
   if (outcome.kind === 'open') {
     return (
       <Card>
-        <Eyebrow>Com’e’ andata</Eyebrow>
-        <p className="mt-2 text-lg font-medium tracking-tight">
-          {item.asking_price !== null
-            ? `Te lo chiedevano ${formatEur(item.asking_price)}. L’hai preso?`
-            : 'L’hai preso?'}
-        </p>
-        {/* Registrare un "no" vale quanto registrare un "sì": e' l'unico modo
-            di sapere se un "lascia stare" era giusto. */}
-        <p className="mt-1 text-sm text-muted">
-          Vale la pena segnarlo anche se l’hai lasciato li’: e’ l’unico modo di sapere, fra un mese,
-          se questa app ci aveva visto giusto.
-        </p>
+        {/*
+          «Com'e' andata» era il titolo sbagliato nel momento sbagliato: qui
+          non e' ancora andata in nessun modo, la domanda arriva mentre hai
+          l'oggetto in mano.
+
+          E il testo sotto spiegava perche' la risposta serve *a noi* —
+          «e' l'unico modo di sapere se questa app ci aveva visto giusto» —
+          il che e' vero e non e' un motivo per cui qualcuno dovrebbe premere
+          un bottone. Le due risposte servono a chi le da': quello che compri
+          entra nel conto di quanto stai guadagnando, quello che lasci resta
+          come una scommessa da riaprire.
+        */}
+        <Eyebrow>Che fine ha fatto</Eyebrow>
+        {/* Una domanda sola, corta. «Te lo chiedevano 99 €. L'hai comprato?»
+            metteva un'informazione davanti alla domanda, e su una riga stretta
+            la domanda finiva a capo, dopo un prezzo: si leggeva il prezzo e si
+            saltava il resto. Il prezzo e' contesto, quindi sta sotto e piano. */}
+        <p className="mt-2 text-2xl font-semibold tracking-tight">L’hai comprato?</p>
+        {item.asking_price !== null ? (
+          <p className="mt-0.5 text-sm text-muted">
+            Ne chiedevano {formatEur(item.asking_price)}.
+          </p>
+        ) : null}
+
         {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
-        <div className="mt-4 grid gap-2 sm:grid-cols-2">
-          <Button pending={pending} onClick={() => open('bought')}>
-            L’ho comprato
-          </Button>
-          <Button variant="ghost" pending={pending} onClick={() => submit({ type: 'passed' })}>
-            Ho lasciato perdere
-          </Button>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div>
+            <Button className="w-full" pending={pending} onClick={() => open('bought')}>
+              Si’, l’ho comprato
+            </Button>
+            <p className="mt-1.5 text-xs text-muted">
+              Entra nel conto di quanto hai speso e quanto ti resta.
+            </p>
+          </div>
+          <div>
+            <Button
+              className="w-full"
+              variant="ghost"
+              pending={pending}
+              onClick={() => submit({ type: 'passed' })}
+            >
+              No, l’ho lasciato li’
+            </Button>
+            <p className="mt-1.5 text-xs text-muted">
+              Resta qui: se fra un mese vale il doppio, lo scopri.
+            </p>
+          </div>
         </div>
       </Card>
     );
@@ -231,11 +261,12 @@ export function OutcomeTracker({ item, outcome }: { item: ItemRow; outcome: Outc
   if (outcome.kind === 'passed') {
     return (
       <Card>
-        <Eyebrow>Com’e’ andata</Eyebrow>
-        <p className="mt-2 text-lg font-medium tracking-tight">Hai lasciato perdere.</p>
+        <Eyebrow>Che fine ha fatto</Eyebrow>
+        <p className="mt-2 text-xl font-semibold tracking-tight">L’hai lasciato li’.</p>
         {outcome.askingPrice !== null ? (
           <p className="mt-1 text-sm text-muted">
-            Ne chiedevano {formatEur(outcome.askingPrice)}.
+            Ne chiedevano {formatEur(outcome.askingPrice)}. Se un giorno scopri che valeva la pena,
+            questa riga te lo ricorda.
           </p>
         ) : null}
         {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
@@ -290,7 +321,6 @@ export function OutcomeTracker({ item, outcome }: { item: ItemRow; outcome: Outc
   }
 
   const { vsEstimate } = outcome;
-  const guadagno = outcome.estimatedNet;
 
   return (
     <Card>
@@ -306,16 +336,9 @@ export function OutcomeTracker({ item, outcome }: { item: ItemRow; outcome: Outc
         ) : null}
         {outcome.grossMargin !== null ? (
           <Figure
-            label="Differenza"
+            label="Guadagno"
             value={`${outcome.grossMargin >= 0 ? '+' : ''}${formatEur(outcome.grossMargin)}`}
             tone={outcome.grossMargin > 0 ? 'good' : 'bad'}
-          />
-        ) : null}
-        {guadagno !== null ? (
-          <Figure
-            label="Netto stimato"
-            value={`${guadagno >= 0 ? '+' : ''}${formatEur(guadagno)}`}
-            tone={guadagno > 0 ? 'good' : 'bad'}
           />
         ) : null}
         {outcome.daysOnMarket !== null ? (
@@ -341,13 +364,6 @@ export function OutcomeTracker({ item, outcome }: { item: ItemRow; outcome: Outc
         </div>
       ) : null}
 
-      {guadagno !== null ? (
-        <p className="mt-3 text-xs text-muted">
-          Il netto e’ una stima: commissioni e spedizione sono le medie usate in tutta l’app, non le
-          tariffe che hai pagato davvero. La differenza sopra, invece, sono due cifre che hai
-          scritto tu.
-        </p>
-      ) : null}
 
       {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
       <TextButton pending={pending} onClick={() => submit({ type: 'reopen' })}>

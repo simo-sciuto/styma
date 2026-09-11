@@ -159,17 +159,39 @@ export function TextButton({
  * Ha il bordo dei blocchi ma non il loro fondo: chiuso pesa meno di una
  * scheda piena, aperto ne ha lo stesso peso. E' la forma giusta per una
  * cosa la cui importanza dipende da chi legge, invece di essere decisa qui.
+ *
+ * `hint` e' l'anticipazione di cosa c'e' sotto, e non e' decorazione: quattro
+ * righe chiuse con un titolo generico ciascuna non danno a nessuno un motivo
+ * per aprirne una invece di un'altra, quindi non se ne apre nessuna. «3
+ * marchi letti sull'oggetto» e «2 cose non tornano» sono due inviti diversi,
+ * e il secondo va aperto subito.
  */
-export function Disclosure({ summary, children }: { summary: string; children: ReactNode }) {
+export function Disclosure({
+  summary,
+  hint,
+  children,
+}: {
+  summary: string;
+  hint?: string;
+  children: ReactNode;
+}) {
   return (
-    <details className="group rounded-block border-2 border-line">
-      <summary className="cursor-pointer list-none px-4 py-3.5 text-sm font-semibold marker:hidden sm:px-5">
+    <details className="group rounded-block border-2 border-line bg-surface">
+      <summary className="cursor-pointer list-none px-4 py-3 marker:hidden sm:px-5">
         <span className="flex items-center justify-between gap-3">
-          {summary}
-          <span className="text-muted transition group-open:rotate-180">⌄</span>
+          <span className="min-w-0">
+            <span className="block text-sm font-semibold">{summary}</span>
+            {hint ? <span className="mt-0.5 block text-xs text-muted">{hint}</span> : null}
+          </span>
+          <span
+            aria-hidden
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[0.4rem] border-2 border-line text-xs transition group-open:rotate-180"
+          >
+            ⌄
+          </span>
         </span>
       </summary>
-      <div className="border-t-2 border-line bg-surface px-4 py-4 text-sm sm:px-5">{children}</div>
+      <div className="border-t-2 border-line px-4 py-4 text-sm sm:px-5">{children}</div>
     </details>
   );
 }

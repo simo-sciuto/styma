@@ -7,7 +7,7 @@ function thresholds(buyUpTo: number | null, maybeUpTo: number | null): PriceThre
   return {
     buyUpTo,
     maybeUpTo,
-    breakdown: { expectedSalePrice: 65, fees: 6.5, riskBuffer: 4.5, targetProfit: 16.25 },
+    breakdown: { expectedSalePrice: 65, riskBuffer: 4.5, targetProfit: 16.25 },
   };
 }
 

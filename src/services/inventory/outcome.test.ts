@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import { daysBetween, describeOutcome } from './outcome';
 import { item, valuation } from './testing';
-import { flipConfig } from '@/services/valuation/config';
 
 const OGGI = Date.parse('2026-03-20T09:00:00Z');
 
@@ -72,10 +71,6 @@ describe('com’e’ andata', () => {
 
     if (outcome.kind !== 'sold') throw new Error('doveva essere venduto');
     expect(outcome.grossMargin).toBe(65);
-    expect(outcome.estimatedNet).toBeCloseTo(
-      65 - 90 * flipConfig.marketplaceFeeRate,
-      10,
-    );
     expect(outcome.daysHeld).toBe(30);
     expect(outcome.daysOnMarket).toBe(20);
   });
@@ -88,7 +83,6 @@ describe('com’e’ andata', () => {
     );
     if (outcome.kind !== 'sold') throw new Error('doveva essere venduto');
     expect(outcome.grossMargin).toBeNull();
-    expect(outcome.estimatedNet).toBeNull();
     expect(outcome.daysHeld).toBeNull();
   });
 

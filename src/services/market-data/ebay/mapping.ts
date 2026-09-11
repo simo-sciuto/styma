@@ -55,6 +55,13 @@ export const EbayItemSummarySchema = z.object({
   shippingOptions: z
     .array(z.object({ shippingCost: z.object({ value: z.string(), currency: z.string() }).optional() }))
     .optional(),
+  /** Presente su tutte. `feedbackPercentage` arriva come stringa, non come numero. */
+  seller: z
+    .object({
+      feedbackPercentage: z.string().optional(),
+      feedbackScore: z.number().optional(),
+    })
+    .optional(),
 });
 
 export const EbaySearchResponseSchema = z.object({
@@ -92,6 +99,13 @@ function mapCondition(item: EbayItemSummary): Condition {
     default:
       return 'unknown';
   }
+}
+
+/** Un numero che eBay manda come stringa, o null se non e' un numero. */
+function leggiNumero(value: string | undefined): number | null {
+  if (value === undefined) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function normalize(value: string): string {
@@ -485,6 +499,8 @@ export function toComparable(raw: unknown, context: ComparableContext): Comparab
     url: item.itemWebUrl,
     imageUrl: item.image?.imageUrl ?? null,
     country: item.itemLocation?.country ?? null,
+    sellerRating: leggiNumero(item.seller?.feedbackPercentage),
+    sellerVotes: item.seller?.feedbackScore ?? null,
     shippingToItalyEur:
       context.marketplace === 'EBAY_IT' &&
       spedizioneVerso !== null &&

@@ -1,5 +1,4 @@
 import type { ItemRow } from './types';
-import { flipConfig } from '@/services/valuation/config';
 
 /**
  * Il conto economico del magazzino, mese per mese.
@@ -23,16 +22,16 @@ import { flipConfig } from '@/services/valuation/config';
  * quello che quell'oggetto era costato. Un mese di soli acquisti ha margine
  * zero, non margine negativo: non hai perso niente, hai comprato.
  *
- * Le commissioni sono le stesse di `flipConfig` con cui si calcola il verdetto
- * di ogni singolo oggetto. Se il margine qui uscisse da un'altra aritmetica,
- * due schermate dello stesso prodotto direbbero due cose diverse.
+ * Il margine e' incasso meno quello che quell'oggetto era costato: la stessa
+ * aritmetica del verdetto di ogni singolo oggetto. Se qui uscisse da un altro
+ * conto, due schermate dello stesso prodotto direbbero due cose diverse.
  */
 export type MonthlyLedger = {
   /** "2026-09". Ordinabile come stringa, che e' tutto quello che serve. */
   month: string;
   spentEur: number;
   earnedEur: number;
-  /** Incassato, meno commissioni, meno quanto erano costati gli oggetti venduti. */
+  /** Incassato meno quanto erano costati gli oggetti venduti. */
   marginEur: number;
   bought: number;
   sold: number;
@@ -144,7 +143,7 @@ export function buildLedger(items: ItemRow[], now: Date = new Date()): Ledger {
       month.sold += 1;
       // Il margine sta nel mese della vendita anche quando la spesa stava in
       // un altro: e' il momento in cui si scopre se quell'acquisto era buono.
-      month.marginEur += item.sale_price - item.sale_price * flipConfig.marketplaceFeeRate - (paid ?? 0);
+      month.marginEur += item.sale_price - (paid ?? 0);
 
       if (item.purchase_date) {
         daysToSell.push(daysBetween(item.purchase_date, new Date(item.sale_date)));

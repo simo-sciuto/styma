@@ -137,12 +137,35 @@ sono ancora aperte.
   del venduto (era il 25%), la stessa riga di configurazione pretendeva un ritorno del 163% per
   dire «compralo» sotto i 50 € e del 95% sopra i 500, e i mercatini stanno tutti in fondo a quella
   scala. `dealRoi` e' sul capitale speso: la richiesta e' la stessa a ogni livello di prezzo.
-- **La spedizione non entra nei conti.** C'erano 9 € fissi di spedizione e imballo sottratti a ogni
-  stima, e su un oggetto da 15 € facevano il 60% del valore: bastavano a far sparire il prezzo
-  massimo di qualunque cosa costasse poco, cioe' quasi tutto quello che si trova a un mercatino.
-  Chi usa STYMA vende soprattutto di persona, e un costo che non paghi non puo' entrare in una
-  sottrazione ne' diventare un avviso. Restano solo le commissioni. Se un giorno serve rimetterla,
-  va rimessa come scelta di chi vende, non come costante.
+- **Spedizione e commissioni non entrano nei conti.** C'erano 9 € fissi di spedizione e il 10% di
+  commissioni marketplace sottratti a ogni stima. Su un oggetto da 15 € la sola spedizione faceva il
+  60% del valore, e insieme bastavano a far sparire il prezzo massimo di quasi tutto quello che si
+  trova a un mercatino. Chi usa STYMA vende soprattutto di persona: un costo che non paghi non puo'
+  entrare in una sottrazione ne' diventare un avviso, e sono usciti tutti e due. Il conto e' ora
+  `valore atteso − margine = prezzo massimo`, tre righe.
+  **Il rovescio, da sapere:** chi vende su Vinted o eBay lascia davvero una quota sul venduto, e per
+  lui il prezzo massimo che mostriamo e' alto di circa un decimo. Se un giorno tornano, tornano come
+  scelta di chi vende, non come costante per tutti.
+- **Un conto si semplifica sommando le righe, non cancellandole.** «Margine di sicurezza» e
+  «il tuo guadagno» erano due righe vere e una di troppo: sommate fanno «il tuo margine», e la
+  colonna torna fino all'ultimo centesimo. Cancellare il cuscinetto avrebbe dato lo stesso prezzo
+  massimo a una stima solida e a una tirata fuori da tre annunci, perche' e' la sola parte del conto
+  che dipende da quanto siamo sicuri. Ogni volta che una riga va tolta dalla vista, la domanda e' se
+  si puo' sommare a un'altra: se non si puo', il numero in fondo smette di essere verificabile.
+- **Chi compila un dato deve guadagnarci qualcosa.** «Vale la pena segnarlo anche se l'hai lasciato
+  li': e' l'unico modo di sapere se questa app ci aveva visto giusto» era vero e inutile, perche'
+  nessuno preme un bottone per fare un favore a un'app. Le stesse due risposte servono a chi le da':
+  quello che compri entra nel conto di quanto stai guadagnando, quello che lasci resta come una
+  scommessa da riaprire. Che di riflesso ci dicano se le nostre stime reggono e' un effetto
+  collaterale, e come tale non si scrive in pagina.
+- **Un blocco chiuso dichiara cosa contiene.** Quattro accordion in fila con un titolo generico
+  ciascuno non danno a nessuno un motivo per aprirne uno invece di un altro, quindi non se ne apre
+  nessuno. `Disclosure` porta un `hint`: «3 marchi letti sull'oggetto» e «2 cose non tornano» sono
+  due inviti diversi, e il secondo va aperto subito.
+- **L'attesa dell'analisi prende tutto lo schermo.** Per un minuto e mezzo non c'e' nient'altro da
+  fare e l'unica cosa che si vuole sapere e' se sta ancora lavorando: tutto quello che circondava il
+  blocco dei passi era rumore intorno all'unica cosa viva. La foto dell'oggetto sta in cima, perche'
+  e' la conferma piu' diretta che stiamo guardando il tuo.
 - **Le etichette dicono cosa fanno, e basta.** Sotto ogni sezione c'era un paragrafo che spiegava
   perche' quella sezione esiste: veri, scritti bene, e lunghi il doppio del contenuto che
   commentavano. Chi legge sta in piedi davanti a un banco. Poche parole dirette, e niente trattini

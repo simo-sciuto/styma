@@ -17,6 +17,15 @@ import {
   formatEur,
 } from '@/lib/format';
 
+/** I fattori del punteggio, contati per verso: e' l'anticipazione piu' onesta
+ *  di un elenco che altrimenti si annuncia con un numero e basta. */
+function riassuntoFattori(factors: { direction: 'positive' | 'negative' }[]): string | undefined {
+  const piu = factors.filter((factor) => factor.direction === 'positive').length;
+  const meno = factors.length - piu;
+  if (factors.length === 0) return undefined;
+  return `${piu} a favore, ${meno} contro`;
+}
+
 export function ResultView({
   result,
   coverUrl = null,
@@ -36,6 +45,12 @@ export function ResultView({
 }) {
   const { identification, market, marketSource, valuation, flip } = result;
   const decision = flip?.atPrice ?? null;
+
+  /* Quante cose ci sono da aprire: un numero in testa al pannello dice che
+     dentro c'e' qualcosa, dove un titolo da solo non lo dice. */
+  const quanteProve =
+    2 + (flip?.atPrice ? 1 : 0) + (identification.history ? 1 : 0) -
+    (identification.authenticity ? 0 : 1);
 
   /*
    * Il titolo e' marca e modello, non il nome lungo.
@@ -155,7 +170,11 @@ export function ResultView({
         risposta — non «quanto pagarlo» ma «forse non e' questo da comprare».
       */}
       {valuation.available && flip ? (
-        <Deals valuation={valuation} thresholds={flip.thresholds} />
+        <Deals
+          valuation={valuation}
+          thresholds={flip.thresholds}
+          askingPrice={decision?.purchasePrice ?? null}
+        />
       ) : null}
 
       {valuation.available && flip ? (
@@ -186,12 +205,18 @@ export function ResultView({
         Sotto un'intestazione sola e tutti chiusi occupano una schermata
         invece di cinque, e chi ha bisogno di controllare sa dove guardare.
       */}
-      <section className="border-t-2 border-line pt-5">
-        <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
-          Se vuoi controllare
+      <section className="rounded-block border-[3px] border-line bg-tile-teal p-4 text-tile-cream sm:p-5">
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em]">Se vuoi controllare</p>
+          <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] opacity-70">
+            {quanteProve} {quanteProve === 1 ? 'cosa' : 'cose'}
+          </p>
+        </div>
+        <p className="mt-1 text-sm opacity-80">
+          Il retro del cartellino: da dove viene ogni numero di questa pagina.
         </p>
 
-        <div className="mt-3 space-y-2">
+        <div className="mt-4 space-y-2 text-foreground">
           <ObjectEvidence identification={identification} />
           {/* Subito dopo le prove dell'identificazione, perche' e' la stessa
               domanda portata un passo piu' in la': non «cos'e'» ma «quanto
@@ -203,7 +228,10 @@ export function ResultView({
               occasione» — e due numeri grandi vicini si contendono lo
               sguardo senza che nessuno dica quale guardare. */}
           {flip && flip.atPrice ? (
-            <Disclosure summary={`Quanto e’ buona l’occasione: ${flip.atPrice.score}/100`}>
+            <Disclosure
+              summary={`Quanto e’ buona l’occasione · ${flip.atPrice.score}/100`}
+              hint={riassuntoFattori(flip.factors)}
+            >
               <ul className="space-y-1">
                 {flip.factors.map((factor) => (
                   <li
@@ -222,7 +250,13 @@ export function ResultView({
           ) : null}
 
           {identification.history ? (
-            <Disclosure summary="Cos’e’, in breve">
+            <Disclosure
+              summary="Cos’e’, in breve"
+              /* L'inizio della storia vera, non un'etichetta: e' il solo di
+                 questi blocchi che non si apre per verificare qualcosa, si
+                 apre per curiosita', e la curiosita' la accende il contenuto. */
+              hint={`${identification.history.slice(0, 64).trimEnd()}…`}
+            >
               <p className="leading-relaxed">{identification.history}</p>
             </Disclosure>
           ) : null}

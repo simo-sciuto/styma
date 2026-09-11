@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildLedger } from './ledger';
-import { flipConfig } from '@/services/valuation/config';
 import { item } from './testing';
 
 const ADESSO = new Date('2026-09-11T12:00:00Z');
@@ -40,7 +39,7 @@ describe('conto economico del magazzino', () => {
     expect(luglio.earnedEur).toBe(100);
   });
 
-  it('il margine sta nel mese della vendita, ed e’ al netto delle commissioni', () => {
+  it('il margine sta nel mese della vendita', () => {
     const ledger = buildLedger(
       [
         item({
@@ -55,7 +54,7 @@ describe('conto economico del magazzino', () => {
     );
 
     const luglio = ledger.months.find((m) => m.month === '2026-07')!;
-    expect(luglio.marginEur).toBe(100 - 100 * flipConfig.marketplaceFeeRate - 30);
+    expect(luglio.marginEur).toBe(100 - 30);
     // Marzo e' un mese di soli acquisti: margine zero, non margine negativo.
     // Non hai perso niente, hai comprato.
     expect(ledger.months.find((m) => m.month === '2026-03')!.marginEur).toBe(0);

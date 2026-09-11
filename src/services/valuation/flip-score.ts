@@ -19,16 +19,13 @@ const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
  * la formula la' significherebbe avere due aritmetiche che possono divergere.
  */
 export function economicsAt(purchasePrice: number, expectedSalePrice: number): Economics {
-  const marketplaceFees = expectedSalePrice * flipConfig.marketplaceFeeRate;
-  const expectedProfit = expectedSalePrice - purchasePrice - marketplaceFees;
-  const totalCost = purchasePrice + marketplaceFees;
+  const expectedProfit = expectedSalePrice - purchasePrice;
 
   return {
     expectedSalePrice,
     purchasePrice,
-    marketplaceFees: Math.round(marketplaceFees * 100) / 100,
     expectedProfit: Math.round(expectedProfit * 100) / 100,
-    roi: totalCost > 0 ? expectedProfit / totalCost : null,
+    roi: purchasePrice > 0 ? expectedProfit / purchasePrice : null,
   };
 }
 
@@ -105,7 +102,6 @@ export function riskBufferRate(
  * Il prezzo massimo di acquisto, leggibile riga per riga.
  *
  *   valore atteso di vendita
- *   − commissioni
  *   − cuscinetto di rischio
  *   = quanto ti resta in mano
  *
@@ -123,11 +119,10 @@ export function priceThresholds(
   identification: Identification,
 ): PriceThresholds {
   const expectedSalePrice = valuation.likely;
-  const fees = expectedSalePrice * flipConfig.marketplaceFeeRate;
   const riskBuffer = expectedSalePrice * riskBufferRate(valuation, identification);
 
   /** Quanto resta in mano dopo la vendita: dentro ci stanno il prezzo che paghi e il tuo guadagno. */
-  const coversCosts = expectedSalePrice - fees - riskBuffer;
+  const coversCosts = expectedSalePrice - riskBuffer;
 
   /*
    * Il guadagno si misura su quello che spendi, non sul prezzo di vendita.
@@ -152,11 +147,10 @@ export function priceThresholds(
     maybeUpTo: coversCosts >= 1 ? Math.floor(coversCosts) : null,
     breakdown: {
       expectedSalePrice: round2(expectedSalePrice),
-      fees: round2(fees),
       riskBuffer: round2(riskBuffer),
       // Quanto ti resta davvero pagando la soglia. Le righe continuano a
-      // tornare a mente: venduto, meno commissioni, meno cuscinetto, meno
-      // guadagno, uguale prezzo massimo.
+      // tornare a mente: venduto, meno cuscinetto, meno guadagno, uguale
+      // prezzo massimo.
       targetProfit: soglia === null ? round2(coversCosts) : round2(coversCosts - soglia),
     },
   };
