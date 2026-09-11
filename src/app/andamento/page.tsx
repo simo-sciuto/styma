@@ -1,0 +1,183 @@
+import Link from 'next/link';
+
+import { Card, PageHeader } from '@/components/ui';
+import { CashflowChart } from '@/features/dashboard/CashflowChart';
+import { formatEur } from '@/lib/format';
+import { buildLedger } from '@/services/inventory/ledger';
+import { listInventory } from '@/services/inventory/repository';
+
+export const metadata = { title: 'Andamento · STYMA' };
+export const dynamic = 'force-dynamic';
+
+/**
+ * Sto guadagnando?
+ *
+ * L'inventario risponde a «cosa ho», che e' una domanda diversa e piu' facile.
+ * Questa pagina risponde all'unica che decide se vale la pena continuare, e la
+ * risponde con i soldi veri: quelli che hai tirato fuori e quelli che hai
+ * incassato, non le stime. Le stime stanno nell'inventario e sono previsioni;
+ * qui non ne entra nessuna, perche' un cruscotto che mescola quello che e'
+ * successo con quello che speri e' un cruscotto che non si puo' usare per
+ * decidere niente.
+ *
+ * Nessuna query in piu': sono gli stessi oggetti che carica la lista.
+ */
+function Numero({
+  label,
+  value,
+  hint,
+  tone = 'plain',
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  tone?: 'plain' | 'good' | 'bad';
+}) {
+  const colore = tone === 'good' ? 'text-accent' : tone === 'bad' ? 'text-danger' : '';
+  return (
+    <div>
+      <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">{label}</p>
+      <p className={`mt-1 text-2xl font-semibold tracking-tight tabular-nums sm:text-3xl ${colore}`}>
+        {value}
+      </p>
+      {hint ? <p className="mt-0.5 text-[0.7rem] leading-snug text-muted">{hint}</p> : null}
+    </div>
+  );
+}
+
+function Vuoto({ testo }: { testo: string }) {
+  return (
+    <Card className="mt-6">
+      <p className="text-sm text-muted">{testo}</p>
+      <Link
+        href="/inventario"
+        className="mt-3 inline-block text-sm font-medium underline decoration-line underline-offset-4"
+      >
+        Vai all’inventario
+      </Link>
+    </Card>
+  );
+}
+
+export default async function AndamentoPage() {
+  const result = await listInventory();
+
+  if (result.status === 'not_configured') {
+    return (
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-20 pt-6 sm:px-5">
+        <PageHeader title="Come sta andando" tone="terracotta" />
+        <Vuoto testo="L’inventario non e’ configurato, quindi non c’e’ niente da contare." />
+      </main>
+    );
+  }
+
+  if (result.status === 'unreachable') {
+    return (
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-20 pt-6 sm:px-5">
+        <PageHeader title="Come sta andando" tone="terracotta" />
+        <Vuoto testo="Non riusciamo a leggere il magazzino in questo momento. I dati sono al sicuro: riprova fra poco." />
+      </main>
+    );
+  }
+
+  const ledger = buildLedger(result.entries.map((entry) => entry.item));
+  const { totals, months } = ledger;
+  const inUtile = totals.marginEur >= 0;
+
+  return (
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-20 pt-6 sm:px-5">
+      <PageHeader
+        title="Come sta andando"
+        subtitle="Soldi veri: quelli usciti e quelli rientrati. Nessuna stima."
+        tone="terracotta"
+      />
+
+      {months.length === 0 ? (
+        <Vuoto
+          testo="Non hai ancora registrato ne’ un acquisto ne’ una vendita. Appena dichiari quanto hai
+          pagato un oggetto, questa pagina comincia a contare."
+        />
+      ) : (
+        <>
+          {/* Livello 1: la risposta. Il margine e' l'unica cifra che risponde
+              alla domanda con cui uno arriva qui. */}
+          <section className="mt-6 rounded-block border-[3px] border-line bg-surface p-5 shadow-pop sm:p-6">
+            <Numero
+              label={inUtile ? 'Hai guadagnato' : 'Sei sotto di'}
+              value={`${inUtile ? '+' : ''}${formatEur(totals.marginEur)}`}
+              tone={inUtile ? 'good' : 'bad'}
+              hint={
+                totals.sold === 0
+                  ? 'nessuna vendita registrata: finche’ non vendi, il conto resta quello che hai speso'
+                  : `su ${totals.sold} ${totals.sold === 1 ? 'vendita' : 'vendite'}, al netto delle commissioni`
+              }
+            />
+
+            <div className="mt-5 grid grid-cols-2 gap-4 border-t-2 border-line pt-5">
+              <Numero
+                label="Incassato"
+                value={formatEur(totals.earnedEur)}
+                hint={`${totals.sold} ${totals.sold === 1 ? 'oggetto venduto' : 'oggetti venduti'}`}
+              />
+              <Numero
+                label="Speso"
+                value={formatEur(totals.spentEur)}
+                hint={`${totals.bought} ${totals.bought === 1 ? 'oggetto comprato' : 'oggetti comprati'}`}
+              />
+            </div>
+          </section>
+
+          <Card className="mt-4">
+            <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
+              Mese per mese
+            </p>
+            <div className="mt-3">
+              <CashflowChart months={months} />
+            </div>
+          </Card>
+
+          {/*
+            Il capitale fermo non e' ne' un guadagno ne' una perdita, e per
+            questo si legge male dentro il conto economico: e' il soldo che non
+            puoi spendere di nuovo finche' non vendi. Per chi rivende e' il
+            vincolo vero, e sta in un blocco suo.
+          */}
+          {ledger.itemsInStock > 0 ? (
+            <Card className="mt-4">
+              <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
+                Fermo in magazzino
+              </p>
+              <div className="mt-3 grid grid-cols-2 gap-4">
+                <Numero
+                  label="Capitale fermo"
+                  value={formatEur(ledger.lockedUpEur)}
+                  hint={`in ${ledger.itemsInStock} ${ledger.itemsInStock === 1 ? 'oggetto' : 'oggetti'} non ancora venduti`}
+                />
+                <Numero
+                  label="Il piu’ vecchio"
+                  value={
+                    ledger.oldestInStockDays !== null
+                      ? `${ledger.oldestInStockDays} gg`
+                      : 'n.d.'
+                  }
+                  hint={
+                    ledger.medianDaysToSell !== null
+                      ? `di solito ne bastano ${ledger.medianDaysToSell} per venderne uno`
+                      : 'nessuna vendita con cui confrontarlo'
+                  }
+                />
+              </div>
+            </Card>
+          ) : null}
+
+          <Link
+            href="/inventario"
+            className="mt-6 text-center text-sm font-medium underline decoration-line underline-offset-4"
+          >
+            Vedi gli oggetti
+          </Link>
+        </>
+      )}
+    </main>
+  );
+}

@@ -45,7 +45,9 @@ G6 ████████████████████ l'attesa diventa
 
 H1 ████████████████████ tre livelli al posto di undici blocchi pari  fatto
 H2 ████████████████████ i comparabili hanno una faccia               fatto
-H3 ░░░░░░░░░░░░░░░░░░░░ le occasioni dai comparabili                 da fare
+H3 ████████████████████ le occasioni dai comparabili                 fatto
+H4 ████████████████████ otto correzioni dal vivo                      fatto
+H5 ████████████████████ il cruscotto: sto guadagnando?                fatto
 ```
 
 ---
@@ -548,6 +550,19 @@ Multi-oggetto · Scout · allerte · analytics personali · escalation a esperto
   ritardato. L'indirizzo e' ora `/analizza?oggetto=<id>`, stessa rotta, come
   prescrive `linking-and-navigating.md`. L'e2e era rosso su `main` per questo
   motivo e adesso lo verifica esplicitamente.
+
+### H5 — il cruscotto (commit successivo)
+- `/andamento` risponde a «sto guadagnando?», che l'inventario non chiedeva:
+  quello dice cosa hai, questo dice se vale la pena continuare.
+- Solo soldi veri. Le stime restano nell'inventario: un cruscotto che mescola
+  quello che e' successo con quello che speri non si puo' usare per decidere.
+- Spese nel mese in cui hai pagato, incassi nel mese in cui hai venduto,
+  margine nel mese della vendita. `ledger.ts` e' puro, 8 test.
+- Grafico in SVG scritto a mano: incassi sopra la riga dello zero, spese sotto.
+  Nessuna libreria. L'asse dello zero si posiziona sui dati.
+- Capitale fermo in un blocco a parte: non e' ne' guadagno ne' perdita, e'
+  il soldo che non puoi rispendere finche' non vendi.
+- L'e2e ci passa: comprato a 25, venduto a 90, il cruscotto dice +56 €.
 
 ## Decisioni aperte
 

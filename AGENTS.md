@@ -27,7 +27,8 @@ sono ancora aperte.
   La ricerca di mercato gira su corsie parallele con mandati disgiunti (`config.ts`) e i
   risultati vengono ricomposti da `merge.ts`.
 - `src/services/valuation` — fascia di prezzo e flip score. Codice puro, testato.
-- `src/services/inventory` — lettura e scrittura degli oggetti salvati.
+- `src/services/inventory` — lettura e scrittura degli oggetti salvati. `ledger.ts` e' il conto
+  economico del magazzino, puro e testato, che alimenta `/andamento`.
 - `src/services/market-cache` — riuso delle ricerche di mercato per modello, con scadenza
   per ritmo di mercato. `policy.ts` e' puro e testato.
 - `src/services/market-data` — fonti strutturate: eBay Browse API per le inserzioni con prezzo,
@@ -343,6 +344,21 @@ sono ancora aperte.
   ultima nella classe. Il punto d'attesa e' rimasto acceso su ogni bottone finche' una schermata non
   l'ha mostrato — typecheck, lint e test non hanno niente da dire. Per accendere e spegnere si usa
   la visibilita' (`visible`/`invisible`), che non litiga con niente.
+- **Il cruscotto conta soldi veri, mai stime.** `/andamento` risponde a «sto guadagnando?», e per
+  farlo non puo' mescolare quello che e' successo con quello che si spera: le stime restano
+  nell'inventario e sono previsioni, qui entrano solo prezzi pagati e prezzi incassati. Le spese
+  vanno al mese in cui hai pagato e gli incassi al mese in cui hai venduto, perche' e' cosi' che si
+  muovono i soldi: attribuire tutto alla vendita farebbe sembrare senza spese proprio il mese in cui
+  hai svuotato il portafoglio. Il margine invece appartiene alla vendita, ed e' l'unico modo di
+  legarlo all'oggetto giusto. `services/inventory/ledger.ts` e' puro e testato, e usa le stesse
+  commissioni di `flipConfig`: se qui uscisse da un'altra aritmetica, due schermate dello stesso
+  prodotto direbbero due cose diverse sullo stesso oggetto.
+- **I grafici si disegnano a mano, in SVG.** Sono rettangoli su una scala lineare, e una libreria da
+  centinaia di kilobyte per disegnarli la pagherebbe chi apre la pagina da un telefono in giro. Due
+  cose che sembrano dettagli: con `vectorEffect="non-scaling-stroke"` lo spessore si legge in pixel
+  di schermo e non in unita' di viewBox (0,7 spariva), e l'asse dello zero non sta a meta' altezza
+  ma dove lo mettono i dati, altrimenti meta' riquadro resta vuoto e le etichette dei mesi finiscono
+  lontane dalle barre che nominano.
 - Interfaccia in italiano, identificatori in inglese.
 
 ## Comandi

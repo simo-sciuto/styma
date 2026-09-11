@@ -71,15 +71,29 @@ function InventorySummaryBlock({ summary }: { summary: InventorySummary }) {
           value={potentialMarginEur !== null ? formatEur(potentialMarginEur) : 'n.d.'}
           hint={
             withBoth > 0
-              ? `su ${withBoth} ${withBoth === 1 ? 'oggetto' : 'oggetti'} ancora in mano, al netto di commissioni e spedizione`
+              ? `su ${withBoth} ${withBoth === 1 ? 'oggetto' : 'oggetti'} ancora in mano, al netto delle commissioni`
               : 'serve sia il prezzo pagato sia una stima'
           }
         />
       </div>
 
+      {/*
+        Il collegamento all'andamento sta qui e non nella barra di
+        navigazione: sotto i 390px il menu ha gia' due voci di testo e
+        l'account, e una terza manderebbe il logo a capo. Chi vuole sapere se
+        sta guadagnando passa comunque da questa schermata.
+      */}
+      <Link
+        href="/andamento"
+        className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium underline decoration-line underline-offset-4"
+      >
+        Come sta andando
+        <span aria-hidden>→</span>
+      </Link>
+
       {/* La riga dei fatti, separata da quella delle previsioni: sopra c'e'
           quello che pensiamo, qui sotto quello che e' successo. Compare solo
-          quando c'e' almeno una vendita — quattro trattini non sono un
+          quando c'e' almeno una vendita: quattro trattini non sono un
           cruscotto, sono un rimprovero. */}
       {sold > 0 ? (
         <div className="mt-5 grid grid-cols-2 gap-4 border-t-2 border-line pt-5">

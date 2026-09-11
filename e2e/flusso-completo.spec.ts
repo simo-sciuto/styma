@@ -141,6 +141,20 @@ test('dall’analisi all’archivio, passando per la vendita', async ({ page }) 
   await expect(page.getByText('Stime centrate')).toBeVisible();
   await expect(page.getByText('Venduto a 90 €')).toBeVisible();
 
+  // — E l'andamento conta gli stessi soldi, non le stime ————————————
+  //
+  // Comprato a 25, venduto a 90: incassi 90, spendi 25, e il margine e' 90
+  // meno il 10% di commissioni meno i 25, cioe' 56. Se questa cifra un giorno
+  // divergesse da quella della scheda oggetto, due schermate dello stesso
+  // prodotto direbbero due cose diverse sullo stesso oggetto.
+  await page.getByRole('link', { name: /Come sta andando/ }).click();
+  await expect(page).toHaveURL(/\/andamento$/);
+  await expect(page.getByText('Hai guadagnato')).toBeVisible();
+  await expect(page.getByText('+56 €', { exact: true })).toBeVisible();
+  await expect(page.getByText('90 €', { exact: true })).toBeVisible();
+  await expect(page.getByText('25 €', { exact: true })).toBeVisible();
+  await page.screenshot({ path: 'e2e/schermate/andamento.png', fullPage: true });
+
   // — Toglierlo dalla lista non lo cancella ————————————————————————
   await page.goto(`/inventario/${itemId}`);
   await page.getByRole('button', { name: 'Toglilo dalla lista' }).click();
