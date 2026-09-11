@@ -113,18 +113,18 @@ export function ListingCard({
         </p>
       ) : null}
 
-      {/* Se abbiamo cercato anche con le parole del venditore, si dice: e'
-          l'unica parte della stima che poggia su quello che scrive lui. */}
-      {usaLeSueParole ? (
-        <p className="mt-3 border-t-2 border-line pt-3 text-xs text-muted">
-          Dalle foto non abbiamo letto un modello, quindi abbiamo cercato anche con il titolo
-          scritto dal venditore.
-        </p>
-      ) : null}
-
-      <p className="mt-3 text-xs text-muted">
-        L’identificazione esce dalle foto dell’annuncio. Quello che c’e’ scritto nel testo non entra
-        nella stima.
+      {/*
+        Una riga sola. Erano due paragrafi grigi in fondo alla scheda, cioe'
+        esattamente il commento lungo che questo prodotto ha smesso di
+        scrivere sotto ogni blocco. Quello che va detto e' una cosa: guardiamo
+        le foto, non il testo — e se abbiamo dovuto usare le sue parole per
+        cercare, si aggiunge mezza riga.
+      */}
+      <p className="mt-3 border-t-2 border-line pt-3 text-xs text-muted">
+        Guardiamo le foto, non il testo.
+        {usaLeSueParole
+          ? ' Un modello non l’abbiamo letto, quindi abbiamo cercato anche col suo titolo.'
+          : ''}
       </p>
     </Card>
   );

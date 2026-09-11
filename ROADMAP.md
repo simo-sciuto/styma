@@ -667,6 +667,21 @@ Multi-oggetto · Scout · allerte · analytics personali · escalation a esperto
   di prova separata da cio' che si vede. **Non verificata contro il modello
   vero: il credito Anthropic si e' esaurito durante il lavoro.**
 
+### I10 — il prezzo si precompila, e l'annuncio non si perde (commit successivo)
+- Il prezzo letto dall'annuncio finisce nel campo «quanto costa»: verificato su
+  eBay, 104,7 €. Resta modificabile.
+- `items.listing_url` e `listing_source`: l'indirizzo dell'annuncio sopravvive
+  al salvataggio, e ricompare nella scheda dell'oggetto e nell'analisi
+  riaperta. Prima si perdeva proprio quando cominciava a servire.
+- Copy dei passi riscritto: tre domande al posto di tre verbi.
+- Pallina che rimbalza al posto del segmento che scorre, nelle due attese
+  lunghe. La vecchia barra indeterminata esce dal CSS: non la usava piu'
+  nessuno.
+- **La prima migrazione era vuota**: la catena di comandi si e' interrotta fra
+  la creazione del file e il suo contenuto, e `db push` ha applicato zero
+  righe dichiarando successo. Controllare la colonna dopo un push, non il
+  messaggio del push.
+
 ## Decisioni aperte
 
 - **Autenticazione sulle API a pagamento.** `/api/identify` e `/api/valuate`

@@ -195,6 +195,10 @@ sono ancora aperte.
   `priceThresholds` e `recommendationAt`, le stesse funzioni che rispondono davanti al banco, e usa
   gli stessi componenti della pagina risultato: se cambia l'aritmetica, cambia anche la home. Un
   numero in vetrina che invecchia senza che nessuno lo tocchi e' il modo piu' silenzioso di mentire.
+- **I passi dell'attesa sono domande, non verbi.** «Leggo forma, materiali, marchi e punzoni» era
+  la macchina che racconta se stessa: vero, e a chi aspetta non serve. «Che oggetto e'», «A quanto
+  lo vendono», «Quanto puoi pagarlo» sono le stesse domande del resto del prodotto, e dicono cosa
+  stai per sapere invece di cosa stiamo facendo noi.
 - **Le etichette usano le parole che diresti a voce.** «Quanto te lo chiedono» era gergo da
   mercatino: limpido per chi ci sta dentro, opaco per tutti gli altri. «Quanto costa» e' la domanda
   che fai al venditore. Stessa ragione per «attribuzione» → «quanto e' sicuro che sia questo», e per
@@ -327,10 +331,24 @@ sono ancora aperte.
   corsia quando finisce davvero. Nessuna barra di avanzamento che si muove da sola: dove non
   sappiamo quanto manca, la barra e' indeterminata e va avanti e indietro, che e' piu' onesto di una
   che si ferma al novanta per cento.
+- **Il prezzo dell'annuncio riempie il campo da solo.** E' esattamente la cifra che il verdetto
+  deve giudicare: leggerla al posto di chi guarda e poi chiedergli di ricopiarla e' un modulo che
+  domanda un dato che ha gia'. Resta modificabile, perche' anche su Vinted si tratta. E
+  `ricomincia()` azzera il prezzo: senza, il primo verdetto del secondo oggetto uscirebbe da una
+  cifra che non e' la sua.
+- **L'indirizzo dell'annuncio sopravvive al salvataggio.** `ListingCard` mette a confronto quello
+  che dice chi vende e quello che vediamo noi, e quel confronto serve al momento della decisione:
+  vive nello stato del browser e finisce li'. Quello che serve dopo e' una cosa sola, «com'e' che ci
+  torno», e prima di `items.listing_url` non aveva risposta. Due colonne e non di piu': titolo,
+  marca e categoria dichiarati contano mentre decidi, l'indirizzo conta per sempre.
 - **L'attesa ha una lingua sola**, non una per punto: scheletro a forma del contenuto per le pagine
   (`components/Skeleton.tsx` + `loading.tsx`), punto che pulsa per le attese brevi (`pending` su
-  `Button` e `TextButton`), blocco a passi per l'analisi (`AnalysisProgress`). I passi si accendono
-  sugli eventi veri dello stream, non su un timer: se la pipeline cambia vanno cambiati con lei.
+  `Button` e `TextButton`), blocco a passi per l'analisi (`AnalysisProgress`), e una pallina che rimbalza da un capo
+  all'altro per le attese lunghe. Il rimbalzo e' sostituzione, non aggiunta: c'era un segmento che
+  scorreva, e due indicatori sullo stesso passo sono rumore. Si legge anche con la coda
+  dell'occhio, che durante un minuto di attesa e' come la si guarda davvero — il telefono e' in
+  mano ma lo sguardo e' sull'oggetto. I passi si accendono sugli eventi veri dello stream, non su
+  un timer: se la pipeline cambia vanno cambiati con lei.
   Ogni indicatore parte con 120 ms di ritardo — un'azione che dura un battito non deve produrre un
   lampo — e occupa spazio anche da spento, perche' un puntino che appare non deve spostare
   l'etichetta sotto il dito.

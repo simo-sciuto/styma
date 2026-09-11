@@ -12,9 +12,9 @@ import { Card } from '@/components/ui';
  * I tre passi sono quelli veri, e ognuno si accende quando comincia davvero e
  * si spunta quando finisce davvero — sono legati agli eventi che arrivano
  * dallo stream, non a un timer. Il passo in corso porta una barra
- * indeterminata, che va avanti e indietro apposta: non sappiamo quanto manca,
- * e una barra che si riempie fino al novanta per cento e li' si ferma sarebbe
- * la solita bugia comoda.
+ * una pallina che rimbalza da un capo all'altro: non sappiamo quanto manca, e
+ * una barra che si riempie fino al novanta per cento e li' si ferma sarebbe la
+ * solita bugia comoda.
  *
  * Ogni passo, appena chiude, lascia dietro il suo risultato: il nome
  * dell'oggetto riconosciuto, quante inserzioni ha dato eBay. Chi aspetta vede
@@ -115,9 +115,12 @@ export function AnalysisProgress({ passi, corsie }: { passi: Passo[]; corsie: Co
                 {attivo ? (
                   <>
                     <p className="mt-0.5 text-sm text-muted">{passo.durante}</p>
+                    {/* La pallina al posto del segmento: si legge anche con
+                        la coda dell'occhio, che durante un'attesa di un minuto
+                        e' come la si guarda davvero. */}
                     <span
                       aria-hidden
-                      className="indeterminate mt-2 block h-1 w-full rounded-full bg-line text-tile-teal"
+                      className="rimbalzo mt-2.5 block h-4 w-full rounded-full border-2 border-line bg-background text-tile-teal"
                     />
                   </>
                 ) : null}

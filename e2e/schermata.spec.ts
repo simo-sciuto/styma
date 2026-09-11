@@ -32,7 +32,7 @@ test('@istantanea l’attesa dell’analisi', async ({ page }) => {
   await page.getByText('Ci sto lavorando').waitFor({ timeout: 30_000 });
   await page.screenshot({ path: 'e2e/schermate/attesa-1.png' });
   // A oggetto riconosciuto: primo passo spuntato, secondo in corso.
-  await page.getByText('Cerco sul mercato').waitFor();
+  await page.getByText('A quanto lo vendono').waitFor();
   await page.waitForTimeout(2_500);
   await page.screenshot({ path: 'e2e/schermate/attesa-2.png' });
 });

@@ -38,6 +38,9 @@ async function leggiSalvata(id: string): Promise<SavedAnalysis | null> {
     snapshot,
     coverUrl: imageUrls[0] ?? null,
     askingPrice: item.asking_price,
+    listing: item.listing_url
+      ? { url: item.listing_url, source: item.listing_source ?? 'vinted' }
+      : null,
   };
 }
 

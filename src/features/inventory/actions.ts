@@ -26,6 +26,8 @@ export type SaveResult = { ok: true; itemId: string } | { ok: false; error: stri
 export async function saveAnalysis(
   result: AnalysisResult,
   askingPrice: number | null,
+  /** L'annuncio da cui e' nata, quando non e' nata da una fotografia. */
+  listing: { url: string; source: 'vinted' | 'ebay' } | null = null,
 ): Promise<SaveResult> {
   const supabase = await getServerSupabase();
   if (!supabase) return { ok: false, error: 'Persistenza non configurata.' };
@@ -61,6 +63,8 @@ export async function saveAnalysis(
       // silenziosa da ipotesi a fatto.
       authenticity: identification.authenticity,
       asking_price: askingPrice,
+      listing_url: listing?.url ?? null,
+      listing_source: listing?.source ?? null,
       status: 'found',
     })
     .select('id')

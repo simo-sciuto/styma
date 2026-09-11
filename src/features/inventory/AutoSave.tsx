@@ -28,6 +28,7 @@ export function AutoSave({
   result,
   images,
   listingImages = [],
+  listing = null,
   onSaved,
 }: {
   result: AnalysisResult;
@@ -39,6 +40,8 @@ export function AutoSave({
    * viene venduto.
    */
   listingImages?: string[];
+  /** L'indirizzo di quell'annuncio, per poterci tornare fra un mese. */
+  listing?: { url: string; source: 'vinted' | 'ebay' } | null;
   /** Chiamato con l'id appena l'oggetto esiste: e' li' che nasce l'indirizzo. */
   onSaved: (itemId: string) => void;
 }) {
@@ -51,6 +54,7 @@ export function AutoSave({
   const primoRisultato = useRef(result);
   const immagini = useRef(images);
   const dallAnnuncio = useRef(listingImages);
+  const annuncio = useRef(listing);
   const segnala = useRef(onSaved);
   useEffect(() => {
     segnala.current = onSaved;
@@ -66,7 +70,7 @@ export function AutoSave({
 
         // Il prezzo del banco non si conosce ancora: si scrive dopo, e viene
         // aggiornato mentre lo digiti.
-        const saved = await saveAnalysis(primoRisultato.current, null);
+        const saved = await saveAnalysis(primoRisultato.current, null, annuncio.current);
         if (!saved.ok) throw new Error(saved.error);
 
         setState('saved');

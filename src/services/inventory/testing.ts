@@ -27,6 +27,8 @@ export function item(overrides: Partial<ItemRow> = {}): ItemRow {
     authenticity: null,
     archived_at: null,
     asking_price: null,
+    listing_url: null,
+    listing_source: null,
     purchase_price: null,
     extra_costs: null,
     extra_costs_note: null,

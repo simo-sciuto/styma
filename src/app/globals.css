@@ -295,10 +295,6 @@ body {
     animation: styma-sweep 1.6s var(--ease-smooth) infinite;
   }
 
-  .indeterminate::after {
-    animation: styma-slide 1.4s var(--ease-smooth) infinite;
-  }
-
   /* Il punto delle attese brevi: compare solo se l'attesa dura davvero,
      cosi' un salvataggio da 80 ms non produce un lampo. */
   .pending-dot {
@@ -315,27 +311,51 @@ body {
 }
 
 /*
- * La barra indeterminata: un segmento che attraversa la traccia. Non e' una
- * percentuale e non deve sembrarlo — quando sappiamo davvero a che punto
- * siamo (le corsie di ricerca) usiamo un segno che si spunta, non questa.
+ * La pallina che rimbalza da un capo all'altro.
+ *
+ * Stessa promessa della barra indeterminata e nessuna in piu': va avanti e
+ * indietro perche' non sappiamo quanto manca, e dirlo cosi' e' piu' onesto di
+ * qualcosa che si riempie. Rispetto al segmento che scorre, il rimbalzo si
+ * legge anche con la coda dell'occhio, che e' la condizione vera durante
+ * un'attesa di un minuto: il telefono e' in mano ma lo sguardo e' sull'oggetto.
+ *
+ * `alternate` fa il ritorno senza scriverne i fotogrammi, e la curva rallenta
+ * alle due estremita': e' quello che rende il movimento un rimbalzo invece di
+ * un avanti-indietro meccanico.
  */
-.indeterminate {
+.rimbalzo {
   position: relative;
   overflow: hidden;
 }
-.indeterminate::after {
+.rimbalzo::after {
   content: '';
   position: absolute;
-  inset-block: 0;
-  inline-size: 45%;
-  border-radius: inherit;
+  top: 50%;
+  left: 0;
+  width: 0.85rem;
+  height: 0.85rem;
+  margin-top: -0.425rem;
+  border-radius: 999px;
+  border: 2px solid var(--border);
   background-color: currentColor;
-  transform: translateX(-100%);
 }
 
-@keyframes styma-slide {
+@media (prefers-reduced-motion: no-preference) {
+  .rimbalzo::after {
+    animation: styma-rimbalzo 1.15s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+  }
+}
+
+@keyframes styma-rimbalzo {
   to {
-    transform: translateX(222%);
+    left: calc(100% - 0.85rem);
+  }
+}
+
+/* Chi ha chiesto meno movimento vede la pallina ferma in mezzo. */
+@media (prefers-reduced-motion: reduce) {
+  .rimbalzo::after {
+    left: calc(50% - 0.425rem);
   }
 }
 
@@ -345,11 +365,3 @@ body {
   }
 }
 
-/* Chi ha chiesto meno movimento vede lo stesso stato, fermo. */
-@media (prefers-reduced-motion: reduce) {
-  .indeterminate::after {
-    inline-size: 100%;
-    transform: none;
-    opacity: 0.35;
-  }
-}

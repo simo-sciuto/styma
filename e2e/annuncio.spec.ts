@@ -44,6 +44,18 @@ test('@annuncio dal link di Vinted al verdetto', async ({ page }) => {
   ).toBeVisible({ timeout: 150_000 });
 
   /*
+   * E quando il prezzo c'e', finisce nel campo da solo.
+   *
+   * E' la cifra che il verdetto deve giudicare: chiederla a mano dopo averla
+   * appena letta al posto di chi guarda sarebbe un modulo che fa ricopiare un
+   * dato che ha gia'. Resta modificabile, perche' su Vinted si tratta come al
+   * banco.
+   */
+  const prezzo = await page.getByLabel('Prezzo richiesto dal venditore').inputValue();
+  const dichiarato = await page.getByText('75 €').first().count();
+  if (dichiarato > 0) expect(prezzo).toBe('75');
+
+  /*
    * E la stima gira come per una foto scattata al banco. Le risposte valide
    * sono due, e la seconda non e' un fallimento: su un oggetto di cui non
    * leggiamo il modello, «non lo sappiamo» e' la risposta giusta, ed e' la
@@ -80,6 +92,18 @@ test('@annuncio dal link di Vinted al verdetto', async ({ page }) => {
    * visibile lo stesso, e la prima versione di questo test passava mostrando
    * un rettangolo grigio. La domanda e' se il pixel c'e'.
    */
+  /*
+   * E l'indirizzo dell'annuncio sopravvive al salvataggio.
+   *
+   * Prima no: la scheda del confronto vive nello stato del browser, e riaperto
+   * l'oggetto non restava niente. Ma «quella borsa e' ancora in vendita? a
+   * quanto sta adesso?» e' proprio la domanda di chi riapre fra un mese.
+   */
+  await expect(page.getByRole('link', { name: /Riaprilo su Vinted/ })).toHaveAttribute(
+    'href',
+    new RegExp('vinted\\.it/items/9961066353'),
+  );
+
   await page.goto('/inventario');
   await expect
     .poll(

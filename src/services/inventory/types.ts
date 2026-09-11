@@ -38,6 +38,13 @@ export type ItemRow = {
   authenticity: Authenticity | null;
   /** Quanto chiedeva chi vendeva. Non e' quanto hai pagato: vedi `purchase_price`. */
   asking_price: number | null;
+  /**
+   * L'annuncio da cui e' nata l'analisi, se non e' nata da una fotografia.
+   * Senza, un oggetto trovato online perdeva la strada per tornarci proprio
+   * quando quella strada comincia a servire.
+   */
+  listing_url: string | null;
+  listing_source: 'vinted' | 'ebay' | null;
   purchase_price: number | null;
   /**
    * Quello che l'oggetto ti e' costato oltre il prezzo di acquisto: pulizia,

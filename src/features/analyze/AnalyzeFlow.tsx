@@ -22,6 +22,7 @@ import type { SharedListing } from '@/services/listings/types';
 import type { Calibration } from '@/services/inventory/calibration';
 import { AnalysisProgress, type Passo } from './AnalysisProgress';
 import { ListingCard } from './ListingCard';
+import { ListingLink } from './ListingLink';
 import { PhotoGuidance, PhotoPicker } from './PhotoPicker';
 import { StartBar } from './StartBar';
 import { ResultView } from './ResultView';
@@ -38,6 +39,8 @@ export type SavedAnalysis = {
   snapshot: AnalysisSnapshot;
   coverUrl: string | null;
   askingPrice: number | null;
+  /** L'annuncio da cui era nata, se non era nata da una fotografia. */
+  listing: { url: string; source: 'vinted' | 'ebay' } | null;
 };
 
 /**
@@ -209,19 +212,23 @@ export function AnalyzeFlow({
     [partial.brand, partial.model].filter(Boolean).join(' ') || partial.name || partial.objectType;
   const passi: Passo[] = [
     {
-      titolo: 'Riconosco l’oggetto',
       /*
-       * Mentre il modello scrive, il passo dice gia' cosa ha in mano invece
-       * di raccontare cosa sta facendo: «Olivetti Valentine» comparso al
-       * terzo secondo vale piu' di venti secondi di «leggo i marchi».
+       * Tre domande, non tre verbi. «Leggo forma, materiali, marchi e
+       * punzoni» era la macchina che racconta se stessa: giusto, e a chi
+       * aspetta non serve. Le domande sono le stesse del resto del prodotto —
+       * «quanto vale», «quanto costa» — e dicono cosa stai per sapere invece
+       * di cosa stiamo facendo noi.
        */
-      durante: nomeParziale ?? 'Leggo forma, materiali, marchi e punzoni.',
+      titolo: 'Che oggetto e’',
+      // Appena il modello scrive il nome, il passo lo dice: «Guess» al terzo
+      // secondo vale piu' di venti secondi di sottotitolo.
+      durante: nomeParziale ?? 'Guardo le foto.',
       esito: identification ? identification.name : null,
       stato: identification ? 'fatto' : 'corso',
     },
     {
-      titolo: 'Cerco sul mercato',
-      durante: 'Annunci dello stesso modello su cinque mercati eBay.',
+      titolo: 'A quanto lo vendono',
+      durante: 'Annunci veri, su cinque mercati.',
       esito: reusedResearch
         ? `Ricerca gia' fatta ${reusedResearch.ageDays === 0 ? 'oggi' : `${reusedResearch.ageDays} giorni fa`}: riuso ${reusedResearch.comparables} comparabili.`
         : structuredSource
@@ -232,8 +239,8 @@ export function AnalyzeFlow({
       stato: mercatoRisposto ? 'fatto' : identification ? 'corso' : 'attesa',
     },
     {
-      titolo: 'Faccio i conti',
-      durante: 'Peso i comparabili, tolgo quelli fuori scala, calcolo la fascia.',
+      titolo: 'Quanto puoi pagarlo',
+      durante: 'Peso gli annunci e scarto quelli fuori scala.',
       esito: null,
       stato: mercatoRisposto ? 'corso' : 'attesa',
     },
@@ -246,6 +253,9 @@ export function AnalyzeFlow({
     setIdentification(null);
     setPartial(NOTHING_YET);
     setListing(null);
+    // Il prezzo appartiene all'oggetto di prima: senza azzerarlo, il primo
+    // verdetto del secondo oggetto uscirebbe da una cifra che non e' la sua.
+    setPurchasePrice('');
     setSightings({ chiave: '', trovati: [] });
     setLanes([]);
     setReusedResearch(null);
@@ -274,6 +284,15 @@ export function AnalyzeFlow({
     for await (const event of readAnalysisEvents<ListingEvent>(response.body)) {
       if (event.type === 'listing') {
         setListing(event.listing);
+        /*
+         * Il prezzo dell'annuncio e' esattamente la cifra che il verdetto deve
+         * giudicare, e chiederla a mano dopo averla appena letta al posto suo
+         * e' un modulo che fa ricopiare un dato che ha gia'. Resta
+         * modificabile: su Vinted si tratta come al banco.
+         */
+        if (event.listing.priceEur !== null) {
+          setPurchasePrice(String(event.listing.priceEur));
+        }
       } else if (event.type === 'photos') {
         // Nessuno stato: il numero di foto scaricate si vede gia' dal passo.
       } else if (event.type === 'partial') {
@@ -463,7 +482,14 @@ export function AnalyzeFlow({
           sightings={precedenti}
           calibration={calibration}
           listingSlot={
-            listing ? <ListingCard listing={listing} identification={identification!} /> : null
+            listing ? (
+              <ListingCard listing={listing} identification={identification!} />
+            ) : (
+              /* Riaperta domani, la scheda del confronto non c'e' piu' — di
+                 quell'annuncio teniamo l'indirizzo, non il titolo dichiarato.
+                 Ma la strada per tornarci si', ed e' quella che serve dopo. */
+              <ListingLink listing={saved?.listing ?? null} />
+            )
           }
           saveSlot={
             giaSalvata ? null : (
@@ -471,6 +497,7 @@ export function AnalyzeFlow({
                 result={liveResult}
                 images={images}
                 listingImages={listing?.imageUrls ?? []}
+                listing={listing ? { url: listing.url, source: listing.source } : null}
                 onSaved={setItemId}
               />
             )
