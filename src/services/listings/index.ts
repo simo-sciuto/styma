@@ -3,7 +3,7 @@ import 'server-only';
 import type { ImageInput } from '@/services/ai';
 import { fetchEbayListing } from './ebay';
 import { parseListingUrl } from './parse';
-import { ListingError, type SharedListing } from './types';
+import { ListingError, MAX_LISTING_IMAGES, type SharedListing } from './types';
 import { fetchVintedListing } from './vinted';
 
 export { parseListingUrl, sellerQuery, SOURCE_LABELS, type ListingSource } from './parse';
@@ -45,9 +45,9 @@ const TIPI_AMMESSI = ['image/jpeg', 'image/png', 'image/webp'] as const;
  * dichiara da sola; un errore duro qui sarebbe invece un link che non
  * funziona senza spiegare perche'.
  */
-export async function downloadListingImages(listing: SharedListing): Promise<ImageInput[]> {
+export async function downloadListingImages(urls: string[]): Promise<ImageInput[]> {
   const scaricate = await Promise.all(
-    listing.imageUrls.map(async (src): Promise<ImageInput | null> => {
+    urls.slice(0, MAX_LISTING_IMAGES).map(async (src): Promise<ImageInput | null> => {
       try {
         const response = await fetch(src, { signal: AbortSignal.timeout(10_000) });
         if (!response.ok) return null;

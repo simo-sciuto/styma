@@ -27,8 +27,21 @@ test('@annuncio dal link di Vinted al verdetto', async ({ page }) => {
   await expect(page.getByText('Cosa dice l’annuncio')).toBeVisible({ timeout: 150_000 });
   await expect(page.getByText(/The North Face/).first()).toBeVisible();
 
-  // Il prezzo dell'annuncio e' quello che il verdetto deve giudicare.
-  await expect(page.getByText('75 €').first()).toBeVisible();
+  /*
+   * Il prezzo puo' esserci o no, e non dipende da noi.
+   *
+   * Vinted serve la stessa pagina in due versioni: una col JSON-LD, che porta
+   * prezzo, marca e categoria, e una senza, che porta solo titolo e foto.
+   * Misurato sullo stesso annuncio a un'ora di distanza. Quando manca, il
+   * prezzo lo scrive chi guarda — e il campo vuoto e' la risposta giusta, non
+   * un guasto.
+   */
+  await expect(
+    page
+      .getByText('75 €')
+      .first()
+      .or(page.getByText('Scrivi il prezzo e ti dico se conviene')),
+  ).toBeVisible({ timeout: 150_000 });
 
   /*
    * E la stima gira come per una foto scattata al banco. Le risposte valide
@@ -42,4 +55,55 @@ test('@annuncio dal link di Vinted al verdetto', async ({ page }) => {
   ).toBeVisible({ timeout: 150_000 });
 
   await page.screenshot({ path: 'e2e/schermate/annuncio.png', fullPage: true });
+
+  /*
+   * E le foto devono finire nel magazzino, non restare su Vinted.
+   *
+   * Un'analisi nata da un link non passa da nessun file scelto a mano: senza
+   * l'importazione, l'oggetto salvato resterebbe senza copertina in lista e
+   * senza immagine nella scheda. Il difetto non si vede sul risultato appena
+   * fatto — li' le foto dell'annuncio si vedono dal vivo — si vedrebbe
+   * domani, con l'inventario pieno di rettangoli grigi.
+   */
+  await expect(page.getByText(/Salvato in inventario/)).toBeVisible({ timeout: 60_000 });
+  await expect(page).toHaveURL(/\/analizza\?oggetto=[0-9a-f-]{36}/, { timeout: 30_000 });
+  const itemId = new URL(page.url()).searchParams.get('oggetto')!;
+
+  // L'importazione gira dopo il salvataggio: si aspetta il fatto.
+  await expect(async () => {
+    await page.goto(`/inventario/${itemId}`);
+    await expect(page.locator('main img').first()).toBeVisible({ timeout: 5_000 });
+  }).toPass({ timeout: 60_000 });
+
+  /*
+   * `naturalWidth`, non `toBeVisible`: un `<img>` con la sorgente rotta e'
+   * visibile lo stesso, e la prima versione di questo test passava mostrando
+   * un rettangolo grigio. La domanda e' se il pixel c'e'.
+   */
+  await page.goto('/inventario');
+  await expect
+    .poll(
+      () =>
+        page
+          .locator('main img')
+          .first()
+          .evaluate((img: HTMLImageElement) => img.naturalWidth)
+          .catch(() => 0),
+      { timeout: 20_000 },
+    )
+    .toBeGreaterThan(0);
+  await page.screenshot({ path: 'e2e/schermate/annuncio-inventario.png', fullPage: true });
+
+  // Pulizia: l'oggetto creato qui non deve restare in magazzino.
+  const env = Object.fromEntries(
+    (await import('node:fs')).readFileSync('.env.local', 'utf8')
+      .split('\n')
+      .filter((l) => l.includes('=') && !l.startsWith('#'))
+      .map((l) => [l.slice(0, l.indexOf('=')).trim(), l.slice(l.indexOf('=') + 1).trim()]),
+  );
+  const risposta = await fetch(`${env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/items?id=eq.${itemId}`, {
+    method: 'DELETE',
+    headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY!, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}` },
+  });
+  console.log(`[e2e] oggetto ${itemId} cancellato: ${risposta.status}`);
 });

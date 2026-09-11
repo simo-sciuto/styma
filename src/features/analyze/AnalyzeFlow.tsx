@@ -450,7 +450,7 @@ export function AnalyzeFlow({
       <>
         <ResultView
           result={liveResult}
-          coverUrl={images[0]?.previewUrl ?? saved?.coverUrl ?? null}
+          coverUrl={images[0]?.previewUrl ?? listing?.imageUrls[0] ?? saved?.coverUrl ?? null}
           purchasePrice={purchasePrice}
           onPurchasePriceChange={setPurchasePrice}
           sightings={precedenti}
@@ -460,7 +460,12 @@ export function AnalyzeFlow({
           }
           saveSlot={
             giaSalvata ? null : (
-              <AutoSave result={liveResult} images={images} onSaved={setItemId} />
+              <AutoSave
+                result={liveResult}
+                images={images}
+                listingImages={listing?.imageUrls ?? []}
+                onSaved={setItemId}
+              />
             )
           }
         />

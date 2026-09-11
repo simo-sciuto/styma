@@ -47,8 +47,26 @@ export function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-3 z-40 hidden px-4 sm:block sm:px-5">
-      <nav className="mx-auto flex w-full max-w-2xl items-center justify-between gap-1 rounded-block border-2 border-line bg-surface/95 px-1.5 py-1.5 shadow-pop-sm backdrop-blur sm:px-2 sm:py-2">
+    <header className="sticky top-0 z-40 px-4 pt-3 sm:top-3 sm:px-5 sm:pt-0">
+      {/*
+        Sul telefono resta solo il marchio, e serve a una cosa che la barra in
+        basso non fa: riportare alla home. Spostando la navigazione in fondo
+        l'avevo tolta del tutto, e una volta dentro l'app non c'era piu' modo
+        di uscirne. Una riga alta quaranta pixel e' il prezzo giusto per non
+        avere un vicolo cieco.
+      */}
+      <Link
+        href="/"
+        className="mx-auto flex w-full max-w-2xl items-center gap-2 rounded-block border-2 border-line bg-surface/95 px-3 py-2 font-mono text-[11px] uppercase tracking-[0.16em] shadow-pop-sm backdrop-blur sm:hidden"
+      >
+        <span className="h-2.5 w-2.5 rounded-[0.2rem] border-2 border-line bg-tile-teal" aria-hidden />
+        STYMA
+        <span aria-hidden className="ml-auto text-muted">
+          home
+        </span>
+      </Link>
+
+      <nav className="mx-auto hidden w-full max-w-2xl items-center justify-between gap-1 rounded-block border-2 border-line bg-surface/95 px-1.5 py-1.5 shadow-pop-sm backdrop-blur sm:flex sm:px-2 sm:py-2">
         <Link
           href="/"
           className="flex shrink-0 items-center gap-1.5 rounded-[0.5rem] px-2 py-2 font-mono text-[11px] uppercase tracking-[0.16em] text-foreground sm:gap-2 sm:px-3 sm:text-xs sm:tracking-[0.2em]"

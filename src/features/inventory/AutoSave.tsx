@@ -8,7 +8,7 @@ import { ensureSession, getBrowserSupabase } from '@/lib/supabase/client';
 import { isPersistenceEnabled } from '@/lib/supabase/env';
 import type { AnalysisResult } from '@/schemas/analysis';
 import { IMAGE_BUCKET } from '@/services/inventory/types';
-import { registerImages, saveAnalysis } from './actions';
+import { importListingImages, registerImages, saveAnalysis } from './actions';
 
 /**
  * Ogni analisi si salva da sola, appena finisce.
@@ -27,10 +27,18 @@ import { registerImages, saveAnalysis } from './actions';
 export function AutoSave({
   result,
   images,
+  listingImages = [],
   onSaved,
 }: {
   result: AnalysisResult;
   images: PreparedImage[];
+  /**
+   * Le foto dell'annuncio, quando si e' partiti da un link e non da file
+   * scelti a mano. Le scarica e le archivia il server: un inventario che
+   * punta a URL di Vinted si svuota da solo il giorno in cui quell'annuncio
+   * viene venduto.
+   */
+  listingImages?: string[];
   /** Chiamato con l'id appena l'oggetto esiste: e' li' che nasce l'indirizzo. */
   onSaved: (itemId: string) => void;
 }) {
@@ -42,6 +50,7 @@ export function AutoSave({
   const partito = useRef(false);
   const primoRisultato = useRef(result);
   const immagini = useRef(images);
+  const dallAnnuncio = useRef(listingImages);
   const segnala = useRef(onSaved);
   useEffect(() => {
     segnala.current = onSaved;
@@ -62,6 +71,10 @@ export function AutoSave({
 
         setState('saved');
         segnala.current(saved.itemId);
+
+        if (immagini.current.length === 0 && dallAnnuncio.current.length > 0) {
+          await importListingImages(saved.itemId, dallAnnuncio.current);
+        }
 
         const supabase = getBrowserSupabase();
         if (supabase && immagini.current.length > 0) {

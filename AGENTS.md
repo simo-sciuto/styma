@@ -425,16 +425,39 @@ sono ancora aperte.
   cinque mercati, e tagliato dalla marca in poi ne da' tre e centrati. Le parole prima della marca
   sono come chi vende chiama la categoria nella sua lingua, e nei titoli eBay non ci sono. E' la
   stessa regola di posizione di `looksLikeAccessory`: la marca segna il confine.
+- **Le foto di un annuncio si copiano, non si linkano.** Un'analisi nata da un link non passa da
+  nessun file scelto a mano, e senza `importListingImages` l'oggetto salvato resta **senza foto
+  dappertutto**: niente copertina in lista, niente immagine nella scheda. Il difetto non si vede
+  subito, perche' il risultato appena fatto mostra le foto dell'annuncio dal vivo; si vede domani,
+  con l'inventario pieno di rettangoli grigi. E si copiano perche' un annuncio venduto sparisce
+  insieme alle sue immagini: quello che teniamo dev'essere nostro.
+- **Vinted serve la stessa pagina in due versioni, e la seconda e' pericolosa.** Misurato sullo
+  stesso annuncio a un'ora di distanza: una volta col JSON-LD (prezzo, marca, categoria, e cinque
+  foto su sedici prima del marcatore dei consigliati), una volta senza — e li' **quindici foto su
+  sedici stanno prima del marcatore**, cioe' il marcatore non separa piu' niente. Prendere le prime
+  cinque vorrebbe dire identificare l'oggetto di qualcun altro. Nel ripiego si prende **una foto
+  sola**, la prima della galleria, e il prezzo non si indovina: lo scrive chi guarda. Un'analisi su
+  una foto e' piu' debole e lo dichiara da sola; una sull'oggetto sbagliato no.
+- **Il parsing sta separato dal fetch.** `vinted-parse.ts` non importa `server-only` ed e' testato
+  su frammenti scritti a mano: una pagina vera pesa due megabyte e appartiene a Vinted, tenerne una
+  copia nel repository sarebbe archiviare contenuto altrui, che e' un'altra cosa rispetto a
+  leggerlo una volta su richiesta di chi lo sta guardando.
+- **`toBeVisible` non basta su un'immagine.** Un `<img>` con la sorgente rotta e' visibile lo
+  stesso, e la prima versione del test sulle foto importate passava mostrando un rettangolo grigio.
+  La domanda e' se il pixel c'e': si guarda `naturalWidth`.
 - **Un dominio in una lista bianca e' un controllo di sicurezza.** L'URL incollato lo apre il
   *nostro* server. La prima versione del riconoscitore usava `/(^|\.)vinted\.[a-z.]+$/`, e il punto
   dentro la classe rendeva valido `vinted.it.truffa.example`: chiunque poteva farsi aprire una
   pagina qualunque dal nostro backend. Se n'e' accorto un test, non una rilettura.
-- **La navigazione del telefono sta in basso.** Le voci erano tre in una barra in alto e ci
-  stavano appena; la quarta non ci sarebbe entrata. Ma il vincolo vero non era lo spazio: questa
-  app si usa in piedi con una mano sola, e il bordo alto di uno schermo da sei pollici e' il punto
-  piu' lontano dal pollice che ci sia. `BottomNav` su telefono, `Header` da `sm` in su, e il
-  `<body>` porta `pb-24` sotto quel breakpoint perche' una barra fissa senza spazio copre l'ultima
-  riga di ogni pagina.
+- **La navigazione del telefono sta in basso, ma il marchio resta in alto.** Le voci erano tre in
+  una barra in alto e ci stavano appena; la quarta non ci sarebbe entrata. Ma il vincolo vero non
+  era lo spazio: questa app si usa in piedi con una mano sola, e il bordo alto di uno schermo da sei
+  pollici e' il punto piu' lontano dal pollice che ci sia. `BottomNav` su telefono, `Header` da `sm`
+  in su, e il `<body>` porta `pb-24` sotto quel breakpoint perche' una barra fissa senza spazio
+  copre l'ultima riga di ogni pagina.
+  **Togliendo del tutto la barra alta era sparita la home**, e dentro l'app non c'era piu' modo di
+  uscirne: sul telefono resta una riga col solo marchio, che e' il collegamento a `/`. Quaranta
+  pixel sono il prezzo giusto per non avere un vicolo cieco.
 - **Il cruscotto risponde a due domande, non a una.** «Sto guadagnando» ne ha una sola e sta in
   cima. «Su cosa» cambia cosa comprerai domenica prossima, e la categoria la scrive il modello a
   ogni identificazione — ce l'avevamo da sempre e non la leggeva nessuno. Il margine per categoria

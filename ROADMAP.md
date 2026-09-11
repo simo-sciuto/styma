@@ -641,6 +641,13 @@ Multi-oggetto · Scout · allerte · analytics personali · escalation a esperto
   misurato, intero da' zero risultati, tagliato ne da' tre e centrati.
 - `npm run annuncio` e' a parte da `npm run e2e`: dipende da un annuncio di
   terzi che puo' sparire, e non deve far diventare rosso il giro principale.
+- Le foto dell'annuncio si copiano nel nostro magazzino: senza, l'oggetto
+  salvato restava senza immagine in lista e nella scheda.
+- Vinted serve la pagina in due versioni, e nella seconda il confine fra le
+  foto dell'oggetto e quelle dei consigliati sparisce: li' si prende una foto
+  sola e il prezzo lo scrive chi guarda.
+- Il campo del link e' salito in cima, e sul telefono e' tornato il marchio in
+  alto: spostando la navigazione in basso era sparita la home.
 
 ## Decisioni aperte
 

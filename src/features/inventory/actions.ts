@@ -5,6 +5,8 @@ import { revalidatePath } from 'next/cache';
 import { findPreviousSightings, type PreviousSighting } from '@/services/inventory/repository';
 
 import { getServerSupabase } from '@/lib/supabase/server';
+import { downloadListingImages } from '@/services/listings';
+import { IMAGE_BUCKET } from '@/services/inventory/types';
 import type { AnalysisResult } from '@/schemas/analysis';
 import { OutcomeInputSchema } from '@/schemas/outcome';
 
@@ -327,6 +329,65 @@ export async function setArchived(itemId: string, archived: boolean): Promise<Ou
   revalidatePath('/inventario');
   revalidatePath(`/inventario/${itemId}`);
   return { ok: true };
+}
+
+/**
+ * Le foto di un annuncio, portate dentro il nostro magazzino.
+ *
+ * Un'analisi nata da un link non passa da nessun file scelto a mano, quindi
+ * senza questo l'oggetto salvato resterebbe **senza foto dappertutto**: niente
+ * copertina in lista, niente immagine grande nella scheda, niente miniatura
+ * sul risultato riaperto. Il difetto non si vedeva subito, perche' il
+ * risultato appena fatto mostrava comunque le foto dell'annuncio dal vivo: si
+ * sarebbe visto domani, con l'inventario pieno di rettangoli grigi.
+ *
+ * Le foto si **copiano**, non si linkano. Un annuncio venduto sparisce, e con
+ * lui le sue immagini: un inventario che punta a URL di Vinted e' un
+ * inventario che si svuota da solo. Quello che teniamo deve essere nostro,
+ * come per una foto scattata al banco.
+ *
+ * Una foto che non si scarica non ferma le altre, e zero foto non fanno
+ * fallire il salvataggio: l'analisi vale comunque piu' delle sue immagini.
+ */
+export async function importListingImages(
+  itemId: string,
+  urls: string[],
+): Promise<{ ok: boolean; imported: number }> {
+  if (urls.length === 0) return { ok: true, imported: 0 };
+
+  const supabase = await getServerSupabase();
+  if (!supabase) return { ok: false, imported: 0 };
+
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id;
+  if (!userId) return { ok: false, imported: 0 };
+
+  const scaricate = await downloadListingImages(urls).catch((caught: unknown) => {
+    console.error('[inventory] foto dell’annuncio non scaricate', caught);
+    return [];
+  });
+  if (scaricate.length === 0) return { ok: false, imported: 0 };
+
+  const paths: string[] = [];
+  for (const [index, image] of scaricate.entries()) {
+    const estensione =
+      image.mediaType === 'image/png' ? 'png' : image.mediaType === 'image/webp' ? 'webp' : 'jpg';
+    const path = `${userId}/${itemId}/${String(index).padStart(2, '0')}.${estensione}`;
+    const { error } = await supabase.storage
+      .from(IMAGE_BUCKET)
+      .upload(path, Buffer.from(image.data, 'base64'), {
+        contentType: image.mediaType,
+        upsert: true,
+      });
+    // Un caricamento fallito lascia una riga: un inventario senza foto e
+    // nessun log e' un vicolo cieco, ed e' gia' costato abbastanza qui.
+    if (error) console.error(`[inventory] foto non caricata (${path})`, error.message);
+    else paths.push(path);
+  }
+
+  console.info(`[inventory] annuncio ${itemId}: ${paths.length}/${scaricate.length} foto importate`);
+  await registerImages(itemId, paths);
+  return { ok: paths.length > 0, imported: paths.length };
 }
 
 export async function registerImages(

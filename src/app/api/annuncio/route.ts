@@ -110,7 +110,7 @@ export async function POST(request: Request) {
         const listing = await fetchListing(url);
         send({ type: 'listing', listing });
 
-        const images = await downloadListingImages(listing);
+        const images = await downloadListingImages(listing.imageUrls);
         send({ type: 'photos', count: images.length });
 
         const { identification, usage } = await getProvider().identify(images, {

@@ -1,6 +1,26 @@
 import 'server-only';
 
-import { ListingError, MAX_LISTING_IMAGES, type SharedListing } from './types';
+import { ListingError, type SharedListing } from './types';
+import {
+  extractProduct,
+  extractVintedPhotos,
+  firstVintedPhoto,
+  titleFromOg,
+} from './vinted-parse';
+
+/** Da `UsedCondition` / `NewCondition` alle parole che usa chi vende. */
+const STATI: Record<string, string> = {
+  NewCondition: 'nuovo',
+  UsedCondition: 'usato',
+  RefurbishedCondition: 'ricondizionato',
+  DamagedCondition: 'danneggiato',
+};
+
+function leggiStato(raw: string | undefined): string | null {
+  if (!raw) return null;
+  const nome = raw.split('/').pop() ?? raw;
+  return STATI[nome] ?? null;
+}
 
 /**
  * Un annuncio Vinted, letto dalla sua pagina.
@@ -24,80 +44,6 @@ const TIMEOUT_MS = 12_000;
 
 const UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
-
-type JsonLdProduct = {
-  '@type'?: string;
-  name?: string;
-  description?: string;
-  image?: string | string[];
-  brand?: { name?: string };
-  category?: string;
-  color?: string;
-  offers?: { price?: number | string; priceCurrency?: string; itemCondition?: string };
-};
-
-/** Da `UsedCondition` / `NewCondition` alle parole che usa chi vende. */
-const STATI: Record<string, string> = {
-  NewCondition: 'nuovo',
-  UsedCondition: 'usato',
-  RefurbishedCondition: 'ricondizionato',
-  DamagedCondition: 'danneggiato',
-};
-
-function leggiStato(raw: string | undefined): string | null {
-  if (!raw) return null;
-  const nome = raw.split('/').pop() ?? raw;
-  return STATI[nome] ?? null;
-}
-
-/**
- * Le foto dell'annuncio, separate da quelle dei consigliati.
- *
- * La pagina ne porta sedici, e solo cinque sono dell'oggetto: le altre
- * appartengono agli articoli suggeriti in fondo. Un comparabile sbagliato
- * costa una stima storta; una *foto* sbagliata costa un'identificazione
- * sbagliata, che e' l'unico errore di questo prodotto che non sa dichiararsi.
- *
- * Quindi: la foto del JSON-LD e' certa e viene per prima, e le altre si
- * prendono solo da prima del punto in cui la pagina comincia a consigliare.
- * Se quel punto non si trova, si resta con la sola foto certa: un'analisi su
- * una foto e' peggiore di una su cinque, e lo dichiara da sola con la
- * confidenza bassa. Un'analisi sulla borsa di qualcun altro no.
- */
-const CONFINE_CONSIGLIATI = /Articoli simili|Potrebbero piacerti|Ti potrebbero|recommend/i;
-const FOTO = /https:\/\/images\d*\.vinted\.net\/t\/[^"'\\ ]+?\/f800\/[^"'\\ ]+/g;
-
-export function extractVintedPhotos(html: string, certa: string | null): string[] {
-  const trovate: string[] = [];
-  if (certa) trovate.push(certa);
-
-  const confine = html.search(CONFINE_CONSIGLIATI);
-  if (confine > 0) {
-    for (const match of html.matchAll(FOTO)) {
-      if (match.index !== undefined && match.index >= confine) break;
-      if (!trovate.includes(match[0])) trovate.push(match[0]);
-    }
-  }
-
-  return trovate.slice(0, MAX_LISTING_IMAGES);
-}
-
-/** Il JSON-LD di tipo Product, se c'e'. La pagina puo' portarne piu' d'uno. */
-export function extractProduct(html: string): JsonLdProduct | null {
-  for (const match of html.matchAll(
-    /<script[^>]+type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g,
-  )) {
-    try {
-      const parsed = JSON.parse(match[1]!) as JsonLdProduct | JsonLdProduct[];
-      const candidati = Array.isArray(parsed) ? parsed : [parsed];
-      const prodotto = candidati.find((voce) => voce?.['@type'] === 'Product');
-      if (prodotto) return prodotto;
-    } catch {
-      // Un blocco illeggibile non deve impedire di guardare il successivo.
-    }
-  }
-  return null;
-}
 
 export async function fetchVintedListing(url: string): Promise<SharedListing> {
   let html: string;
@@ -124,32 +70,75 @@ export async function fetchVintedListing(url: string): Promise<SharedListing> {
   }
 
   const prodotto = extractProduct(html);
-  if (!prodotto?.name) {
-    // La pagina c'e' ma non e' quella che ci aspettavamo: meglio dirlo che
-    // analizzare qualcosa di raccolto a caso.
+  if (prodotto?.name) {
+    const certa =
+      typeof prodotto.image === 'string' ? prodotto.image : (prodotto.image?.[0] ?? null);
+    const imageUrls = extractVintedPhotos(html, certa);
+    if (imageUrls.length === 0) {
+      throw new ListingError('Questo annuncio non ha foto da guardare.', 'no_photos');
+    }
+
+    const prezzo = Number(prodotto.offers?.price);
+    const inEuro = prodotto.offers?.priceCurrency === 'EUR' && Number.isFinite(prezzo) && prezzo > 0;
+
+    return {
+      source: 'vinted',
+      url,
+      title: prodotto.name,
+      priceEur: inEuro ? prezzo : null,
+      brand: prodotto.brand?.name ?? null,
+      category: prodotto.category ?? null,
+      condition: leggiStato(prodotto.offers?.itemCondition),
+      // Tagliata: serve a chi legge per riconoscere l'annuncio, non a noi per
+      // dedurre qualcosa. Le deduzioni si fanno sulle foto.
+      description: prodotto.description ? prodotto.description.slice(0, 400) : null,
+      imageUrls,
+    };
+  }
+
+  return leggiPaginaSpoglia(html, url);
+}
+
+/**
+ * La stessa pagina, quando Vinted non serve il JSON-LD.
+ *
+ * Succede: la pagina risponde 200, il titolo e le foto ci sono, e il blocco
+ * di dati strutturati semplicemente non c'e'. Misurato sullo stesso annuncio a
+ * un'ora di distanza, prima con e poi senza.
+ *
+ * Quello che si perde non e' solo il prezzo. **Si perde il confine fra le foto
+ * dell'oggetto e quelle dei consigliati**: nella versione completa cinque foto
+ * su sedici stanno prima del marcatore, in questa quindici su sedici, cioe' il
+ * marcatore non separa piu' niente. Prendere le prime cinque vorrebbe dire
+ * identificare la borsa di qualcun altro, che e' l'unico errore di questo
+ * prodotto che non sa dichiararsi.
+ *
+ * Quindi una foto sola: la prima della galleria, che nella versione completa
+ * e' esattamente quella del JSON-LD. Un'identificazione su una foto e' piu'
+ * debole e lo dichiara da sola, con la confidenza e con «una foto in piu'
+ * aiuterebbe». Un'identificazione sull'oggetto sbagliato no.
+ */
+function leggiPaginaSpoglia(html: string, url: string): SharedListing {
+  const titolo = titleFromOg(html);
+  if (!titolo) {
     throw new ListingError('Questa pagina di Vinted non sembra un annuncio.', 'unreadable');
   }
 
-  const certa = typeof prodotto.image === 'string' ? prodotto.image : (prodotto.image?.[0] ?? null);
-  const imageUrls = extractVintedPhotos(html, certa);
-  if (imageUrls.length === 0) {
+  const prima = firstVintedPhoto(html);
+  if (!prima) {
     throw new ListingError('Questo annuncio non ha foto da guardare.', 'no_photos');
   }
-
-  const prezzo = Number(prodotto.offers?.price);
-  const inEuro = prodotto.offers?.priceCurrency === 'EUR' && Number.isFinite(prezzo) && prezzo > 0;
 
   return {
     source: 'vinted',
     url,
-    title: prodotto.name,
-    priceEur: inEuro ? prezzo : null,
-    brand: prodotto.brand?.name ?? null,
-    category: prodotto.category ?? null,
-    condition: leggiStato(prodotto.offers?.itemCondition),
-    // Tagliata: serve a chi legge per riconoscere l'annuncio, non a noi per
-    // dedurre qualcosa. Le deduzioni si fanno sulle foto.
-    description: prodotto.description ? prodotto.description.slice(0, 400) : null,
-    imageUrls,
+    title: titolo,
+    // Il prezzo non c'e' e non si indovina: lo scrive chi guarda.
+    priceEur: null,
+    brand: null,
+    category: null,
+    condition: null,
+    description: null,
+    imageUrls: [prima],
   };
 }
