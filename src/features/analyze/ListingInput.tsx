@@ -34,10 +34,11 @@ export function ListingInput({
   return (
     <div className="rounded-block border-2 border-line bg-surface p-4 sm:p-5">
       <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
-        Oppure incolla un link
+        Incolla un link
       </p>
       <p className="mt-1.5 text-sm text-muted">
-        Da Vinted o da eBay. Leggiamo le foto dell’annuncio e ti diciamo se il prezzo sta in piedi.
+        Da Vinted o da eBay. Guardiamo le foto dell’annuncio e ti diciamo se quel prezzo sta in
+        piedi.
       </p>
 
       <form

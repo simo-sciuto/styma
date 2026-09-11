@@ -497,16 +497,9 @@ export function AnalyzeFlow({
   return (
     <div className="mt-6 space-y-5">
       <PageHeader
-        title="Fotografa l’oggetto"
-        subtitle="Da quattro a otto foto. Se l’oggetto e’ evidente ne bastano meno."
+        title="Da dove partiamo"
+        subtitle="Fotografa quello che hai in mano, oppure incolla il link di un annuncio."
       />
-
-      <PhotoPicker images={images} onChange={setImages} />
-
-      {/* La seconda porta. Sotto le foto e non sopra: fotografare e' quello
-          che fai al banco, il link e' quello che fai sul divano, e il primo
-          e' il caso d'uso per cui questo prodotto esiste. */}
-      <ListingInput onSubmit={(url) => void analyzeLink(url)} />
 
       {error ? (
         <Card className="border-danger/40 bg-danger-soft">
@@ -514,8 +507,30 @@ export function AnalyzeFlow({
         </Card>
       ) : null}
 
+      {/*
+        Il link sta in cima, non in fondo.
+
+        Stava sotto il selettore delle foto e sotto tutto il blocco «cosa
+        fotografare», con la motivazione che fotografare e' il caso al banco e
+        il link quello sul divano. Guardata su un telefono, quella motivazione
+        cadeva: chi arriva per incollare un link deve scorrere tre schermate di
+        istruzioni su come scattare, cioe' il contenuto dell'altro caso d'uso.
+        Sono due strade, e le due strade stanno affiancate.
+      */}
+      <ListingInput onSubmit={(url) => void analyzeLink(url)} />
+
+      <div className="flex items-center gap-3" aria-hidden>
+        <span className="h-0.5 flex-1 bg-line" />
+        <span className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-muted">
+          oppure
+        </span>
+        <span className="h-0.5 flex-1 bg-line" />
+      </div>
+
+      <PhotoPicker images={images} onChange={setImages} />
+
       <Button className="w-full" disabled={images.length === 0} onClick={() => void analyze()}>
-        Analizza
+        Analizza le foto
       </Button>
     </div>
   );
