@@ -20,6 +20,13 @@ import { ITEM_STATUS_LABELS, type ItemStatus } from '@/services/inventory/types'
  * I conteggi stanno sulle linguette e non in un blocco a parte. Sono la stessa
  * informazione — quanti ne hai e in che stato — detta dove serve, cioe'
  * mentre scegli quale gruppo guardare.
+ *
+ * La scheda arriva gia' resa dal server. La prima versione la chiedeva con un
+ * render-prop, e una funzione non attraversa il confine fra server e client:
+ * «Functions are not valid as a child of Client Components», e la lista
+ * spariva. Un nodo gia' reso invece viaggia, perche' e' dato — e cosi' le
+ * foto, i link e i prezzi restano lavoro del server, che e' dove stavano.
+ * Qui si sceglie solo quali mostrare.
  */
 export type FiltrabileItem = {
   id: string;
@@ -27,6 +34,7 @@ export type FiltrabileItem = {
   brand: string | null;
   category: string | null;
   status: ItemStatus;
+  scheda: ReactNode;
 };
 
 /** Gli stati, nell'ordine in cui un oggetto li attraversa. */
@@ -39,14 +47,7 @@ function normalizza(value: string): string {
     .replace(/[̀-ͯ]/g, '');
 }
 
-export function InventoryFilters({
-  items,
-  children,
-}: {
-  items: FiltrabileItem[];
-  /** La lista gia' resa: riceve gli id da mostrare e decide cosa disegnare. */
-  children: (visibili: Set<string>) => ReactNode;
-}) {
+export function InventoryFilters({ items }: { items: FiltrabileItem[] }) {
   const [testo, setTesto] = useState('');
   const [stato, setStato] = useState<ItemStatus | null>(null);
 
@@ -58,19 +59,14 @@ export function InventoryFilters({
 
   const visibili = useMemo(() => {
     const cercato = normalizza(testo.trim());
-    const trovati = new Set<string>();
-
-    for (const item of items) {
-      if (stato !== null && item.status !== stato) continue;
-      if (cercato !== '') {
-        // Titolo, marca e categoria insieme: chi cerca «guess» non sa se
-        // l'abbiamo messo nel titolo o nella marca, e non deve saperlo.
-        const dove = normalizza([item.title, item.brand, item.category].filter(Boolean).join(' '));
-        if (!dove.includes(cercato)) continue;
-      }
-      trovati.add(item.id);
-    }
-    return trovati;
+    return items.filter((item) => {
+      if (stato !== null && item.status !== stato) return false;
+      if (cercato === '') return true;
+      // Titolo, marca e categoria insieme: chi cerca «guess» non sa se
+      // l'abbiamo messo nel titolo o nella marca, e non deve saperlo.
+      const dove = normalizza([item.title, item.brand, item.category].filter(Boolean).join(' '));
+      return dove.includes(cercato);
+    });
   }, [items, testo, stato]);
 
   const presenti = ORDINE.filter((voce) => (conteggi.get(voce) ?? 0) > 0);
@@ -101,7 +97,7 @@ export function InventoryFilters({
         </div>
       ) : null}
 
-      {visibili.size === 0 ? (
+      {visibili.length === 0 ? (
         <p className="mt-6 text-sm text-muted">
           Nessun oggetto con questi filtri.{' '}
           <button
@@ -116,7 +112,7 @@ export function InventoryFilters({
           </button>
         </p>
       ) : (
-        children(visibili)
+        <ul className="mt-4 grid gap-4 sm:grid-cols-2">{visibili.map((item) => item.scheda)}</ul>
       )}
     </div>
   );

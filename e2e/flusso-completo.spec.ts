@@ -107,18 +107,22 @@ test('dall’analisi all’archivio, passando per la vendita', async ({ page }) 
   await expect(page).toHaveURL(new RegExp(`/inventario/${itemId}$`));
 
   // — L'ho comprato ————————————————————————————————————————————
-  await expect(page.getByText('Che fine ha fatto')).toBeVisible();
-  await page.getByRole('button', { name: 'Si’, l’ho comprato' }).click();
+  await expect(page.getByText('Da decidere')).toBeVisible();
+  await page.getByRole('button', { name: 'L’ho comprato' }).click();
 
   await page.getByLabel('Quanto hai pagato davvero').fill('25');
   // Chiedevano 30, hai pagato 25: la trattativa si dichiara mentre scrivi.
   await expect(page.getByText(/in meno di quanto chiedevano/)).toBeVisible();
   await page.getByRole('button', { name: 'Registra' }).click();
 
-  await expect(page.getByText('Ce l’hai in magazzino')).toBeVisible({ timeout: 30_000 });
-  // `exact`: "Pagato" da solo pesca anche "Quanto hai pagato" nel conto del flip.
-  await expect(page.getByText('Pagato', { exact: true })).toBeVisible();
-  await expect(page.getByText('Trattato', { exact: true })).toBeVisible();
+  await expect(page.getByText('In magazzino')).toBeVisible({ timeout: 30_000 });
+  // Il telaio dell'esito: cos'e' successo, quanto ti e' costato davvero
+  // (25 pagati, nessuna spesa in piu') e quanto ne fai se lo vendi al valore
+  // atteso. Quest'ultima e' la sola cifra della scatola che guarda avanti.
+  await expect(page.getByText(/Ti e’ costato 25\s€/)).toBeVisible();
+  await expect(page.getByText(/Venduto a \d+\s€/)).toBeVisible();
+  // La trattativa non e' una casella, e' una riga minore: 30 chiesti, 25 pagati.
+  await expect(page.getByText(/5\s€ strappati trattando/)).toBeVisible();
 
   // — L'ho venduto ————————————————————————————————————————————
   await page.getByRole('button', { name: 'L’ho venduto' }).click();
@@ -126,11 +130,11 @@ test('dall’analisi all’archivio, passando per la vendita', async ({ page }) 
   await page.getByLabel('Su quale piattaforma').fill('Vinted');
   await page.getByRole('button', { name: 'Registra' }).click();
 
-  await expect(page.getByText('Venduto su Vinted')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(/L’hai venduto a 90\s€ su Vinted/)).toBeVisible({ timeout: 30_000 });
   // Il guadagno e' una sottrazione fra due cifre digitate qui sopra, e da
   // quando commissioni e spedizione sono uscite dai conti e' l'unico margine
   // che esiste: niente piu' "lordo" e "netto stimato" da confrontare.
-  await expect(page.getByText('Guadagno', { exact: true })).toBeVisible();
+  await expect(page.getByText('Ci hai guadagnato', { exact: true })).toBeVisible();
   await expect(page.getByText('+65 €', { exact: true })).toBeVisible();
   // E il confronto con la fascia: l'unico punto in cui il prodotto puo'
   // essere smentito.
@@ -138,8 +142,15 @@ test('dall’analisi all’archivio, passando per la vendita', async ({ page }) 
 
   // — Il magazzino ha registrato il fatto, non la previsione ——————————
   await page.goto('/inventario');
-  await expect(page.getByText('Guadagnato davvero')).toBeVisible();
-  await expect(page.getByText('Stime centrate')).toBeVisible();
+  await expect(page.getByText('Venduto a 90 €')).toBeVisible();
+  // I totali in cima all'inventario erano il cruscotto detto peggio, e sono
+  // usciti: al loro posto si cerca e si filtra. Il filtro lavora sulle righe
+  // gia' in pagina, quindi una parola che non c'e' deve svuotare la lista.
+  await page.getByLabel('Cerca fra i tuoi oggetti').fill('olivetti');
+  await expect(page.getByText('Venduto a 90 €')).toBeVisible();
+  await page.getByLabel('Cerca fra i tuoi oggetti').fill('bicicletta');
+  await expect(page.getByText(/Nessun oggetto con questi filtri/)).toBeVisible();
+  await page.getByRole('button', { name: 'Togli i filtri' }).click();
   await expect(page.getByText('Venduto a 90 €')).toBeVisible();
 
   // — E l'andamento conta gli stessi soldi, non le stime ————————————
