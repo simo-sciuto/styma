@@ -92,7 +92,7 @@ export function viewOutcome(outcome: Outcome, askingPrice: number | null): Outco
       frase:
         askingPrice === null
           ? 'L’hai comprato?'
-          : `Te lo chiedono ${formatEur(askingPrice)}: l’hai comprato?`,
+          : `${formatEur(askingPrice)}: l’hai comprato?`,
       figure: [],
       dettagli: null,
       stima: null,

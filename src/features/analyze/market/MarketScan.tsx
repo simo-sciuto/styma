@@ -5,6 +5,7 @@ import type { Identification } from '@/schemas/identification';
 import type { MarketResearch } from '@/schemas/market';
 import { ebaySearchUrl, ebaySoldSearchUrl } from '@/services/market-data/ebay/queries';
 import {
+  CONDITION_LABELS,
   DEMAND_LABELS,
   LIQUIDITY_LABELS,
   MATCH_LABELS,
@@ -13,6 +14,7 @@ import {
   formatEur,
 } from '@/lib/format';
 import { Card, Pill } from '@/components/ui';
+import { paese, spedizione } from './provenienza';
 
 /**
  * Quante inserzioni mettere nella striscia.
@@ -51,14 +53,31 @@ function describeSource(source: MarketSource): string {
 function ComparableCard({
   item,
   showKind,
-  showWeight,
 }: {
   item: WeightedComparable;
   showKind: boolean;
-  showWeight: boolean;
 }) {
   const { comparable } = item;
-  const date = formatDate(comparable.soldAt);
+
+  /*
+   * Cosa c'e' sotto al titolo, e perche' non e' piu' il peso.
+   *
+   * Il peso descrive il nostro conto, non l'oggetto: davanti a un banco non
+   * ci si fa niente. Al suo posto i tre dati che eBay restituisce e che
+   * finora buttavamo via, in ordine di quanto cambiano la lettura del prezzo:
+   *
+   *   stato        «Come nuovo» e «Scarso» a 45 € sono due mercati diversi.
+   *                Dichiarato su 3 inserzioni su 20 (misurato), quindi c'e'
+   *                di rado — e quando c'e' vale la riga che occupa.
+   *   provenienza  presente su 100 su 100. Un comparabile che parte dal
+   *                Giappone non prezza il mercato italiano come uno di Milano.
+   *   spedizione   solo dal mercato italiano, dove la cifra che eBay dichiara
+   *                e' davvero quanto pagheresti tu.
+   */
+  const stato = comparable.condition === 'unknown' ? null : CONDITION_LABELS[comparable.condition];
+  const riga = [paese(comparable.country), spedizione(comparable.shippingToItalyEur), formatDate(comparable.soldAt)]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <li className="w-40 shrink-0 snap-start">
@@ -98,13 +117,10 @@ function ComparableCard({
                 {PRICE_KIND_LABELS[comparable.kind]}
               </Pill>
             ) : null}
+            {stato ? <Pill>{stato}</Pill> : null}
           </div>
 
-          {showWeight || date ? (
-            <p className="mt-1 font-mono text-[0.65rem] text-muted">
-              {[showWeight ? `peso ${item.weight.toFixed(2)}` : null, date].filter(Boolean).join(' · ')}
-            </p>
-          ) : null}
+          {riga ? <p className="mt-1 text-[0.65rem] leading-snug text-muted">{riga}</p> : null}
         </div>
       </a>
     </li>
@@ -151,29 +167,6 @@ export function MarketScan({
   // una volta in testa e' piu' onesto che ripetere "Richiesto" su ogni riga,
   // dove diventa un'etichetta che non si legge piu'.
   const allAsking = used.every((item) => item.comparable.kind === 'asking');
-
-  /*
-   * Il peso si mostra solo se cambia da una riga all'altra.
-   *
-   * Esisteva per spiegare perche' un'inserzione avesse spostato la stima piu'
-   * di un'altra, ed e' un buon motivo — ma sulle ricerche vere leggeva
-   * «peso 1.00» su tutte e quattro le righe aperte. Il peso e' il prodotto di
-   * due fattori, e uno dei due, lo stato di conservazione, eBay lo dichiara
-   * su 3 inserzioni su 20 (misurato sulla Browse API in produzione): sulle
-   * altre 17 vale la stessa costante. Con una ricerca riuscita, dove tutti i
-   * comparabili sono lo stesso modello, anche il primo fattore e' costante.
-   *
-   * Una colonna di numeri identici non e' trasparenza: e' rumore travestito
-   * da informazione, e insegna a saltare la riga in cui sta — compresa la
-   * volta in cui quel numero varia davvero e conta.
-   *
-   * Il conto si fa per elenco, non sull'insieme: le quattro righe aperte
-   * possono valere tutte 1,00 mentre fra i settantaquattro piegati il peso
-   * varia eccome, e guardare il totale rimetterebbe la colonna costante
-   * proprio dove si legge.
-   */
-  const pesiVariano = (elenco: WeightedComparable[]) =>
-    new Set(elenco.map((item) => item.weight.toFixed(2))).size > 1;
 
   const identical = used.filter((item) => item.comparable.matchLevel === 'exact_model');
   const competition =
@@ -252,7 +245,6 @@ export function MarketScan({
               key={`${item.comparable.url}-${item.comparable.price}`}
               item={item}
               showKind={!allAsking}
-              showWeight={pesiVariano(mostrati)}
             />
           ))}
         </ul>

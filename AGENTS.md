@@ -394,15 +394,21 @@ sono ancora aperte.
   **parametri di ricerca**, restando sulla stessa rotta: l'analisi vive a
   `/analizza?oggetto=<id>`, e la scheda dell'oggetto si raggiunge con un
   collegamento vero.
-- **Un numero che non varia mai non va mostrato.** Accanto a ogni comparabile
-  c'era «peso 1.00», su tutte le righe: sembrava una discriminazione e non ne
-  faceva nessuna. La ragione e' misurata — eBay dichiara la condizione su
-  **3 inserzioni su 20**, quindi uno dei due fattori del peso e' una costante
-  sulle altre 17 — e la cura e' mostrarlo solo quando cambia *dentro l'elenco
-  che si sta guardando*, non nell'insieme: le quattro righe aperte possono
-  valere tutte uguale mentre fra i settantaquattro piegati il peso varia.
-  Una colonna di numeri identici insegna a saltare la riga in cui sta, e la
-  lezione vale anche la volta in cui quel numero conta.
+- **Un numero che descrive il nostro conto non e' un'informazione su
+  quell'oggetto.** Accanto a ogni comparabile c'era «peso 1.00», su tutte le
+  righe: sembrava una discriminazione e non ne faceva nessuna. La prima cura
+  fu mostrarlo solo quando varia dentro l'elenco aperto — giusta, e insufficiente,
+  perche' anche quando varia il peso risponde a «come l'abbiamo contato» e non
+  a «e' lo stesso oggetto del mio», che e' la sola domanda di chi scorre la
+  striscia. Al suo posto tre cose che eBay restituisce e che buttavamo via:
+  lo **stato dichiarato** (su 3 inserzioni su 20 — raro, e quando c'e' cambia
+  la lettura del prezzo piu' di qualunque altra cosa), la **provenienza** (su
+  100 su 100: un comparabile che parte dal Giappone non prezza il mercato
+  italiano come uno di Milano) e la **spedizione**, che si dichiara solo dal
+  mercato italiano, dove la cifra di eBay e' davvero quanto pagheresti tu.
+  La regola generale resta e si allarga: una colonna di numeri identici insegna
+  a saltare la riga in cui sta, e una colonna di numeri nostri insegna a saltarla
+  anche quando variano.
 - **Un comparabile si controlla con gli occhi, quindi porta la sua foto.** La
   Browse API la restituisce su 20 inserzioni su 20 — misurato in produzione,
   insieme a `itemLocation` e `shippingOptions` — e la buttavamo via, lasciando

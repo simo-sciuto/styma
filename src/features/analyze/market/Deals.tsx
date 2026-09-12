@@ -4,33 +4,7 @@ import type { PriceThresholds, Valuation } from '@/schemas/analysis';
 import { formatEur } from '@/lib/format';
 import { findDeals, similarForSale, type Deal } from '@/services/valuation/deals';
 import { Card, Disclosure } from '@/components/ui';
-
-/**
- * I nomi dei paesi che eBay restituisce come sigla. Solo quelli che compaiono
- * davvero: misurando cinque mercati su un oggetto reale sono tornati venditori
- * da nove paesi, Giappone compreso — sedici inserzioni su cento.
- */
-const PAESI: Record<string, string> = {
-  IT: 'Italia',
-  DE: 'Germania',
-  FR: 'Francia',
-  GB: 'Regno Unito',
-  ES: 'Spagna',
-  NL: 'Paesi Bassi',
-  AT: 'Austria',
-  DK: 'Danimarca',
-  BE: 'Belgio',
-  PT: 'Portogallo',
-  CH: 'Svizzera',
-  PL: 'Polonia',
-  JP: 'Giappone',
-  US: 'Stati Uniti',
-};
-
-function paese(code: string | null | undefined): string | null {
-  if (!code) return null;
-  return PAESI[code] ?? code;
-}
+import { paese } from './provenienza';
 
 /**
  * Lo stesso oggetto, in vendita adesso sotto il tuo prezzo massimo.
