@@ -54,6 +54,8 @@ async function attendiPrezzoScritto(itemId: string): Promise<void> {
 
 /** L'oggetto creato dal test, per cancellarlo alla fine. */
 let itemId: string | null = null;
+/** Quando il giro arriva in fondo, la pulizia l'ha gia' fatta l'interfaccia. */
+let cancellatoDallInterfaccia = false;
 
 test.describe.configure({ mode: 'serial' });
 
@@ -196,15 +198,39 @@ test('dall’analisi all’archivio, passando per la vendita', async ({ page }) 
   await page.getByRole('link', { name: 'Mostrali' }).click();
   await expect(page.getByText('Archiviato', { exact: true })).toBeVisible();
 
+  // — Cancellare, invece, lo cancella ——————————————————————————————
+  //
+  // L'altro gesto, quello che non torna indietro. La domanda nomina
+  // l'oggetto: e' l'unico freno che c'e', e va provato che ci sia davvero.
+  // Fa anche da pulizia: dopo questo non resta niente da togliere a mano.
+  await page.getByRole('button', { name: /^Cancella / }).first().click();
+  await expect(page.getByText(/^Cancellare .+\?$/)).toBeVisible();
+
+  // Annullare non cancella: se questa parte non reggesse, il freno non
+  // sarebbe un freno.
+  await page.getByRole('button', { name: 'Annulla' }).click();
+  await expect(page.getByText('Archiviato', { exact: true })).toBeVisible();
+
+  await page.getByRole('button', { name: /^Cancella / }).first().click();
+  await page.getByRole('button', { name: 'Cancella', exact: true }).click();
+  await expect(page.getByText('Archiviato', { exact: true })).toHaveCount(0, {
+    timeout: 30_000,
+  });
+  cancellatoDallInterfaccia = true;
+
   expect(erroriConsole, `errori JavaScript in pagina: ${erroriConsole.join(' | ')}`).toEqual([]);
 });
 
 /**
  * Il test scrive su Supabase vero: senza pulizia, ogni esecuzione lascerebbe
  * un oggetto finto nell'inventario di chi lo lancia.
+ *
+ * Quando il giro arriva in fondo la pulizia l'ha gia' fatta l'interfaccia, ed
+ * e' meglio cosi': la cancellazione vera si prova cancellando davvero. Questo
+ * resta per le esecuzioni che si fermano a meta', dove l'oggetto rimarrebbe.
  */
 test.afterAll(async () => {
-  if (!itemId) return;
+  if (!itemId || cancellatoDallInterfaccia) return;
 
   const { url, key } = supabaseEnv();
   if (!url || !key) {

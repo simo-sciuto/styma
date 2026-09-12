@@ -69,7 +69,7 @@ export function Button({
   disabled = false,
   children,
   ...props
-}: ComponentProps<'button'> & { variant?: 'primary' | 'ghost'; pending?: boolean }) {
+}: ComponentProps<'button'> & { variant?: 'primary' | 'ghost' | 'danger'; pending?: boolean }) {
   /*
    * Il bottone si preme davvero: sotto il dito scende di tre pixel e
    * l'ombra sparisce sotto di lui. E' l'unica animazione di stato che
@@ -83,6 +83,10 @@ export function Button({
   const variants = {
     primary: 'bg-tile-teal text-tile-cream',
     ghost: 'bg-surface text-foreground hover:bg-accent-soft',
+    /* Un'azione che non torna indietro non puo' avere lo stesso colore di
+       tutte le altre: e' il rosso del verdetto «lascia stare», cioe' l'unico
+       colore che in questa app vuol dire gia' «fermati». */
+    danger: 'bg-verdict-pass text-foreground',
   } as const;
 
   return (

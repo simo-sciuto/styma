@@ -76,8 +76,17 @@ sono ancora aperte.
   proprio la meta' del magazzino che non insegna niente. `valuations.snapshot` conserva l'analisi
   come e' stata mostrata, **senza il verdetto**: quello e' funzione del prezzo che stai digitando
   ora, e si ricalcola con `assessFlip`. Chi ricarica la pagina rivede la stessa pagina.
-  Corollario: non esiste un pulsante per cancellare, solo `archived_at`. Un oggetto scartato e' il
-  dato piu' difficile da raccogliere che questo prodotto abbia.
+  Corollario, **rivisto il 2026-09-12**: per molto tempo non e' esistito un pulsante per
+  cancellare, solo `archived_at`, e la ragione vale ancora — un oggetto scartato e' il dato piu'
+  difficile da raccogliere che questo prodotto abbia, ed e' l'unico che puo' dire se un «lascia
+  stare» era giusto. Quella ragione pero' non basta a decidere al posto di chi il magazzino ce
+  l'ha. Ora ci sono tutti e due i gesti, e non si somigliano: **archiviare** e' quello normale,
+  reversibile, e vive sulla scheda dell'oggetto («toglilo dalla lista»); **cancellare** e' sulla
+  lista, chiede conferma nominando l'oggetto, e non torna indietro. Il freno e' la domanda, non
+  l'assenza del bottone — e la domanda elenca cosa sparisce invece di dire «azione
+  irreversibile», che e' una formula e non un'informazione. `deleteItem` toglie **prima** i file
+  dallo storage, perche' dopo il `delete` i loro indirizzi se ne sono andati con la riga che li
+  teneva; le tabelle figlie cascadano da sole.
 - **Il prezzo del banco non e' un acquisto.** Il numero digitato per ottenere il verdetto e' quanto
   *chiedono* (`asking_price`): finiva in `purchase_price` con lo stato "comprato" dedotto dalla sua
   presenza, e l'inventario dichiarava acquisti mai fatti sommandoli fra le spese. Quanto hai pagato,

@@ -336,6 +336,56 @@ export async function setArchived(itemId: string, archived: boolean): Promise<Ou
 }
 
 /**
+ * Cancellare per davvero.
+ *
+ * Fino a qui non esisteva, ed era una scelta: un oggetto scartato e' il dato
+ * che dice se un «lascia stare» era giusto, e lasciar buttare per fare ordine
+ * vuol dire perdere proprio la meta' piu' difficile da raccogliere. Resta
+ * vero, e non e' piu' una ragione sufficiente per decidere al posto di chi ha
+ * il magazzino: `archived_at` toglie di mezzo, questo toglie e basta. Il freno
+ * e' la domanda che si para davanti, non un bottone che non c'e'.
+ *
+ * Le righe figlie se ne vanno da sole — `item_images`, `valuations` e gli
+ * snapshot hanno tutte `on delete cascade` sulla riga dell'oggetto. I file
+ * nello storage no: quelli nessuno li cancella, e restano a occupare il bucket
+ * di chi ha chiesto di cancellare. Vanno via **prima**, perche' dopo il
+ * `delete` i loro indirizzi sono spariti insieme alla riga che li teneva.
+ *
+ * Se lo storage fallisce si va avanti lo stesso: chi ha chiesto di cancellare
+ * un oggetto deve vederlo sparire, e qualche file orfano e' un problema
+ * nostro, non suo. Resta nei log.
+ */
+export async function deleteItem(itemId: string): Promise<OutcomeResult> {
+  const supabase = await getServerSupabase();
+  if (!supabase) return { ok: false, error: 'Persistenza non configurata.' };
+
+  const { data: images } = await supabase
+    .from('item_images')
+    .select('storage_path')
+    .eq('item_id', itemId);
+
+  const paths = (images ?? []).map((image) => image.storage_path as string);
+  if (paths.length > 0) {
+    const { error } = await supabase.storage.from('item-photos').remove(paths);
+    if (error) console.error('[inventory] foto non cancellate', itemId, error.message);
+  }
+
+  // `select('id')`: senza, una riga che la RLS non lascia toccare tornerebbe
+  // come un successo, e la pagina direbbe «cancellato» a un oggetto ancora li'.
+  const { data, error } = await supabase.from('items').delete().eq('id', itemId).select('id');
+
+  if (error) {
+    console.error('[inventory] cancellazione fallita', error.message);
+    return { ok: false, error: 'Non siamo riusciti a cancellarlo.' };
+  }
+  if (!data || data.length === 0) return { ok: false, error: 'Oggetto non trovato.' };
+
+  revalidatePath('/inventario');
+  revalidatePath('/andamento');
+  return { ok: true };
+}
+
+/**
  * Le foto di un annuncio, portate dentro il nostro magazzino.
  *
  * Un'analisi nata da un link non passa da nessun file scelto a mano, quindi
